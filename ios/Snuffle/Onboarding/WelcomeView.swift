@@ -34,7 +34,7 @@ struct WelcomeView: View {
             panel
         }
         .background(colors.fill.ignoresSafeArea())
-        .sheet(isPresented: $adding) { AddProjectFlow() }
+        .sheet(isPresented: $adding) { AddProjectFlow(offersDemo: true) }
         .task { await play() }
     }
 

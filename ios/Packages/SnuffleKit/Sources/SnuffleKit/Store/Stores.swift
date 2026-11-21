@@ -123,4 +123,18 @@ public enum SharedContainer {
     public static var liveCache: FileStore<RefreshCache> { FileStore(directory: directory, name: "cache-live.json") }
     public static var demoCache: FileStore<RefreshCache> { FileStore(directory: directory, name: "cache-demo.json") }
     public static var demoWorld: FileStore<DemoWorld> { FileStore(directory: directory, name: "demo-world.json") }
+
+    /// A project's picture. The version is in the name, so an edit that is cancelled never replaces the saved one.
+    public static func projectIcon(_ projectId: UUID, version: Int) -> URL {
+        directory.appending(path: "icons/\(projectId.uuidString)-\(version).jpg")
+    }
+
+    /// Deletes a project's pictures except `keep` (all of them when nil).
+    public static func removeProjectIcons(_ projectId: UUID, keeping keep: Int? = nil) {
+        let folder = directory.appending(path: "icons")
+        let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path())) ?? []
+        for name in names where name.hasPrefix(projectId.uuidString + "-") && name != keep.map({ "\(projectId.uuidString)-\($0).jpg" }) {
+            try? FileManager.default.removeItem(at: folder.appending(path: name))
+        }
+    }
 }

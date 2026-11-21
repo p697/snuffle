@@ -8,9 +8,13 @@ struct ProjectCard: View {
     @Environment(\.accent) private var accent
     @Environment(\.colorScheme) private var colorScheme
     var project: Project
+    /// Numbers for a project that is not saved yet (the connect flow's "连上了" page); nil on the home screen.
+    var preview: ProjectSnapshot?
+    var previewLoading = false
 
-    private var snapshot: ProjectSnapshot? { model.snapshot(project.id) }
-    private var stage: CardStage { model.stage(project.id) }
+    private var isPreview: Bool { preview != nil || previewLoading }
+    private var snapshot: ProjectSnapshot? { preview ?? model.snapshot(project.id) }
+    private var stage: CardStage { previewLoading ? .loading : model.stage(project.id) }
     private var mark: SnapshotChange? { model.marks[project.id] }
     private var marked: Bool { mark != nil && !model.marksFading }
 
@@ -48,7 +52,7 @@ struct ProjectCard: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: stage)
         .modifier(Shake.Driver(trigger: model.shakes[project.id] ?? 0))
         .overlay {
-            if model.isLocked(project) { LockedOverlay() }
+            if !isPreview, model.isLocked(project) { LockedOverlay() }
         }
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("card-\(project.name)")
@@ -151,20 +155,6 @@ struct ProjectCard: View {
         guard let revenue = snapshot?.revenue, revenue > 0 else { return "还没有收入" }
         if let sales = snapshot?.sales { return "\(Format.money(revenue)) · \(sales) 笔" }
         return "\(Format.money(revenue)) · RevenueCat"
-    }
-}
-
-struct ProjectBadge: View {
-    var project: Project
-    var size: CGFloat
-
-    var body: some View {
-        Text(project.monogram)
-            .font(.system(size: size * 0.54, weight: .heavy))
-            .foregroundStyle(project.tint.textColor)
-            .frame(width: size, height: size)
-            .background(project.tint.color, in: RoundedRectangle(cornerRadius: size * 0.29, style: .continuous))
-            .accessibilityHidden(true)
     }
 }
 

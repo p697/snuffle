@@ -318,11 +318,13 @@ final class AppModel {
             workspace.projects.append(project)
         }
         SharedContainer.workspace.save(workspace)
+        SharedContainer.removeProjectIcons(project.id, keeping: project.iconVersion)
         WidgetCenter.shared.reloadAllTimelines()
     }
 
     func delete(project: Project) {
         workspace.projects.removeAll { $0.id == project.id }
+        SharedContainer.removeProjectIcons(project.id)
         cache.snapshots[project.id] = nil
         cache.reviews[project.id] = nil
         SharedContainer.workspace.save(workspace)
@@ -437,6 +439,14 @@ final class AppModel {
             if demo == nil { startDemo() }
             cache = SharedContainer.demoCache.load() ?? RefreshCache()
         }
+        #if DEBUG
+        // UI tests of the project pages outside demo mode: the sample projects as the person's own, no accounts.
+        if arguments.contains("-sampleWorkspace") {
+            settings.refreshOnOpen = false
+            workspace = Workspace(projects: DemoWorld.projects)
+            SharedContainer.workspace.save(workspace)
+        }
+        #endif
         if let index = arguments.firstIndex(of: "-scenario"), index + 1 < arguments.count,
            let scenario = DemoWorld.Scenario(rawValue: arguments[index + 1]) {
             Task { await demo?.setScenario(scenario) }

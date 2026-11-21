@@ -9,6 +9,8 @@ nonisolated struct TodayEntry: TimelineEntry {
         var name: String
         var monogram: String
         var tint: ProjectTint
+        /// The project's picture, when the person chose one in the app.
+        var icon: UIImage? = nil
         var newUsers: Int?
         var revenue: Double?
         var failed: Bool
@@ -33,7 +35,8 @@ nonisolated struct TodayEntry: TimelineEntry {
         let projects = settings.demoMode ? DemoWorld.projects : (SharedContainer.workspace.load()?.projects ?? [])
         let rows = projects.filter(\.includeInRefresh).map { project in
             let snapshot = cache.snapshots[project.id]
-            return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, newUsers: snapshot?.newUsers, revenue: snapshot?.revenue, failed: !(snapshot?.failures.isEmpty ?? true))
+            let icon = project.iconVersion.flatMap { UIImage(contentsOfFile: SharedContainer.projectIcon(project.id, version: $0).path()) }
+            return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, icon: icon, newUsers: snapshot?.newUsers, revenue: snapshot?.revenue, failed: !(snapshot?.failures.isEmpty ?? true))
         }
         let pro = UserDefaults(suiteName: SharedContainer.appGroup)?.bool(forKey: "isPro") ?? false
         return TodayEntry(date: now, rows: rows, lastRefresh: cache.lastRefresh, unlocked: pro || settings.demoMode, demo: settings.demoMode, accent: settings.accent)
@@ -156,11 +159,19 @@ struct TodayMediumFace<Refresh: View>: View {
                     .foregroundStyle(WidgetPalette.ink2)
                 ForEach(entry.rows.prefix(3)) { row in
                     HStack(spacing: 8) {
-                        Text(row.monogram)
-                            .font(.system(size: 12, weight: .heavy))
-                            .foregroundStyle(row.tint == .ink ? WidgetPalette.card : .white)
-                            .frame(width: 22, height: 22)
-                            .background(WidgetPalette.tint(row.tint), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        if let icon = row.icon {
+                            Image(uiImage: icon)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 22, height: 22)
+                                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        } else {
+                            Text(row.monogram)
+                                .font(.system(size: 12, weight: .heavy))
+                                .foregroundStyle(row.tint == .ink ? WidgetPalette.card : .white)
+                                .frame(width: 22, height: 22)
+                                .background(WidgetPalette.tint(row.tint), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        }
                         Text(row.name).font(.system(size: 14, weight: .semibold)).foregroundStyle(WidgetPalette.ink).lineLimit(1)
                         Spacer(minLength: 4)
                         if row.failed {

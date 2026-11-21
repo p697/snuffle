@@ -145,14 +145,25 @@ struct PrimaryButtonStyle: ButtonStyle {
     var filled = true
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 17, weight: .heavy))
-            .foregroundStyle(filled ? Palette.paper : Palette.ink)
-            .frame(maxWidth: .infinity, minHeight: 56)
-            .background(filled ? Palette.ink : Palette.card, in: Capsule())
-            .overlay(Capsule().strokeBorder(filled ? .clear : Palette.line))
-            .opacity(configuration.isPressed ? 0.8 : 1)
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+        Label(configuration: configuration, filled: filled)
+    }
+
+    /// A view, so it can read whether the button is enabled.
+    private struct Label: View {
+        var configuration: Configuration
+        var filled: Bool
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 17, weight: .heavy))
+                .foregroundStyle(filled ? Palette.paper : Palette.ink)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .background(filled ? Palette.ink : Palette.card, in: Capsule())
+                .overlay(Capsule().strokeBorder(filled ? .clear : Palette.line))
+                .opacity(!isEnabled ? 0.35 : configuration.isPressed ? 0.8 : 1)
+                .scaleEffect(configuration.isPressed ? 0.98 : 1)
+        }
     }
 }
 

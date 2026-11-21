@@ -58,6 +58,7 @@ targets:
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        INFOPLIST_KEY_NSCameraUsageDescription: 拍一张照片作为项目图标。照片只存在这台 iPhone 上。
         INFOPLIST_FILE: Snuffle/Info.plist
 
   SnuffleWidgets:

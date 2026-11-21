@@ -30,6 +30,9 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
     public var appStore: AppStoreLink?
     public var googlePlay: GooglePlayLink?
     public var metrics: MetricSettings
+    /// Set when the person picked a picture for the project; bumped on every change. The picture lives only on this
+    /// phone (`SharedContainer.projectIcon`), so it is lost with the app, like the rest of the local data.
+    public var iconVersion: Int?
 
     public init(
         id: UUID = UUID(),
@@ -40,7 +43,8 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         revenueCat: RevenueCatLink? = nil,
         appStore: AppStoreLink? = nil,
         googlePlay: GooglePlayLink? = nil,
-        metrics: MetricSettings = .standard
+        metrics: MetricSettings = .standard,
+        iconVersion: Int? = nil
     ) {
         self.id = id
         self.name = name
@@ -51,6 +55,7 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         self.appStore = appStore
         self.googlePlay = googlePlay
         self.metrics = metrics
+        self.iconVersion = iconVersion
     }
 
     /// The letter on the project's square badge.

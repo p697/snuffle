@@ -98,8 +98,10 @@ extension Color {
         )
     }
 
-    init(light: UInt32, dark: UInt32) {
-        self.init(uiColor: UIColor { traits in
+    /// Nonisolated: UIKit resolves the colour on SwiftUI's render thread during animations, and a main-actor
+    /// closure there traps on the isolation check.
+    nonisolated init(light: UInt32, dark: UInt32) {
+        self.init(uiColor: UIColor { @Sendable traits in
             let hex = traits.userInterfaceStyle == .dark ? dark : light
             return UIColor(
                 red: CGFloat((hex >> 16) & 0xFF) / 255,
