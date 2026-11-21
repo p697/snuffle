@@ -107,6 +107,8 @@ public enum PostHogOAuth {
 /// Google sign-in for the Play Developer API with an iOS OAuth client (public, no secret).
 public enum GoogleOAuth {
     public static let scope = "https://www.googleapis.com/auth/androidpublisher"
+    /// Read-only Play Console reporting; Snuffle uses it only to list the apps the account can open.
+    public static let appsScope = "https://www.googleapis.com/auth/playdeveloperreporting"
 
     /// The redirect Google expects for an iOS client: the reversed client id as a scheme.
     public static func callbackScheme(clientId: String) -> String {
@@ -122,7 +124,7 @@ public enum GoogleOAuth {
             URLQueryItem(name: "client_id", value: clientId),
             URLQueryItem(name: "redirect_uri", value: redirectURI(clientId: clientId)),
             URLQueryItem(name: "response_type", value: "code"),
-            URLQueryItem(name: "scope", value: "openid email \(scope)"),
+            URLQueryItem(name: "scope", value: "openid email \(scope) \(appsScope)"),
             URLQueryItem(name: "code_challenge", value: pkce.challenge),
             URLQueryItem(name: "code_challenge_method", value: "S256"),
             URLQueryItem(name: "state", value: pkce.state),

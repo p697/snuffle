@@ -1,4 +1,5 @@
 // Values the app reads at runtime through Info.plist. Secrets never go here.
 // Local.xcconfig (ignored by git) can point SNUFFLE_API_URL at another deployment.
 SNUFFLE_API_URL = https:/$()/snuffle.ai
-SNUFFLE_GOOGLE_CLIENT_ID =
+// iOS OAuth client in the "Snuffle" Google Cloud project (public by design; no secret for iOS clients).
+SNUFFLE_GOOGLE_CLIENT_ID = 146345666099-tqdviknis2a1v6i76ldj8tllfau7a0d2.apps.googleusercontent.com

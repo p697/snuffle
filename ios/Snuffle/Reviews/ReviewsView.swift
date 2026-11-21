@@ -59,11 +59,15 @@ struct ReviewsView: View {
         return parts.joined(separator: " · ")
     }
 
+    private var hasStore: Bool { model.projects.contains(where: \.hasStore) }
+
     private var empty: some View {
         VStack(spacing: 8) {
-            Text(model.projects.contains(where: \.hasStore) ? "都回复完了" : "还没有连接商店")
+            Text(!hasStore ? "还没有连接商店" : filter == .all ? "还没有评论" : "都回复完了")
                 .font(.system(size: 17, weight: .bold))
-            Text(model.projects.contains(where: \.hasStore) ? "新的评论会在下次刷新时出现在这里。" : "在项目里连接 App Store Connect 或 Google Play，评论会汇总到这里，可以直接回复。")
+            Text(!hasStore ? "在项目里连接 App Store Connect 或 Google Play，评论会汇总到这里，可以直接回复。"
+                 : filter == .all ? (model.projects.contains { $0.googlePlay != nil } ? "Google Play 只提供近 7 天的评论。新的评论会在刷新后出现在这里。" : "新的评论会在刷新后出现在这里。")
+                 : "新的评论会在下次刷新时出现在这里。")
                 .font(.system(size: 14))
                 .foregroundStyle(Palette.ink2)
                 .multilineTextAlignment(.center)

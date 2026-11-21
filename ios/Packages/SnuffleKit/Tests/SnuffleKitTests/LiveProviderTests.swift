@@ -101,6 +101,22 @@ struct LiveProviderTests {
         #expect(request.contains("resolution=0") && request.contains("currency=USD") && request.contains("start_date=2026-11-16"))
     }
 
+    @Test func listsPlayAppsSoNobodyTypesAPackageName() async throws {
+        StubProtocol.reset([
+            "playdeveloperreporting.googleapis.com/v1beta1/apps:search": (200, #"{"apps":[{"name":"apps/com.p697.clawket","packageName":"com.p697.clawket","displayName":"Clawket"},{"name":"apps/com.example.atlas","packageName":"com.example.atlas"}]}"#)
+        ])
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StubProtocol.self]
+        let client = GooglePlayClient(http: HTTPClient(session: URLSession(configuration: configuration))) { "token" }
+        let apps = try await client.apps()
+        #expect(apps == [
+            GooglePlayApp(packageName: "com.p697.clawket", displayName: "Clawket"),
+            GooglePlayApp(packageName: "com.example.atlas", displayName: "com.example.atlas")
+        ], "sorted by name; a missing name falls back to the package name")
+        #expect(StubProtocol.seen.first?.value(forHTTPHeaderField: "Authorization") == "Bearer token")
+        #expect(GoogleOAuth.authorizeURL(clientId: "1-a.apps.googleusercontent.com", pkce: PKCE()).absoluteString.contains("playdeveloperreporting"))
+    }
+
     @Test func combinesSourcesIntoOneSnapshot() async throws {
         // 01:30 UTC: two hour columns after the two fixed ones.
         StubProtocol.reset([
