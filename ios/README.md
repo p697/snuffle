@@ -48,17 +48,14 @@ SNUFFLE_API_URL = http:/$()/127.0.0.1:8787   // a local `wrangler dev`, see serv
 ## Release
 
 The App Store record is "Snuffle" (`ai.snuffle.app`, team C8TM82D73W); the Pro products are already configured in
-App Store Connect with the same ids as `Products.storekit`. Bump `CURRENT_PROJECT_VERSION` (and `MARKETING_VERSION`
-for a new version) in `project.yml`, then archive and upload with the Apple ID signed into Xcode:
+App Store Connect with the same ids as `Products.storekit`. Build from the latest `main` with the script at the repository root (it syncs and builds the primary checkout):
 
 ```
-xcodegen generate
-xcodebuild archive -project Snuffle.xcodeproj -scheme Snuffle -configuration Release \
-  -destination 'generic/platform=iOS' -archivePath build/release/Snuffle.xcarchive -allowProvisioningUpdates
-xcodebuild -exportArchive -archivePath build/release/Snuffle.xcarchive \
-  -exportOptionsPlist ExportOptions.plist -exportPath build/release/export -allowProvisioningUpdates
+scripts/ios-build.sh device       # Release build on the iPhone connected by cable
+scripts/ios-build.sh testflight   # archive and upload; the build number is the commit count of main
 ```
 
+Signing uses the Apple ID signed into Xcode. Bump `MARKETING_VERSION` in `project.yml` for a new version.
 `ExportOptions.plist` uses `method` `app-store-connect` and `destination` `upload`. `PrivacyInfo.xcprivacy` in each
-target declares the App Group defaults and what drafting sends to the server; keep it in step with the App Store
-privacy answers.
+target declares the App Group defaults and no collected data while drafting is hidden; keep it in step with the App
+Store privacy answers.

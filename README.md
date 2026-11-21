@@ -13,7 +13,12 @@ Each folder has its own README with the commands to build, test and deploy it.
 ## Privacy by design
 
 The accounts you connect and the data they return stay on your iPhone: the app talks to each platform directly.
-The server only sees a review you ask it to draft a reply for, and never stores its text. See `server/README.md`.
+While drafting is hidden nothing reaches the server; when on, it only sees a review you ask it to draft a reply for,
+and never stores its text. See `server/README.md`.
+
+## Contributing
+
+How branches, worktrees, merges and builds work here: `AGENTS.md`.
 
 ## License
 
