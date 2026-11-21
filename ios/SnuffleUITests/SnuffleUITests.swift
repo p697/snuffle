@@ -106,8 +106,9 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "project-detail-week")
     }
 
-    /// Walks every preview page with the local StoreKit configuration, so prices and the trial are real.
-    func testPaywallPreviewsAndPlans() throws {
+    /// Opens the paywall from settings and for a locked feature, with the local StoreKit configuration so
+    /// prices and the trial are real.
+    func testPaywallPosterAndPlans() throws {
         #if targetEnvironment(simulator)
         let os = ProcessInfo.processInfo.operatingSystemVersion
         try XCTSkipIf(os.majorVersion == 26 && os.minorVersion == 5,
@@ -118,40 +119,40 @@ final class SnuffleUITests: XCTestCase {
         session.disableDialogs = true
         session.clearTransactions()
 
-        let app = launch()
+        var app = launch()
         XCTAssertTrue(app.staticTexts["Lumen Notes"].waitForExistence(timeout: 5))
         app.buttons["设置"].tap()
         app.buttons["upgradePro"].tap()
 
-        // Opened from settings: the home screen page, yearly selected with its free week.
-        let purchase = app.buttons["purchase"]
+        // Opened from settings: no row stands out, yearly is selected with its free week.
+        var purchase = app.buttons["purchase"]
         XCTAssertTrue(purchase.waitForExistence(timeout: 5))
         let trial = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == '免费试用 7 天'"), object: purchase)
         XCTAssertEqual(XCTWaiter.wait(for: [trial], timeout: 10), .completed, "button says \(purchase.label)")
-        XCTAssertTrue(app.buttons["page-desk"].isSelected)
         XCTAssertTrue(app.staticTexts["先免费 7 天"].exists)
-        XCTAssertTrue(app.buttons["previewRefresh"].exists)
-        attach(app, name: "paywall-desk-medium")
-        app.buttons["widgetSize-小号"].tap()
-        attach(app, name: "paywall-desk-small")
+        for perk in ["projects", "history", "widgets"] {
+            let row = app.descendants(matching: .any)["perk-\(perk)"]
+            XCTAssertTrue(row.exists, perk)
+            XCTAssertFalse(row.isSelected, perk)
+        }
+        attach(app, name: "paywall-settings")
 
         app.buttons["plan-ai.snuffle.pro.monthly"].tap()
         XCTAssertEqual(purchase.label, "订阅 · $1.99/月")
+        attach(app, name: "paywall-monthly")
         app.buttons["plan-ai.snuffle.pro.lifetime"].tap()
         XCTAssertEqual(purchase.label, "买断 · $29.99")
-        app.buttons["plan-ai.snuffle.pro.yearly"].tap()
-
-        app.buttons["page-lock"].tap()
-        attach(app, name: "paywall-lock")
-        app.buttons["page-history"].tap()
-        XCTAssertTrue(app.staticTexts["每日新增用户"].waitForExistence(timeout: 5))
-        attach(app, name: "paywall-history")
-        app.buttons["page-projects"].tap()
-        XCTAssertTrue(app.staticTexts["项目想加多少加多少"].waitForExistence(timeout: 5))
-        attach(app, name: "paywall-projects")
 
         app.buttons["closePaywall"].tap()
         XCTAssertFalse(purchase.waitForExistence(timeout: 2))
+
+        // Opened for the 30-day range: that row is the one picked out.
+        app = launch(["-paywall", "history"])
+        purchase = app.buttons["purchase"]
+        XCTAssertTrue(purchase.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["perk-history"].isSelected)
+        XCTAssertFalse(app.descendants(matching: .any)["perk-projects"].isSelected)
+        attach(app, name: "paywall-history")
     }
 
     /// Imports a real App Store Connect key through the UI, picks an app and refreshes. Runs only when

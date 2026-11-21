@@ -24,6 +24,18 @@ enum Palette {
     static let shadow = Color(light: 0x121210, dark: 0x000000)
 }
 
+/// The welcome screen's and the paywall's poster: accent paper with ink type; in dark mode a dark sheet with
+/// accent type, so the status bar stays legible.
+struct PosterColors {
+    var fill: Color
+    var ink: Color
+
+    init(accent: Color, scheme: ColorScheme) {
+        fill = scheme == .dark ? Palette.card : accent
+        ink = scheme == .dark ? accent : Palette.onAccent
+    }
+}
+
 extension AppSettings.Accent {
     var color: Color {
         switch self {

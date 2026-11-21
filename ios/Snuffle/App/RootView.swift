@@ -11,8 +11,18 @@ struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
     @State private var tab = Tab.today
-    @State private var paywall: PaywallReason?
+    @State private var paywall = Self.launchPaywall
     @State private var barHeight: CGFloat = 0
+
+    /// Debug builds launched with `-paywall history` open on the paywall for that reason, so UI tests reach
+    /// the entries demo mode leaves unlocked.
+    private static var launchPaywall: PaywallReason? {
+        #if DEBUG
+        UserDefaults.standard.string(forKey: "paywall").flatMap(PaywallReason.init(rawValue:))
+        #else
+        nil
+        #endif
+    }
 
     var body: some View {
         Group {

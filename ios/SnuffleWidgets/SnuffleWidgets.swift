@@ -11,7 +11,7 @@ struct SnuffleWidgetBundle: WidgetBundle {
     }
 }
 
-// MARK: Data (TodayEntry and the widget faces live in Shared/WidgetFaces.swift)
+// MARK: Data (TodayEntry and the widget faces live in WidgetFaces.swift)
 
 struct TodayProvider: TimelineProvider {
     func placeholder(in context: Context) -> TodayEntry { .placeholder }

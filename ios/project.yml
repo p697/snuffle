@@ -32,7 +32,6 @@ targets:
     platform: iOS
     sources:
       - path: Snuffle
-      - path: Shared
     dependencies:
       - package: SnuffleKit
       - target: SnuffleWidgets
@@ -66,7 +65,6 @@ targets:
     platform: iOS
     sources:
       - path: SnuffleWidgets
-      - path: Shared
     dependencies:
       - package: SnuffleKit
       - sdk: WidgetKit.framework
