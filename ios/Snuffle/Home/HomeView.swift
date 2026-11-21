@@ -21,18 +21,6 @@ struct HomeView: View {
                     if model.projects.isEmpty {
                         EmptyProjects()
                     }
-                    if model.settings.demoMode {
-                        Button {
-                            model.update { $0.demoMode = false }
-                        } label: {
-                            (Text("现在看的是示例数据 · ") + Text(model.workspace.projects.isEmpty ? "连接真实项目" : "回到我的项目").bold().foregroundStyle(Palette.ink))
-                                .font(.system(size: 13))
-                                .foregroundStyle(Palette.ink2)
-                                .frame(maxWidth: .infinity, minHeight: 44)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityIdentifier("leaveDemo")
-                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -50,24 +38,19 @@ struct HomeView: View {
         }
     }
 
-    /// 今日, then a short muted line beside it: "示例" in demo mode and when the last refresh was.
+    /// 今日, the way out of demo mode, then a short muted line with when the last refresh was.
     private var header: some View {
         HStack(spacing: 8) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text("今日")
                     .font(Typeface.title(40))
                     .foregroundStyle(Palette.ink)
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    TimelineView(.periodic(from: .now, by: 30)) { context in
-                        let status = status(now: context.date)
-                        HStack(alignment: .firstTextBaseline, spacing: 6) {
-                            if model.settings.demoMode {
-                                DemoMark()
-                                if !status.isEmpty { Text("·").accessibilityHidden(true) }
-                            }
-                            Text(status).accessibilityIdentifier("refreshStatus")
-                        }
-                    }
+                if model.settings.demoMode {
+                    LeaveDemoButton()
+                        .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
+                }
+                TimelineView(.periodic(from: .now, by: 30)) { context in
+                    Text(status(now: context.date)).accessibilityIdentifier("refreshStatus")
                 }
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.ink2)
@@ -100,16 +83,33 @@ struct HomeView: View {
     }
 }
 
-private struct DemoMark: View {
+/// "● 示例 退出": says the numbers are made up, and is the way back, where the eye already is.
+private struct LeaveDemoButton: View {
+    @Environment(AppModel.self) private var model
     @Environment(\.accent) private var accent
 
     var body: some View {
-        HStack(spacing: 4) {
-            Circle().fill(accent).frame(width: 6, height: 6)
-            Text("示例").fontWeight(.semibold)
+        Button {
+            model.update { $0.demoMode = false }
+        } label: {
+            HStack(spacing: 5) {
+                Circle().fill(accent).frame(width: 7, height: 7)
+                Text("示例").foregroundStyle(Palette.ink2)
+                Text("退出").fontWeight(.bold).foregroundStyle(Palette.ink)
+                Image(systemName: "xmark").font(.system(size: 9, weight: .heavy)).foregroundStyle(Palette.ink)
+            }
+            .font(.system(size: 13, weight: .semibold))
+            .padding(.horizontal, 10)
+            .frame(height: 30)
+            .background(Palette.card, in: Capsule())
+            .overlay(Capsule().strokeBorder(Palette.line))
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("示例数据")
+        .buttonStyle(.plain)
+        .fixedSize()
+        .accessibilityLabel(model.workspace.projects.isEmpty ? "正在看示例数据，退出并连接真实项目" : "正在看示例数据，退出并回到我的项目")
+        .accessibilityIdentifier("leaveDemo")
     }
 }
 
