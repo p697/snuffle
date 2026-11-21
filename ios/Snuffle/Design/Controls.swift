@@ -11,7 +11,7 @@ extension Platform {
         case .posthog: "新增用户、在线和付费事件"
         case .revenueCat: "收入和订阅"
         case .appStore: "评论和回复"
-        case .googlePlay: "近 7 天的评论和回复"
+        case .googlePlay: "评论和回复"
         }
     }
 }

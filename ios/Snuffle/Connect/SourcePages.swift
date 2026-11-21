@@ -676,7 +676,7 @@ struct GooglePlayConnectPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 BackButton()
-                SourceHeader(platform: .googlePlay, title: "连接 Google Play", subtitle: "近 7 天的评论，在这里直接回复")
+                SourceHeader(platform: .googlePlay, title: "连接 Google Play", subtitle: "评论和回复，在这里直接回复")
                 if account == nil || appsUnavailable {
                     SavedAccounts(platform: .googlePlay, busyId: nil) { saved in
                         account = saved
