@@ -28,7 +28,9 @@ struct PostHogTests {
     @Test func countsQueryHasFixedColumnsThenOneColumnPerHour() throws {
         let metrics = MetricSettings(newUsers: .event("user_signed_up"), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), extra: .installs)
         let sql = try #require(PostHogQueries.eventCounts(metrics: metrics, clock: clock))
-        #expect(sql.contains("AS new_today, countIf(event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795046400)"))
+        // New users are people, not events: someone whose signup is sent twice still counts once.
+        #expect(sql.hasPrefix("SELECT uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795132800)) AS new_today, uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795046400)"))
+        #expect(sql.contains("uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795132800) AND timestamp < fromUnixTimestamp(1795136400)) AS h0"))
         #expect(sql.contains("sumIf(toFloat(properties['value']), event = 'purchase'"))
         #expect(sql.contains("AS h0"))
         #expect(sql.contains("AS h9"))
@@ -49,13 +51,32 @@ struct PostHogTests {
         let sql = PostHogQueries.firstSeen(clock: clock)
         let lookback = Int(clock.yesterdayStart.timeIntervalSince1970) - 30 * 86_400
         #expect(!sql.contains("persons"))
-        #expect(sql.contains("(SELECT person_id, min(timestamp) AS first FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback)) GROUP BY person_id)"))
+        #expect(sql.contains("FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback)) GROUP BY person_id"))
         #expect(sql.contains("countIf(first >= fromUnixTimestamp(\(Int(clock.todayStart.timeIntervalSince1970)))) AS new_today"))
+        #expect(sql.contains("countIf(first >= fromUnixTimestamp(1795132800) AND first < fromUnixTimestamp(1795136400)) AS h0"))
 
         let history = PostHogQueries.firstSeenHistory(clock: clock, days: 7)
         let start = Int(clock.historyStart(days: 7).timeIntervalSince1970)
         #expect(history.contains("timestamp >= fromUnixTimestamp(\(start - 30 * 86_400))"))
         #expect(history.hasSuffix("WHERE first >= fromUnixTimestamp(\(start)) GROUP BY day ORDER BY day"))
+    }
+
+    @Test func websiteVisitorsAreNotNewUsers() {
+        // Anonymous posthog-js traffic is someone reading the website; apps, servers and signed-in web users count.
+        // A project with nothing but visitors falls back to everyone, so a site without sign-in still has new users.
+        #expect(PostHogQueries.productUse == "(ifNull(properties.$lib, '') != 'web' OR ifNull(toString(properties.$is_identified), '') = 'true')")
+        let sql = PostHogQueries.firstSeen(clock: clock)
+        #expect(sql.contains("minIf(timestamp, \(PostHogQueries.productUse)) AS first_use, max(\(PostHogQueries.productUse)) AS uses"))
+        #expect(sql.contains("SELECT if(max(uses) OVER () = 1, first_use, first_event) AS first"))
+    }
+
+    @Test func historyDaysFollowTheProjectZone() {
+        let shanghai = ProjectClock(now: clock.now, timeZoneIdentifier: "Asia/Shanghai")
+        let metrics = MetricSettings(newUsers: .event("user_signed_up"), revenue: .none, extra: .none)
+        let sql = PostHogQueries.history(metrics: metrics, clock: shanghai, days: 7)
+        #expect(sql.hasPrefix("SELECT toString(toDate(toTimeZone(timestamp, 'Asia/Shanghai'))) AS day"))
+        #expect(sql.contains("uniqExactIf(person_id, event = 'user_signed_up') AS new_users"))
+        #expect(PostHogQueries.firstSeenHistory(clock: shanghai, days: 7).hasPrefix("SELECT toString(toDate(toTimeZone(first, 'Asia/Shanghai'))) AS day"))
     }
 
     @Test func parsesCountsInBuilderOrder() {
@@ -98,8 +119,8 @@ struct PostHogTests {
 
     @Test func historyFillsMissingDays() {
         let rows: [[JSONValue]] = [
-            [.string("2026-11-18 00:00:00"), .number(100), .number(10), .number(40)],
-            [.string("2026-11-20 00:00:00"), .number(120), .number(12), .number(0)]
+            [.string("2026-11-18"), .number(100), .number(10), .number(40)],
+            [.string("2026-11-20"), .number(120), .number(12), .number(0)]
         ]
         let points = PostHogParsing.history(rows, firstSeen: nil, clock: clock, days: 3, hasRevenue: true)
         #expect(points.map(\.newUsers) == [10, 0, 12])
@@ -108,8 +129,8 @@ struct PostHogTests {
     }
 
     @Test func historyUsesFirstSeenRowsWhenCountingThatWay() {
-        let rows: [[JSONValue]] = [[.string("2026-11-20 00:00:00"), .number(9), .number(0), .number(0)]]
-        let firstSeen: [[JSONValue]] = [[.string("2026-11-20 00:00:00"), .number(4)]]
+        let rows: [[JSONValue]] = [[.string("2026-11-20"), .number(9), .number(0), .number(0)]]
+        let firstSeen: [[JSONValue]] = [[.string("2026-11-20"), .number(4)]]
         let points = PostHogParsing.history(rows, firstSeen: firstSeen, clock: clock, days: 2, hasRevenue: false)
         #expect(points.map(\.newUsers) == [0, 4])
         #expect(points.allSatisfy { $0.revenue == nil })

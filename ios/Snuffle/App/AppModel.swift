@@ -191,6 +191,7 @@ final class AppModel {
             let elapsed = ContinuousClock.now - started
             if elapsed < .milliseconds(650) { try? await Task.sleep(for: .milliseconds(650) - elapsed) }
 
+            adoptTimeZone(result.posthogTimeZone, for: project.id)
             let previous = cache.snapshots[project.id]
             let snapshot = result.snapshot.fillingGaps(from: previous)
             let change = SnapshotChange(from: previous, to: snapshot)
@@ -317,6 +318,15 @@ final class AppModel {
     }
 
     // MARK: Workspace
+
+    /// Follows a time zone changed in PostHog after the project was connected; the next refresh counts by it.
+    private func adoptTimeZone(_ zone: String?, for projectId: UUID) {
+        guard let zone, TimeZone(identifier: zone) != nil,
+              let index = workspace.projects.firstIndex(where: { $0.id == projectId }),
+              let link = workspace.projects[index].posthog, link.timeZone != zone else { return }
+        workspace.projects[index].posthog?.timeZone = zone
+        SharedContainer.workspace.save(workspace)
+    }
 
     func save(project: Project) {
         if let index = workspace.projects.firstIndex(where: { $0.id == project.id }) {
