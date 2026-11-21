@@ -100,7 +100,10 @@ struct WelcomeView: View {
                 .foregroundStyle(Palette.ink2)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 10)
-            Button("连接我的产品") { adding = true }
+            Button("连接我的产品") {
+                adding = true
+                Analytics.addProjectOpened(.welcome)
+            }
                 .buttonStyle(PrimaryButtonStyle())
                 .accessibilityIdentifier("startConnecting")
                 .padding(.top, 28)

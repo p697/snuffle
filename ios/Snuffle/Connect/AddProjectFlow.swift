@@ -17,7 +17,7 @@ struct AddProjectFlow: View {
     @Environment(\.dismiss) private var dismiss
     /// The first project from the welcome screen also offers sample data instead.
     var offersDemo = false
-    @State private var session = ConnectSession(project: Project(name: "", tint: .ink))
+    @State private var session = ConnectSession(project: Project(name: "", tint: .ink), isNewProject: true)
     @State private var path: [ConnectRoute] = []
 
     var body: some View {
@@ -71,7 +71,7 @@ struct AddProjectFlow: View {
     private func finish() {
         model.save(project: session.project)
         dismiss()
-        Task { await model.refreshAll() }
+        Task { await model.refreshAll(trigger: .connect) }
     }
 }
 
@@ -334,7 +334,7 @@ struct ConnectSourceSheet: View {
     init(platform: Platform, project: Binding<Project>) {
         self.platform = platform
         _project = project
-        _session = State(initialValue: ConnectSession(project: project.wrappedValue))
+        _session = State(initialValue: ConnectSession(project: project.wrappedValue, isNewProject: false))
     }
 
     var body: some View {

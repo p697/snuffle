@@ -77,7 +77,7 @@ struct ProjectCard: View {
     private var stateLabel: some View {
         if let failure = snapshot?.failures.first, stage != .loading {
             Button {
-                Task { await model.refresh([project]) }
+                Task { await model.refresh([project], trigger: .project) }
             } label: {
                 Text("\(failure.platform.displayName) 没连上 · 重试")
                     .font(.system(size: 13, weight: .bold))

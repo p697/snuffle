@@ -176,7 +176,7 @@ public struct LiveProvider: DataProvider {
     }
 
     static func failure(_ platform: Platform, _ error: Error) -> SourceFailure {
-        SourceFailure(platform: platform, message: (error as? LocalizedError)?.errorDescription ?? error.localizedDescription)
+        SourceFailure(platform: platform, message: (error as? LocalizedError)?.errorDescription ?? error.localizedDescription, kind: FailureKind(error))
     }
 
     // MARK: Detail screens

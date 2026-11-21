@@ -37,6 +37,10 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.refreshOnOpenIfNeeded() } }
         }
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase == .active { Analytics.appOpened() }
+        }
+        .onChange(of: tab) { _, value in Analytics.tabViewed(value) }
         .task { await model.refreshOnOpenIfNeeded() }
     }
 

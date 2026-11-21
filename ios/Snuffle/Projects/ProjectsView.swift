@@ -50,6 +50,7 @@ struct ProjectsView: View {
                 Button {
                     if model.pro.isPro || model.projects.count < AppModel.freeProjectLimit {
                         adding = true
+                        Analytics.addProjectOpened(.projects)
                     } else {
                         openPaywall(.projects)
                     }

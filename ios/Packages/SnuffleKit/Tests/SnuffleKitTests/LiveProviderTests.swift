@@ -144,7 +144,7 @@ struct LiveProviderTests {
         let result = await provider(store: store).refresh(project)
         #expect(result.snapshot.newUsers == 18)
         #expect(result.snapshot.revenue == nil)
-        #expect(result.snapshot.failures == [SourceFailure(platform: .revenueCat, message: "RevenueCat 拒绝了请求：Missing permission charts_metrics:overview:read")])
+        #expect(result.snapshot.failures == [SourceFailure(platform: .revenueCat, message: "RevenueCat 拒绝了请求：Missing permission charts_metrics:overview:read", kind: .forbidden)])
     }
 
     @Test func missingCredentialIsReportedPerSource() async {

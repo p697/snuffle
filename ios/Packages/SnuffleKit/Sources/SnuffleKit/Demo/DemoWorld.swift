@@ -178,7 +178,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             snapshot.reviewsToAnswer = reviews.filter { $0.projectId == projectId && $0.needsReply }.count
         }
         if scenario == .failure, projectId == DemoWorld.ferryId {
-            snapshot.failures = [SourceFailure(platform: .revenueCat, message: "RevenueCat 返回 503：服务暂时不可用")]
+            snapshot.failures = [SourceFailure(platform: .revenueCat, message: "RevenueCat 返回 503：服务暂时不可用", kind: .serverError)]
         }
         return snapshot
     }

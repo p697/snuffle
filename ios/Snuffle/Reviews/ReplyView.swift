@@ -150,8 +150,10 @@ struct ReplyView: View {
         defer { sending = false }
         do {
             try await model.reply(to: review, text: text.trimmingCharacters(in: .whitespacesAndNewlines))
+            Analytics.reviewReplyResolved(review.platform, error: nil)
             dismiss()
         } catch {
+            Analytics.reviewReplyResolved(review.platform, error: error)
             self.error = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
         }
     }

@@ -10,7 +10,7 @@ final class SnuffleUITests: XCTestCase {
 
     private func launch(_ arguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-resetState", "-demo"] + arguments
+        app.launchArguments = ["-resetState", "-noAnalytics", "-demo"] + arguments
         app.launch()
         return app
     }
@@ -27,7 +27,7 @@ final class SnuffleUITests: XCTestCase {
 
     func testWelcomeOffersDemoAndConnect() {
         let app = XCUIApplication()
-        app.launchArguments = ["-resetState"]
+        app.launchArguments = ["-resetState", "-noAnalytics"]
         app.launch()
         XCTAssertTrue(app.buttons["startConnecting"].waitForExistence(timeout: 5))
         app.buttons["tryDemo"].tap()
@@ -166,7 +166,7 @@ final class SnuffleUITests: XCTestCase {
             throw XCTSkip("No live App Store Connect key in the environment")
         }
         let app = XCUIApplication()
-        app.launchArguments = ["-resetState"]
+        app.launchArguments = ["-resetState", "-noAnalytics"]
         app.launch()
         app.buttons["startConnecting"].tap()
         app.buttons["connect-appStore"].tap()
@@ -216,7 +216,7 @@ final class SnuffleUITests: XCTestCase {
     /// The connect flow and the project and settings pages, without signing in anywhere.
     func testConnectFlowAndManagementPages() {
         var app = XCUIApplication()
-        app.launchArguments = ["-resetState"]
+        app.launchArguments = ["-resetState", "-noAnalytics"]
         app.launch()
         app.buttons["startConnecting"].tap()
         XCTAssertTrue(app.buttons["posthogSignIn"].waitForExistence(timeout: 5))
@@ -234,7 +234,7 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["今日"].waitForExistence(timeout: 5))
 
         app = XCUIApplication()
-        app.launchArguments = ["-resetState", "-sampleWorkspace"]
+        app.launchArguments = ["-resetState", "-noAnalytics", "-sampleWorkspace"]
         app.launch()
         app.buttons["设置"].tap()
         XCTAssertTrue(app.buttons["upgradePro"].waitForExistence(timeout: 5))
