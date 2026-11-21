@@ -70,6 +70,13 @@ final class AppModel {
 
     private var fadeTask: Task<Void, Never>?
 
+    // MARK: Connecting
+
+    /// A key file opened in Snuffle from Files or AirDrop, waiting for the App Store connect page to take it.
+    var openedKeyFile: KeyFile?
+    /// How many connect flows are on screen, so an opened key file joins one instead of starting another.
+    var openConnectFlows = 0
+
     /// Mark stay time chosen with the user: five seconds after the last card lands.
     static let markStay: Duration = .seconds(5)
     /// Ten minutes after a refresh the cat starts flicking an ear: time to refresh again.
