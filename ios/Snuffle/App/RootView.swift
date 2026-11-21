@@ -13,6 +13,8 @@ struct RootView: View {
     @State private var tab = Tab.today
     @State private var paywall = Self.launchPaywall
     @State private var barHeight: CGFloat = 0
+    /// A connect flow opened by a key file from Files or AirDrop.
+    @State private var keyFlow = false
 
     /// Debug builds launched with `-paywall history` open on the paywall for that reason, so UI tests reach
     /// the entries demo mode leaves unlocked.
@@ -33,6 +35,13 @@ struct RootView: View {
             }
         }
         .environment(\.openPaywall) { paywall = $0 }
+        .onOpenURL { url in
+            guard url.isFileURL, let file = KeyFile(url: url) else { return }
+            model.openedKeyFile = file
+            // An open connect flow takes the file itself; otherwise start one on the App Store page.
+            if model.openConnectFlows == 0 { keyFlow = true }
+        }
+        .sheet(isPresented: $keyFlow) { AddProjectFlow(startsAt: .appStore) }
         .sheet(item: $paywall) { reason in PaywallView(reason: reason) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.refreshOnOpenIfNeeded() } }

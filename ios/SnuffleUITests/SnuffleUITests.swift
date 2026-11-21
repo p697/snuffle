@@ -170,6 +170,8 @@ final class SnuffleUITests: XCTestCase {
         app.launch()
         app.buttons["startConnecting"].tap()
         app.buttons["connect-appStore"].tap()
+        // This key is a team key: switch to the team-key form.
+        app.buttons["ascTeamKey"].tap()
 
         let keyField = app.textFields["ascKeyId"]
         XCTAssertTrue(keyField.waitForExistence(timeout: 5))

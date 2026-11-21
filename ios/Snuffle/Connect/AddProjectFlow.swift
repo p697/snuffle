@@ -17,6 +17,8 @@ struct AddProjectFlow: View {
     @Environment(\.dismiss) private var dismiss
     /// The first project from the welcome screen also offers sample data instead.
     var offersDemo = false
+    /// Opened by a key file: go straight to that source's page.
+    var startsAt: Platform?
     @State private var session = ConnectSession(project: Project(name: "", tint: .ink))
     @State private var path: [ConnectRoute] = []
 
@@ -27,9 +29,16 @@ struct AddProjectFlow: View {
         }
         .environment(session)
         .onAppear {
+            model.openConnectFlows += 1
             // A different colour for each new project.
             let used = Set(model.workspace.projects.map(\.tint))
             session.project.tint = ProjectTint.allCases.first { !used.contains($0) } ?? .ink
+            if let startsAt { path = [.connect(startsAt)] }
+        }
+        .onDisappear { model.openConnectFlows -= 1 }
+        // A key file opened from Files or AirDrop while this flow is up: show the App Store page, which takes it.
+        .onChange(of: model.openedKeyFile) { _, file in
+            if file != nil, path.last != .connect(.appStore) { path.append(.connect(.appStore)) }
         }
     }
 
@@ -350,6 +359,8 @@ struct ConnectSourceSheet: View {
                 }
         }
         .environment(session)
+        .onAppear { model.openConnectFlows += 1 }
+        .onDisappear { model.openConnectFlows -= 1 }
     }
 
     @ViewBuilder
