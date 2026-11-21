@@ -17,7 +17,7 @@ struct SettingsView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(model.pro.isPro ? "Snuffle Pro" : "升级到 Snuffle Pro").font(.system(size: 17, weight: .bold))
-                                Text(model.pro.isPro ? proPlan : "起草回复、不限项目、桌面小组件、30 天历史")
+                                Text(model.pro.isPro ? proPlan : (Feature.replyDrafts ? "起草回复、" : "") + "不限项目、桌面小组件、30 天历史")
                                     .font(.system(size: 13))
                                     .foregroundStyle(Palette.ink2)
                             }
@@ -63,17 +63,19 @@ struct SettingsView: View {
                     Toggle("提示音", isOn: setting(\.sound))
                 }
 
-                Section {
-                    Picker("语气", selection: setting(\.replyTone)) {
-                        Text("亲切").tag(AppSettings.ReplyTone.warm)
-                        Text("专业").tag(AppSettings.ReplyTone.professional)
-                        Text("简短").tag(AppSettings.ReplyTone.brief)
+                if Feature.replyDrafts {
+                    Section {
+                        Picker("语气", selection: setting(\.replyTone)) {
+                            Text("亲切").tag(AppSettings.ReplyTone.warm)
+                            Text("专业").tag(AppSettings.ReplyTone.professional)
+                            Text("简短").tag(AppSettings.ReplyTone.brief)
+                        }
+                        TextField("署名，例如：Mia，Lumen Notes 开发者", text: setting(\.replySignature))
+                    } header: {
+                        Text("起草回复")
+                    } footer: {
+                        Text("起草时会把评论内容发给 Snuffle 的服务器和模型供应商生成草稿，不会保存评论正文。发布前你都可以修改。")
                     }
-                    TextField("署名，例如：Mia，Lumen Notes 开发者", text: setting(\.replySignature))
-                } header: {
-                    Text("起草回复")
-                } footer: {
-                    Text("起草时会把评论内容发给 Snuffle 的服务器和模型供应商生成草稿，不会保存评论正文。发布前你都可以修改。")
                 }
 
                 Section {

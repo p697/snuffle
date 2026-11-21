@@ -2,7 +2,8 @@ import SnuffleKit
 import StoreKit
 import SwiftUI
 
-/// Snuffle Pro. Refreshing stays free; Pro adds drafting replies, unlimited projects, widgets and 30-day history.
+/// Snuffle Pro. Refreshing stays free; Pro adds unlimited projects, widgets, 30-day history and (when
+/// `Feature.replyDrafts` is on) drafting replies.
 struct PaywallView: View {
     var reason: PaywallReason
     @Environment(AppModel.self) private var model
@@ -51,8 +52,10 @@ struct PaywallView: View {
                 }
 
                 CardGroup {
-                    Benefit(symbol: "sparkles", title: "帮我起草回复", detail: "按评论的语言写好回复，附中文对照，改两句就能发", highlighted: reason == .drafts)
-                    Divider().overlay(Palette.line)
+                    if Feature.replyDrafts {
+                        Benefit(symbol: "sparkles", title: "帮我起草回复", detail: "按评论的语言写好回复，附中文对照，改两句就能发", highlighted: reason == .drafts)
+                        Divider().overlay(Palette.line)
+                    }
                     Benefit(symbol: "square.stack.3d.up", title: "不限项目", detail: "免费版两个，Pro 想加多少加多少", highlighted: reason == .projects)
                     Divider().overlay(Palette.line)
                     Benefit(symbol: "rectangle.grid.1x2", title: "桌面和锁屏小组件", detail: "不打开 App 也能看数，还能直接刷新", highlighted: reason == .widgets)
