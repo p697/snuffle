@@ -17,14 +17,10 @@ struct WelcomeView: View {
         ("7", "条评论待回复")
     ]
 
-    /// `PeekingCat` sizes itself from a button size; this one gives a head about 150 pt wide.
-    private static let catSize: CGFloat = 192
     /// Room above the panel for the cat's head once it is out.
     private static let catHeadroom: CGFloat = 104
 
-    /// Accent paper with ink type; in dark mode a dark sheet with accent type, so the status bar stays legible.
-    private var posterFill: Color { colorScheme == .dark ? Palette.card : accent }
-    private var posterInk: Color { colorScheme == .dark ? accent : Palette.onAccent }
+    private var colors: PosterColors { PosterColors(accent: accent, scheme: colorScheme) }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,7 +33,7 @@ struct WelcomeView: View {
             .padding(.bottom, Self.catHeadroom)
             panel
         }
-        .background(posterFill.ignoresSafeArea())
+        .background(colors.fill.ignoresSafeArea())
         .sheet(isPresented: $adding) { AddProjectFlow() }
         .task { await play() }
     }
@@ -45,9 +41,9 @@ struct WelcomeView: View {
     private var header: some View {
         HStack(spacing: 8) {
             Circle()
-                .fill(posterInk)
+                .fill(colors.ink)
                 .frame(width: 24, height: 24)
-                .overlay(RefreshArrow().stroke(posterFill, style: StrokeStyle(lineWidth: 2.6, lineCap: .round, lineJoin: .round)).frame(width: 14, height: 14))
+                .overlay(RefreshArrow().stroke(colors.fill, style: StrokeStyle(lineWidth: 2.6, lineCap: .round, lineJoin: .round)).frame(width: 14, height: 14))
                 .accessibilityHidden(true)
             Text("Snuffle")
                 .font(.system(size: 17, weight: .heavy))
@@ -57,10 +53,10 @@ struct WelcomeView: View {
                 .font(.system(size: 12, weight: .bold))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 2)
-                .overlay(Capsule().strokeBorder(posterInk, lineWidth: 1.5))
+                .overlay(Capsule().strokeBorder(colors.ink, lineWidth: 1.5))
                 .accessibilityHidden(true)
         }
-        .foregroundStyle(posterInk)
+        .foregroundStyle(colors.ink)
         .frame(height: 28)
         .padding(.horizontal, 24)
     }
@@ -72,21 +68,21 @@ struct WelcomeView: View {
             ForEach(Self.rows.indices, id: \.self) { index in
                 let row = Self.rows[index]
                 VStack(spacing: 0) {
-                    Rectangle().fill(posterInk).frame(height: 2)
+                    Rectangle().fill(colors.ink).frame(height: 2)
                     // First baseline: an odometer's last baseline is the bottom of its hidden digit strip.
                     HStack(alignment: .firstTextBaseline) {
-                        Odometer(text: row.value, size: size, spinning: spinning[index], color: posterInk)
+                        Odometer(text: row.value, size: size, spinning: spinning[index], color: colors.ink)
                         Spacer(minLength: 12)
                         Text(row.label)
                             .font(.system(size: min(19, max(15, size * 0.2)), weight: .bold))
-                            .foregroundStyle(posterInk)
+                            .foregroundStyle(colors.ink)
                             .lineLimit(1)
                     }
                     .padding(.top, 8)
                     .padding(.bottom, 2)
                 }
             }
-            Rectangle().fill(posterInk).frame(height: 2)
+            Rectangle().fill(colors.ink).frame(height: 2)
         }
         .padding(.horizontal, 24)
         .frame(maxHeight: .infinity, alignment: .top)
@@ -121,21 +117,7 @@ struct WelcomeView: View {
         .padding(.horizontal, 24)
         .padding(.top, 34)
         .padding(.bottom, 8)
-        .background(alignment: .topTrailing) {
-            // The cat sits behind the panel, so only what rises above its edge shows.
-            ZStack(alignment: .topTrailing) {
-                PeekingCat(state: cat, ready: false, buttonSize: Self.catSize)
-                    .padding(.trailing, 4)
-                UnevenRoundedRectangle(topLeadingRadius: 36, topTrailingRadius: 36, style: .continuous)
-                    .fill(Palette.paper)
-                    .ignoresSafeArea(edges: .bottom)
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            CatPaws(out: cat.out, buttonSize: Self.catSize)
-                .offset(y: -8)
-                .padding(.trailing, 4)
-        }
+        .catPanel(cat)
     }
 
     /// The numbers spin and land one by one while the cat comes up for a sniff, then it grins and stays.

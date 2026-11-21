@@ -2,9 +2,6 @@ import SnuffleKit
 import SwiftUI
 import WidgetKit
 
-// Compiled into both the app and the widget extension, so the paywall's widget preview is drawn by the same code
-// as the real widgets.
-
 /// What a widget draws: the same cache the app writes after every refresh.
 nonisolated struct TodayEntry: TimelineEntry {
     struct Row: Identifiable {
@@ -30,20 +27,16 @@ nonisolated struct TodayEntry: TimelineEntry {
         return values.isEmpty ? nil : values.reduce(0, +)
     }
 
-    static func make(projects: [Project], cache: RefreshCache, unlocked: Bool, demo: Bool, accent: AppSettings.Accent, now: Date = .now) -> TodayEntry {
-        let rows = projects.map { project in
-            let snapshot = cache.snapshots[project.id]
-            return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, newUsers: snapshot?.newUsers, revenue: snapshot?.revenue, failed: !(snapshot?.failures.isEmpty ?? true))
-        }
-        return TodayEntry(date: now, rows: rows, lastRefresh: cache.lastRefresh, unlocked: unlocked, demo: demo, accent: accent)
-    }
-
     static func load(now: Date = .now) -> TodayEntry {
         let settings = SharedContainer.settings.load() ?? AppSettings()
         let cache = (settings.demoMode ? SharedContainer.demoCache : SharedContainer.liveCache).load() ?? RefreshCache()
         let projects = settings.demoMode ? DemoWorld.projects : (SharedContainer.workspace.load()?.projects ?? [])
+        let rows = projects.filter(\.includeInRefresh).map { project in
+            let snapshot = cache.snapshots[project.id]
+            return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, newUsers: snapshot?.newUsers, revenue: snapshot?.revenue, failed: !(snapshot?.failures.isEmpty ?? true))
+        }
         let pro = UserDefaults(suiteName: SharedContainer.appGroup)?.bool(forKey: "isPro") ?? false
-        return make(projects: projects.filter(\.includeInRefresh), cache: cache, unlocked: pro || settings.demoMode, demo: settings.demoMode, accent: settings.accent, now: now)
+        return TodayEntry(date: now, rows: rows, lastRefresh: cache.lastRefresh, unlocked: pro || settings.demoMode, demo: settings.demoMode, accent: settings.accent)
     }
 
     static let placeholder = TodayEntry(
@@ -108,7 +101,7 @@ nonisolated enum WidgetText {
     }
 }
 
-/// The round refresh button's face. The widget wraps it in an intent button, the paywall preview in a plain one.
+/// The round refresh button's face, wrapped in an intent button by the widget.
 struct WidgetRefreshCircle: View {
     var accent: AppSettings.Accent
 

@@ -69,6 +69,36 @@ struct CatPaws: View {
     }
 }
 
+/// A paper panel rising from the bottom of a poster, with the cat peeking over its top trailing corner.
+/// The cat sits behind the panel, so only what rises above its edge shows; leave it about 80 pt of headroom.
+private struct CatPanel: ViewModifier {
+    var cat: CatState
+    /// `PeekingCat` sizes itself from a button size; this one gives a head about 150 pt wide.
+    private static let catSize: CGFloat = 192
+
+    func body(content: Content) -> some View {
+        content
+            .background(alignment: .topTrailing) {
+                ZStack(alignment: .topTrailing) {
+                    PeekingCat(state: cat, ready: false, buttonSize: Self.catSize)
+                        .padding(.trailing, 4)
+                    UnevenRoundedRectangle(topLeadingRadius: 36, topTrailingRadius: 36, style: .continuous)
+                        .fill(Palette.paper)
+                        .ignoresSafeArea(edges: .bottom)
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                CatPaws(out: cat.out, buttonSize: Self.catSize)
+                    .offset(y: -8)
+                    .padding(.trailing, 4)
+            }
+    }
+}
+
+extension View {
+    func catPanel(_ cat: CatState) -> some View { modifier(CatPanel(cat: cat)) }
+}
+
 private struct CatHead: View {
     var state: CatState
     var ready: Bool
