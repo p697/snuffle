@@ -54,6 +54,7 @@ public struct LiveProvider: DataProvider {
 
     private enum Part: Sendable {
         case posthog(PostHogParsing.Counts?, firstSeen: (Int?, Int?, [Int])?, online: Int?, active: Int?)
+        case timeZone(String)
         case revenueCat(Double)
         case reviews([Review])
         case failure(SourceFailure)
@@ -114,10 +115,14 @@ public struct LiveProvider: DataProvider {
                     guard metrics.newUsers == .firstSeen else { return [] }
                     return try await client.query(projectId: link.projectId, PostHogQueries.firstSeen(clock: clock), name: "snuffle_first_seen")
                 }()
+                // Read alongside the queries, so it costs no extra wait; a failure here never fails the numbers.
+                async let zone = try? client.timeZone(projectId: link.projectId)
                 let counts = try await countsRow.first.map { PostHogParsing.counts($0, metrics: metrics) }
                 let presence = try await presenceRow.first ?? []
                 let firstSeen = try await firstSeenRow.first.map(PostHogParsing.firstSeen)
-                return [.posthog(counts, firstSeen: firstSeen.map { ($0.today, $0.yesterday, $0.hourly) }, online: presence.first?.int, active: presence.count > 1 ? presence[1].int : nil)]
+                var parts = [Part.posthog(counts, firstSeen: firstSeen.map { ($0.today, $0.yesterday, $0.hourly) }, online: presence.first?.int, active: presence.count > 1 ? presence[1].int : nil)]
+                if let identifier = await zone { parts.append(.timeZone(identifier)) }
+                return parts
             }
         } catch {
             return [.failure(Self.failure(.posthog, error))]
@@ -128,6 +133,7 @@ public struct LiveProvider: DataProvider {
         var snapshot = ProjectSnapshot(projectId: project.id, fetchedAt: clock.now, dayStart: clock.todayStart)
         var reviews: [Review]?
         var storeFailed = false
+        var zone: String?
         for part in parts {
             switch part {
             case .posthog(let counts, let firstSeen, let online, let active):
@@ -156,6 +162,8 @@ public struct LiveProvider: DataProvider {
                         }
                     }
                 }
+            case .timeZone(let identifier):
+                zone = identifier
             case .revenueCat(let value):
                 snapshot.revenue = value
                 snapshot.sales = nil
@@ -172,7 +180,7 @@ public struct LiveProvider: DataProvider {
         snapshot.reviewsToAnswer = reviews.map { $0.filter(\.needsReply).count }
         snapshot.failures.sort { $0.platform.rawValue < $1.platform.rawValue }
         // A partial list would drop the failed store's reviews from the inbox, so only a complete one replaces it.
-        return RefreshResult(snapshot: snapshot, reviews: storeFailed ? nil : reviews)
+        return RefreshResult(snapshot: snapshot, reviews: storeFailed ? nil : reviews, posthogTimeZone: zone)
     }
 
     static func failure(_ platform: Platform, _ error: Error) -> SourceFailure {

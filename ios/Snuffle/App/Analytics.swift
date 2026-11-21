@@ -96,7 +96,11 @@ enum Analytics {
         capture("demo_mode_changed", ["enabled": enabled])
     }
 
-    enum AddProjectSource: String { case welcome, home, projects }
+    enum AddProjectSource: String {
+        case welcome, home, projects
+        /// An App Store Connect key file opened in Snuffle.
+        case keyFile = "key_file"
+    }
 
     static func addProjectOpened(_ source: AddProjectSource) {
         capture("add_project_opened", ["source": source.rawValue])

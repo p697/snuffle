@@ -34,6 +34,20 @@ struct StoreTests {
         #expect(key.publicKey.isValidSignature(ecdsa, for: Data((parts[0] + "." + parts[1]).utf8)))
     }
 
+    @Test func individualKeyTokenHasNoIssuer() throws {
+        let key = P256.Signing.PrivateKey()
+        let token = try AppStoreConnectToken(issuerId: "", keyId: "XYZ987WVUT", privateKeyPEM: key.pemRepresentation)
+        #expect(token.isIndividual)
+        let payloadPart = try token.make(now: Date(timeIntervalSince1970: 1_795_000_000)).split(separator: ".")[1]
+        var text = payloadPart.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        while text.count % 4 != 0 { text += "=" }
+        let data = try #require(Data(base64Encoded: text))
+        let payload = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(payload["sub"] as? String == "user")
+        #expect(payload["iss"] == nil)
+        #expect(payload["aud"] as? String == "appstoreconnect-v1")
+    }
+
     @Test func rejectsTextThatIsNotAKey() {
         #expect(throws: SourceError.self) {
             _ = try AppStoreConnectToken(issuerId: "i", keyId: "k", privateKeyPEM: "-----BEGIN PRIVATE KEY-----\nnope\n-----END PRIVATE KEY-----")

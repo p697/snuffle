@@ -39,7 +39,7 @@ Business charts use `client_app = 'snuffle_ios' AND app_environment = 'release' 
 | `app_opened` | The app becomes active (launch or back from the background) | — |
 | `tab_viewed` | The person switches tab | `tab`: today, money, reviews, projects |
 | `demo_mode_changed` | Demo mode turned on or off, from anywhere | `enabled` |
-| `add_project_opened` | The add-project flow opens | `source`: welcome, home, projects |
+| `add_project_opened` | The add-project flow opens | `source`: welcome, home, projects, key_file (a `.p8` opened in Snuffle) |
 | `source_connect_resolved` | A sign-in or key check against a platform ends | `platform`, `method` (oauth, key, saved), `flow` (new_project, existing_project), `outcome` (succeeded, failed, cancelled), `error_kind` on failure |
 | `project_saved` | A project is created or edited | `is_new`, `source_count`, `has_posthog`, `has_revenuecat`, `has_app_store`, `has_google_play`, `project_count` |
 | `project_deleted` | A project is deleted | `source_count`, `project_count` |
