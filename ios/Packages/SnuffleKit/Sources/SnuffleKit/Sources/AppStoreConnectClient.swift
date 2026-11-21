@@ -14,7 +14,10 @@ public struct AppStoreApp: Codable, Hashable, Sendable, Identifiable {
 }
 
 /// Signs App Store Connect API tokens on the device with the team key the person imported.
+/// Signs App Store Connect API requests. A team key carries the team's issuer ID; an individual key (generated on
+/// the person's own profile) has none and is identified as `sub: "user"` instead.
 public struct AppStoreConnectToken: Sendable {
+    /// Empty for an individual key.
     public var issuerId: String
     public var keyId: String
     private let key: P256.Signing.PrivateKey
@@ -33,12 +36,15 @@ public struct AppStoreConnectToken: Sendable {
     public func make(now: Date = .now) throws -> String {
         let header = ["alg": "ES256", "kid": keyId, "typ": "JWT"]
         let issued = Int(now.timeIntervalSince1970)
-        let payload: [String: Any] = ["iss": issuerId, "iat": issued, "exp": issued + 900, "aud": "appstoreconnect-v1"]
+        var payload: [String: Any] = ["iat": issued, "exp": issued + 900, "aud": "appstoreconnect-v1"]
+        if isIndividual { payload["sub"] = "user" } else { payload["iss"] = issuerId }
         let signingInput = try Self.base64URL(JSONSerialization.data(withJSONObject: header, options: .sortedKeys))
             + "." + Self.base64URL(JSONSerialization.data(withJSONObject: payload, options: .sortedKeys))
         let signature = try key.signature(for: Data(signingInput.utf8))
         return signingInput + "." + Self.base64URL(signature.rawRepresentation)
     }
+
+    public var isIndividual: Bool { issuerId.isEmpty }
 
     public var publicKey: P256.Signing.PublicKey { key.publicKey }
 
