@@ -39,13 +39,20 @@ struct RootView: View {
             guard url.isFileURL, let file = KeyFile(url: url) else { return }
             model.openedKeyFile = file
             // An open connect flow takes the file itself; otherwise start one on the App Store page.
-            if model.openConnectFlows == 0 { keyFlow = true }
+            if model.openConnectFlows == 0 {
+                keyFlow = true
+                Analytics.addProjectOpened(.keyFile)
+            }
         }
         .sheet(isPresented: $keyFlow) { AddProjectFlow(startsAt: .appStore) }
         .sheet(item: $paywall) { reason in PaywallView(reason: reason) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.refreshOnOpenIfNeeded() } }
         }
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase == .active { Analytics.appOpened() }
+        }
+        .onChange(of: tab) { _, value in Analytics.tabViewed(value) }
         .task { await model.refreshOnOpenIfNeeded() }
     }
 

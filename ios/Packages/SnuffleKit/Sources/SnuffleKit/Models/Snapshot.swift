@@ -85,10 +85,13 @@ public struct ExtraCount: Codable, Hashable, Sendable {
 public struct SourceFailure: Codable, Hashable, Sendable {
     public var platform: Platform
     public var message: String
+    /// Nil in caches written before kinds were recorded.
+    public var kind: FailureKind?
 
-    public init(platform: Platform, message: String) {
+    public init(platform: Platform, message: String, kind: FailureKind? = nil) {
         self.platform = platform
         self.message = message
+        self.kind = kind
     }
 }
 

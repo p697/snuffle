@@ -41,6 +41,16 @@ final class ProStore {
 
     func product(_ id: String) -> Product? { products.first { $0.id == id } }
 
+    /// "monthly", "yearly" or "lifetime", for analytics.
+    nonisolated static func planName(_ productId: String) -> String {
+        switch productId {
+        case monthly: "monthly"
+        case yearly: "yearly"
+        case lifetime: "lifetime"
+        default: "unknown"
+        }
+    }
+
     /// Length of the yearly plan's free trial, read from App Store Connect rather than assumed.
     var trialDays: Int? {
         guard let offer = product(Self.yearly)?.subscription?.introductoryOffer, offer.paymentMode == .freeTrial else { return nil }
@@ -80,19 +90,21 @@ final class ProStore {
         trialEligible = await product(Self.yearly)?.subscription?.isEligibleForIntroOffer ?? false
     }
 
-    /// Returns true when the purchase went through (not when it is pending or cancelled).
-    func purchase(_ product: Product) async throws -> Bool {
+    /// How the purchase sheet ended. Only `.purchased` unlocks Pro; an unverified transaction counts as failed.
+    func purchase(_ product: Product) async throws -> Analytics.PurchaseOutcome {
         let result = try await product.purchase()
         switch result {
         case .success(let verification):
-            guard case .verified(let transaction) = verification else { return false }
+            guard case .verified(let transaction) = verification else { return .failed }
             await transaction.finish()
             await refreshEntitlements()
-            return true
-        case .pending, .userCancelled:
-            return false
+            return .purchased
+        case .pending:
+            return .pending
+        case .userCancelled:
+            return .cancelled
         @unknown default:
-            return false
+            return .failed
         }
     }
 
@@ -114,6 +126,7 @@ final class ProStore {
         #endif
         activeProductId = active
         isPro = active != nil
+        Analytics.setPro(isPro)
         UserDefaults(suiteName: SharedContainer.appGroup)?.set(isPro, forKey: Self.sharedFlag)
         await refreshTrialEligibility()
     }

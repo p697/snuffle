@@ -6,6 +6,7 @@ struct SnuffleApp: App {
     @State private var model: AppModel
 
     init() {
+        Analytics.start()
         let prefix = Bundle.main.object(forInfoDictionaryKey: "AppIdentifierPrefix") as? String
         let group = prefix.map { $0 + SharedContainer.keychainGroupSuffix }
         _model = State(initialValue: AppModel(

@@ -25,6 +25,9 @@ configFiles:
 packages:
   SnuffleKit:
     path: Packages/SnuffleKit
+  PostHog:
+    url: https://github.com/PostHog/posthog-ios
+    exactVersion: 3.93.6
 
 targets:
   Snuffle:
@@ -34,6 +37,7 @@ targets:
       - path: Snuffle
     dependencies:
       - package: SnuffleKit
+      - package: PostHog
       - target: SnuffleWidgets
         embed: true
     entitlements:

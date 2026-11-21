@@ -10,6 +10,7 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
   the cat and the refresh button; one folder per tab.
 - `SnuffleWidgets/` — home and lock screen widgets with an in-widget refresh button.
 - `SnuffleUITests/` — end-to-end tests in demo mode.
+- `ANALYTICS.md` — the PostHog events, their properties and the metrics built on them.
 - `scripts/render-icon.swift` — draws the app icons from the design's geometry.
 
 ## Build and test
@@ -32,7 +33,8 @@ The run scheme uses `Snuffle/Products.storekit`, so purchases work in the simula
 
 `Config/Shared.xcconfig` holds runtime values: the drafting API (`https://snuffle.ai`) and the iOS OAuth client of
 the "Snuffle" Google Cloud project, which has the Google Play Android Developer API (reviews) and the Play Developer
-Reporting API (listing the account's apps) enabled. While its consent screen is in testing, only listed test users can
+Reporting API (listing the account's apps) enabled. `SNUFFLE_POSTHOG_TOKEN` is the client token of Snuffle's own
+PostHog project; leave it empty in `Local.xcconfig` to build without analytics. While its consent screen is in testing, only listed test users can
 sign in. Override values in `Config/Local.xcconfig` (git-ignored), e.g. a local server:
 
 ```
@@ -44,6 +46,7 @@ SNUFFLE_API_URL = http:/$()/127.0.0.1:8787   // a local `wrangler dev`, see serv
 - `-demo` starts in demo mode; `-scenario sale|quiet|failure` shapes the next demo refresh.
 - `-resetState` clears saved projects, settings and caches.
 - `-forcePro` unlocks Pro in debug builds only.
+- `-noAnalytics` keeps the PostHog SDK off (UI tests pass it; unit tests never start it).
 
 ## Release
 
@@ -57,5 +60,6 @@ scripts/ios-build.sh testflight   # archive and upload; the build number is the 
 
 Signing uses the Apple ID signed into Xcode. Bump `MARKETING_VERSION` in `project.yml` for a new version.
 `ExportOptions.plist` uses `method` `app-store-connect` and `destination` `upload`. `PrivacyInfo.xcprivacy` in each
-target declares the App Group defaults and no collected data while drafting is hidden; keep it in step with the App
+target declares the App Group defaults; the app's also declares the anonymous analytics (product interaction, other
+diagnostic data, a random install id and coarse location; not linked, not tracking). Keep it in step with the App
 Store privacy answers.

@@ -196,10 +196,11 @@ struct PostHogSignIn: View {
             )
             let code = try PostHogOAuth.code(from: callback, pkce: pkce)
             let token = try await PostHogOAuth.exchange(code: code, pkce: pkce, region: region)
-            try await finish(credential: .posthogOAuth(token), bearer: token.accessToken)
+            try await finish(credential: .posthogOAuth(token), bearer: token.accessToken, method: .oauth)
         } catch let authError as ASWebAuthenticationSessionError where authError.code == .canceledLogin {
-            return
+            session.track(.posthog, .oauth, .cancelled)
         } catch {
+            session.track(.posthog, .oauth, .failed(error))
             self.error = describe(error)
         }
     }
@@ -210,13 +211,14 @@ struct PostHogSignIn: View {
         defer { busy = false }
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
-            try await finish(credential: .posthogPersonalKey(host: region.host.absoluteString, key: trimmed), bearer: trimmed)
+            try await finish(credential: .posthogPersonalKey(host: region.host.absoluteString, key: trimmed), bearer: trimmed, method: .key)
         } catch {
+            session.track(.posthog, .key, .failed(error))
             self.error = describe(error)
         }
     }
 
-    private func finish(credential: Credential, bearer: String) async throws {
+    private func finish(credential: Credential, bearer: String, method: Analytics.ConnectMethod) async throws {
         let result = try await PostHogClient(host: region.host) { bearer }.account()
         let saved = try model.add(
             account: Account(platform: .posthog, title: result.email ?? "PostHog 个人密钥", subtitle: region.label),
@@ -224,6 +226,7 @@ struct PostHogSignIn: View {
         )
         session.postHogAccount = saved
         session.postHogProjects = result.projects
+        session.track(.posthog, method, .succeeded)
         await signedIn()
     }
 
@@ -235,8 +238,10 @@ struct PostHogSignIn: View {
             let (host, token) = try await TokenBroker(store: model.credentials).posthogToken(account.id)
             session.postHogProjects = try await PostHogClient(host: host) { token }.account().projects
             session.postHogAccount = account
+            session.track(.posthog, .saved, .succeeded)
             await signedIn()
         } catch {
+            session.track(.posthog, .saved, .failed(error))
             self.error = describe(error)
         }
     }
@@ -432,8 +437,10 @@ struct RevenueCatConnectPage: View {
                 account: Account(platform: .revenueCat, title: found.map(\.name).joined(separator: "、").ifEmpty("RevenueCat"), subtitle: "密钥 ••••" + secret.suffix(4)),
                 credential: .revenueCat(secretKey: secret)
             )
+            session.track(.revenueCat, .key, .succeeded)
             use(saved, projects: found)
         } catch {
+            session.track(.revenueCat, .key, .failed(error))
             self.error = describe(error)
         }
     }
@@ -444,8 +451,11 @@ struct RevenueCatConnectPage: View {
         defer { busyAccount = nil }
         do {
             guard case .revenueCat(let secret) = try model.credentials.credential(for: saved.id) else { return }
-            use(saved, projects: try await RevenueCatClient(secretKey: secret).projects())
+            let projects = try await RevenueCatClient(secretKey: secret).projects()
+            session.track(.revenueCat, .saved, .succeeded)
+            use(saved, projects: projects)
         } catch {
+            session.track(.revenueCat, .saved, .failed(error))
             self.error = describe(error)
         }
     }
@@ -639,8 +649,10 @@ struct AppStoreConnectPage: View {
                 account: Account(platform: .appStore, title: found.first.map { "\($0.name) 等 \(found.count) 个 App" } ?? "App Store Connect", subtitle: (token.isIndividual ? "个人密钥 " : "团队密钥 ") + token.keyId),
                 credential: .appStoreConnect(issuerId: token.issuerId, keyId: token.keyId, privateKeyPEM: pem)
             )
+            session.track(.appStore, .key, .succeeded)
             use(saved, apps: found)
         } catch {
+            session.track(.appStore, .key, .failed(error))
             self.error = describe(error)
         }
     }
@@ -651,8 +663,11 @@ struct AppStoreConnectPage: View {
         defer { busyAccount = nil }
         do {
             guard case .appStoreConnect(let issuer, let key, let pem) = try model.credentials.credential(for: saved.id) else { return }
-            use(saved, apps: try await AppStoreConnectClient(token: AppStoreConnectToken(issuerId: issuer, keyId: key, privateKeyPEM: pem)).apps())
+            let apps = try await AppStoreConnectClient(token: AppStoreConnectToken(issuerId: issuer, keyId: key, privateKeyPEM: pem)).apps()
+            session.track(.appStore, .saved, .succeeded)
+            use(saved, apps: apps)
         } catch {
+            session.track(.appStore, .saved, .failed(error))
             self.error = describe(error)
         }
     }
@@ -836,10 +851,12 @@ struct GooglePlayConnectPage: View {
             let code = try GoogleOAuth.code(from: callback, pkce: pkce)
             let (token, email) = try await GoogleOAuth.exchange(code: code, pkce: pkce, clientId: clientId)
             account = try model.add(account: Account(platform: .googlePlay, title: email ?? "Google 账号", subtitle: "Google Play"), credential: .googleOAuth(token))
+            session.track(.googlePlay, .oauth, .succeeded)
             await loadApps()
         } catch let authError as ASWebAuthenticationSessionError where authError.code == .canceledLogin {
-            return
+            session.track(.googlePlay, .oauth, .cancelled)
         } catch {
+            session.track(.googlePlay, .oauth, .failed(error))
             self.error = describe(error)
         }
     }

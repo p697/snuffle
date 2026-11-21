@@ -96,6 +96,11 @@ final class AppModel {
         feedback.soundOn = settings.sound
         if settings.demoMode { startDemo() }
         applyLaunchArguments()
+        syncAnalytics()
+    }
+
+    private func syncAnalytics() {
+        Analytics.setWorkspace(demoMode: settings.demoMode, projectCount: workspace.projects.count)
     }
 
     // MARK: Derived
@@ -160,14 +165,15 @@ final class AppModel {
     }
 
     /// Refreshes every included project, revealing them one after another.
-    func refreshAll() async {
-        await refresh(refreshable)
+    func refreshAll(trigger: Analytics.RefreshTrigger = .manual) async {
+        await refresh(refreshable, trigger: trigger)
     }
 
-    func refresh(_ projects: [Project]) async {
+    func refresh(_ projects: [Project], trigger: Analytics.RefreshTrigger) async {
         guard !isRefreshing, !projects.isEmpty else { return }
         isRefreshing = true
         defer { isRefreshing = false }
+        let refreshStarted = ContinuousClock.now
 
         feedback.release()
         clearMarks()
@@ -183,7 +189,7 @@ final class AppModel {
 
         var total = SnapshotChange.none
         var anySale = false
-        var anyFailure = false
+        var failedProjects = 0
         for (index, (project, fetch)) in fetches.enumerated() {
             stages[project.id] = .loading
             let started = ContinuousClock.now
@@ -220,7 +226,8 @@ final class AppModel {
                 settles[project.id, default: 0] += 1
             }
             if !snapshot.failures.isEmpty {
-                anyFailure = true
+                failedProjects += 1
+                result.snapshot.failures.forEach(Analytics.refreshSourceFailed)
                 shakes[project.id, default: 0] += 1
                 react(.flat)
                 feedback.warning()
@@ -232,11 +239,15 @@ final class AppModel {
 
         cache.recordRefresh(at: Date())
         saveCache()
+        Analytics.refreshCompleted(
+            trigger: trigger, projects: projects.count, failedProjects: failedProjects,
+            wentUp: total.isUp, sale: anySale, duration: ContinuousClock.now - refreshStarted
+        )
         WidgetCenter.shared.reloadAllTimelines()
         scheduleFade()
 
         cat.sniffing = false
-        let finale: CatState.Reaction = anySale ? .cheer : total.isUp ? .glee : anyFailure ? .flat : .blink
+        let finale: CatState.Reaction = anySale ? .cheer : total.isUp ? .glee : failedProjects > 0 ? .flat : .blink
         react(finale)
         try? await Task.sleep(for: finale == .cheer ? .milliseconds(1250) : .milliseconds(900))
         cat = CatState()
@@ -292,7 +303,7 @@ final class AppModel {
     func refreshOnOpenIfNeeded() async {
         guard settings.refreshOnOpen, !needsOnboarding else { return }
         if let last = cache.lastRefresh, Date().timeIntervalSince(last) < 120 { return }
-        await refreshAll()
+        await refreshAll(trigger: .open)
     }
 
     // MARK: Reviews
@@ -329,12 +340,15 @@ final class AppModel {
     }
 
     func save(project: Project) {
-        if let index = workspace.projects.firstIndex(where: { $0.id == project.id }) {
+        let index = workspace.projects.firstIndex { $0.id == project.id }
+        if let index {
             workspace.projects[index] = project
         } else {
             workspace.projects.append(project)
         }
         SharedContainer.workspace.save(workspace)
+        syncAnalytics()
+        Analytics.projectSaved(project, isNew: index == nil, projectCount: workspace.projects.count)
         SharedContainer.removeProjectIcons(project.id, keeping: project.iconVersion)
         WidgetCenter.shared.reloadAllTimelines()
     }
@@ -347,6 +361,8 @@ final class AppModel {
         SharedContainer.workspace.save(workspace)
         saveCache()
         WidgetCenter.shared.reloadAllTimelines()
+        syncAnalytics()
+        Analytics.projectDeleted(project, projectCount: workspace.projects.count)
     }
 
     func moveProjects(from source: IndexSet, to destination: Int) {
@@ -384,6 +400,7 @@ final class AppModel {
             workspace.projects[index] = project
         }
         SharedContainer.workspace.save(workspace)
+        Analytics.accountRemoved(account.platform)
     }
 
     // MARK: Settings
@@ -397,7 +414,11 @@ final class AppModel {
         feedback.hapticsOn = next.haptics
         feedback.soundOn = next.sound
         SharedContainer.settings.save(next)
-        if modeChanged { switchMode() }
+        if modeChanged {
+            switchMode()
+            syncAnalytics()
+            Analytics.demoModeChanged(enabled: next.demoMode)
+        }
         WidgetCenter.shared.reloadAllTimelines()
     }
 

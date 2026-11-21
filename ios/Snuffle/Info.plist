@@ -47,5 +47,9 @@
 	<string>$(SNUFFLE_API_URL)</string>
 	<key>SnuffleGoogleClientID</key>
 	<string>$(SNUFFLE_GOOGLE_CLIENT_ID)</string>
+	<key>SnufflePostHogHost</key>
+	<string>$(SNUFFLE_POSTHOG_HOST)</string>
+	<key>SnufflePostHogToken</key>
+	<string>$(SNUFFLE_POSTHOG_TOKEN)</string>
 </dict>
 </plist>

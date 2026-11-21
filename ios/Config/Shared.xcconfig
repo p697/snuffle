@@ -3,3 +3,7 @@
 SNUFFLE_API_URL = https:/$()/snuffle.ai
 // iOS OAuth client in the "Snuffle" Google Cloud project (public by design; no secret for iOS clients).
 SNUFFLE_GOOGLE_CLIENT_ID = 146345666099-tqdviknis2a1v6i76ldj8tllfau7a0d2.apps.googleusercontent.com
+// Snuffle's own PostHog project (write-only client token, public by design; see ios/ANALYTICS.md).
+// Empty turns analytics off; Local.xcconfig can blank it for local builds.
+SNUFFLE_POSTHOG_HOST = https:/$()/us.i.posthog.com
+SNUFFLE_POSTHOG_TOKEN = phc_knHJ9qyMwiqjLYg6xc3GH8XgBJA5D9m6dW4gWkawGqNQ
