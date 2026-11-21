@@ -12,6 +12,14 @@ public struct PostHogProject: Codable, Hashable, Sendable, Identifiable {
         self.timezone = timezone
         self.organizationName = organizationName
     }
+
+    /// The name to show and to suggest for a Snuffle project: PostHog calls a new organization's first project
+    /// "Default project", which says nothing, so the organization's name stands in for it.
+    public var displayName: String {
+        guard name.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("Default project") == .orderedSame,
+              let organizationName, !organizationName.isEmpty else { return name }
+        return organizationName
+    }
 }
 
 /// Reads a PostHog project with HogQL. Every number is one query; all timestamps are passed as Unix seconds so
@@ -29,24 +37,30 @@ public struct PostHogClient: Sendable {
 
     // MARK: Projects
 
-    /// The signed-in person's email and every project they can open.
+    /// The signed-in person's email and every project they can open, across all their organizations.
+    /// `/api/users/@me/` lists projects only for the current organization; the others are read one by one, and an
+    /// organization the credential may not open is skipped rather than failing the whole list.
     public func account() async throws -> (email: String?, projects: [PostHogProject]) {
-        struct Me: Decodable {
-            let email: String?
-            struct Organization: Decodable {
-                struct Team: Decodable { let id: Int; let name: String; let timezone: String? }
-                let id: String
-                let name: String
-                let teams: [Team]?
-                let projects: [Team]?
-            }
-            let organization: Organization?
-            let organizations: [Organization]?
-        }
         let me: Me = try await http.decode(Me.self, try await request("api/users/@me/"), platform: .posthog)
+        var organizations = [me.organization].compactMap { $0 }
+        let others = (me.organizations ?? []).filter { other in !organizations.contains { $0.id == other.id } }
+        organizations += await withTaskGroup(of: (Int, Me.Organization?).self) { group in
+            for (index, other) in others.enumerated() {
+                group.addTask {
+                    let detail = try? await http.decode(Me.Organization.self, try await request("api/organizations/\(other.id)/"), platform: .posthog)
+                    return (index, detail)
+                }
+            }
+            var found: [(Int, Me.Organization)] = []
+            for await (index, detail) in group {
+                if let detail { found.append((index, detail)) }
+            }
+            return found.sorted { $0.0 < $1.0 }.map(\.1)
+        }
+
         var result: [PostHogProject] = []
         var seen = Set<Int>()
-        for organization in [me.organization].compactMap({ $0 }) + (me.organizations ?? []) {
+        for organization in organizations {
             for team in (organization.teams ?? []) + (organization.projects ?? []) where !seen.contains(team.id) {
                 seen.insert(team.id)
                 result.append(PostHogProject(id: team.id, name: team.name, timezone: team.timezone, organizationName: organization.name))
@@ -60,6 +74,19 @@ public struct PostHogClient: Sendable {
             result = page.results.map { PostHogProject(id: $0.id, name: $0.name, timezone: $0.timezone, organizationName: nil) }
         }
         return (me.email, result)
+    }
+
+    private struct Me: Decodable {
+        let email: String?
+        struct Organization: Decodable, Sendable {
+            struct Team: Decodable, Sendable { let id: Int; let name: String; let timezone: String? }
+            let id: String
+            let name: String
+            let teams: [Team]?
+            let projects: [Team]?
+        }
+        let organization: Organization?
+        let organizations: [Organization]?
     }
 
     /// The project's time zone, read fresh in case it was changed in PostHog.
