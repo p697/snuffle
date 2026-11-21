@@ -42,6 +42,34 @@ public struct RevenueCatClient: Sendable {
         return metric.value
     }
 
+    /// Revenue per UTC calendar date from the Charts API, keyed "yyyy-MM-dd". One request for the whole range.
+    public func dailyRevenue(projectId: String, from: String, to: String) async throws -> [String: Double] {
+        let chart: Chart = try await http.decode(Chart.self, request("projects/\(projectId)/charts/revenue", query: [
+            URLQueryItem(name: "start_date", value: from),
+            URLQueryItem(name: "end_date", value: to),
+            URLQueryItem(name: "resolution", value: "0"),
+            URLQueryItem(name: "currency", value: "USD")
+        ]), platform: .revenueCat)
+        return Self.dailyRevenue(from: chart)
+    }
+
+    struct Chart: Decodable {
+        struct Measure: Decodable { let display_name: String }
+        struct Value: Decodable { let cohort: Double; let measure: Int; let value: Double? }
+        let measures: [Measure]?
+        let values: [Value]
+    }
+
+    /// Values come as one row per day and measure; the revenue measure is found by name, falling back to the first.
+    static func dailyRevenue(from chart: Chart) -> [String: Double] {
+        let revenueMeasure = chart.measures?.firstIndex { $0.display_name.lowercased() == "revenue" } ?? 0
+        var byDay: [String: Double] = [:]
+        for value in chart.values where value.measure == revenueMeasure {
+            byDay[utcDate(Date(timeIntervalSince1970: value.cohort)), default: 0] += value.value ?? 0
+        }
+        return byDay
+    }
+
     public func overview(projectId: String) async throws -> SubscriptionOverview {
         struct Response: Decodable {
             struct Metric: Decodable { let id: String; let value: Double }

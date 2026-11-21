@@ -49,8 +49,15 @@ struct ProjectEditor: View {
                 ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("保存") {
+                        // Anything beyond name and colour changes what the numbers are.
+                        var before = model.workspace.projects.first { $0.id == draft.id }
+                        before?.name = draft.name
+                        before?.tint = draft.tint
+                        let changedNumbers = before != draft
                         model.save(project: draft)
                         dismiss()
+                        // New sources or counting rules: fetch this project's numbers now instead of showing stale ones.
+                        if changedNumbers { Task { [draft] in await model.refresh([draft]) } }
                     }
                     .disabled(draft.name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
