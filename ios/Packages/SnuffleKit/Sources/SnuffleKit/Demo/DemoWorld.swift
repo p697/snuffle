@@ -76,17 +76,20 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         atlasId: Pace(yesterdayTotal: 70, growth: 0.92, salesPerMinute: 0, activePerDay: 210, extraPerDay: 38, onlineAround: 3, averageOrder: 0)
     ]
 
-    /// A fresh demo day at `now`, with numbers proportional to how much of the day has passed.
-    public static func make(now: Date, calendar: Calendar = .current, random: inout some RandomNumberGenerator) -> DemoWorld {
+    /// A fresh demo day at `now`, with numbers proportional to how much of the day has passed. `lateInDay` (App Store
+    /// screenshots) starts the demo clock at 21:30 at the earliest, so the numbers look like a full day whenever they
+    /// are taken; reviews stay relative to the real time, which is what the app shows them against.
+    public static func make(now: Date, calendar: Calendar = .current, lateInDay: Bool = false, random: inout some RandomNumberGenerator) -> DemoWorld {
         let dayStart = calendar.startOfDay(for: now)
-        let fraction = max(0.08, now.timeIntervalSince(dayStart) / 86_400)
-        let hours = max(1, Int(now.timeIntervalSince(dayStart) / 3600) + 1)
+        let clock = lateInDay ? max(now, dayStart.addingTimeInterval(21.5 * 3600)) : now
+        let fraction = max(0.08, clock.timeIntervalSince(dayStart) / 86_400)
+        let hours = max(1, Int(clock.timeIntervalSince(dayStart) / 3600) + 1)
         let books = projects.map { project -> Book in
             let pace = paces[project.id]!
             let today = Int(pace.yesterdayTotal * pace.growth * fraction)
             let sales = Int((pace.salesPerMinute * 1440 * fraction).rounded())
             let orders = (0..<sales).map { index in
-                demoOrder(project.id, at: now.addingTimeInterval(-Double(index + 1) * 1500 * .random(in: 0.6...1.4, using: &random)), random: &random)
+                demoOrder(project.id, at: clock.addingTimeInterval(-Double(index + 1) * 1500 * .random(in: 0.6...1.4, using: &random)), random: &random)
             }
             return Book(
                 projectId: project.id,
@@ -102,7 +105,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
                 orders: orders
             )
         }
-        return DemoWorld(dayStart: dayStart, simulatedNow: now, books: books, reviews: demoReviews(now: now), scenario: .natural)
+        return DemoWorld(dayStart: dayStart, simulatedNow: clock, books: books, reviews: demoReviews(now: now), scenario: .natural)
     }
 
     /// Moves the demo clock forward and lets new users and orders arrive at each project's pace.

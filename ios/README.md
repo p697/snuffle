@@ -83,6 +83,8 @@ SNUFFLE_API_URL = http:/$()/127.0.0.1:8787   // a local `wrangler dev`, see serv
 - `-demo` starts in demo mode; `-scenario sale|quiet|failure` shapes the next demo refresh.
 - `-resetState` clears saved projects, settings and caches.
 - `-forcePro` unlocks Pro in debug builds only.
+- `-storeShots` hides demo mode's "示例" marks and starts a new demo day at 21:30; `-tab money|reviews|projects` opens on that tab; `-refreshAfterLaunch`
+  presses the refresh button two seconds in. `marketing/app-store/capture.sh` uses them for the App Store screenshots.
 - `-noAnalytics` keeps the PostHog SDK off (UI tests pass it; unit tests never start it).
 
 ## Release

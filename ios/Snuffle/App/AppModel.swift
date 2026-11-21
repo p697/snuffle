@@ -122,6 +122,19 @@ final class AppModel {
 
     var needsOnboarding: Bool { !settings.demoMode && workspace.projects.isEmpty }
 
+    /// Debug builds launched with `-storeShots` take App Store screenshots: no "示例" marks, and a demo day that has
+    /// reached the evening whatever the time.
+    private static var storeShots: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-storeShots")
+        #else
+        false
+        #endif
+    }
+
+    /// Whether screens say the numbers are samples (`SharedContainer.hidesDemoMarks`).
+    var marksDemo: Bool { settings.demoMode && !SharedContainer.hidesDemoMarks }
+
     func snapshot(_ projectId: UUID) -> ProjectSnapshot? { cache.snapshots[projectId] }
 
     func stage(_ projectId: UUID) -> CardStage { stages[projectId] ?? .rest }
@@ -434,7 +447,7 @@ final class AppModel {
     }
 
     private func startDemo() {
-        let provider = DemoProvider(world: SharedContainer.demoWorld.load(), persist: { SharedContainer.demoWorld.save($0) })
+        let provider = DemoProvider(world: SharedContainer.demoWorld.load(), lateInDay: Self.storeShots, persist: { SharedContainer.demoWorld.save($0) })
         demo = provider
         Task { await seedDemoIfEmpty(provider) }
     }
@@ -460,6 +473,7 @@ final class AppModel {
     /// UI tests start in demo mode with a known scenario: `-demo` and `-scenario sale|quiet|failure`.
     private func applyLaunchArguments() {
         let arguments = ProcessInfo.processInfo.arguments
+        SharedContainer.hidesDemoMarks = Self.storeShots
         if arguments.contains("-resetState") {
             for store in [SharedContainer.liveCache.url, SharedContainer.demoCache.url, SharedContainer.demoWorld.url, SharedContainer.workspace.url, SharedContainer.settings.url] {
                 try? FileManager.default.removeItem(at: store)

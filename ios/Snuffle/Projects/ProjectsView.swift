@@ -42,7 +42,7 @@ struct ProjectsView: View {
     private var header: some View {
         HStack(alignment: .firstTextBaseline, spacing: 10) {
             Text("项目").font(Typeface.title(40)).foregroundStyle(Palette.ink)
-            if model.settings.demoMode {
+            if model.marksDemo {
                 Text("示例").font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink2)
             }
             Spacer()
@@ -99,7 +99,7 @@ struct ProjectsView: View {
         let lines = [
             model.projects.count > 1 && !model.settings.demoMode ? String(localized: "长按拖动可以调整顺序。") : nil,
             !model.pro.isPro && !model.settings.demoMode ? String(localized: "免费版可以添加两个项目，Pro 不限数量。") : nil,
-            model.settings.demoMode ? String(localized: "示例数据，退出示例后显示你自己的项目。") : nil
+            model.marksDemo ? String(localized: "示例数据，退出示例后显示你自己的项目。") : nil
         ].compactMap { $0 }
         if !lines.isEmpty {
             Text(lines.joined(separator: " "))

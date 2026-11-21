@@ -39,7 +39,7 @@ nonisolated struct TodayEntry: TimelineEntry {
             return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, icon: icon, newUsers: snapshot?.newUsers, revenue: snapshot?.revenue, failed: !(snapshot?.failures.isEmpty ?? true))
         }
         let pro = UserDefaults(suiteName: SharedContainer.appGroup)?.bool(forKey: "isPro") ?? false
-        return TodayEntry(date: now, rows: rows, lastRefresh: cache.lastRefresh, unlocked: pro || settings.demoMode, demo: settings.demoMode, accent: settings.accent)
+        return TodayEntry(date: now, rows: rows, lastRefresh: cache.lastRefresh, unlocked: pro || settings.demoMode, demo: settings.demoMode && !SharedContainer.hidesDemoMarks, accent: settings.accent)
     }
 
     static let placeholder = TodayEntry(

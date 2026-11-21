@@ -90,7 +90,7 @@ struct HomeView: View {
 
     @ViewBuilder
     private var demo: some View {
-        if model.settings.demoMode {
+        if model.marksDemo {
             LeaveDemoButton()
                 .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
         }
