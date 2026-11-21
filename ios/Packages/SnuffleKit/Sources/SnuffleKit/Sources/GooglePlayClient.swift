@@ -1,6 +1,17 @@
 import Foundation
 
 /// Google Play Developer API with the person's own Google sign-in. Google only returns reviews from the last 7 days.
+public struct GooglePlayApp: Codable, Hashable, Sendable, Identifiable {
+    public var packageName: String
+    public var displayName: String
+    public var id: String { packageName }
+
+    public init(packageName: String, displayName: String) {
+        self.packageName = packageName
+        self.displayName = displayName
+    }
+}
+
 public struct GooglePlayClient: Sendable {
     public static let base = URL(string: "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/")!
     public var accessToken: @Sendable () async throws -> String
@@ -26,6 +37,29 @@ public struct GooglePlayClient: Sendable {
             pageToken = page.nextPageToken
         } while pageToken != nil && all.count < 500
         return all
+    }
+
+    /// Every app the signed-in account can open in Play Console (Play Developer Reporting API), so nobody types a
+    /// package name. Tokens granted before this scope was requested get a 403 here.
+    public func apps() async throws -> [GooglePlayApp] {
+        struct Page: Decodable {
+            struct App: Decodable { let packageName: String; let displayName: String? }
+            let apps: [App]?
+            let nextPageToken: String?
+        }
+        var all: [GooglePlayApp] = []
+        var pageToken: String?
+        repeat {
+            var query = [URLQueryItem(name: "pageSize", value: "1000")]
+            if let pageToken { query.append(URLQueryItem(name: "pageToken", value: pageToken)) }
+            var request = URLRequest(url: URL(string: "https://playdeveloperreporting.googleapis.com/v1beta1/apps:search")!.appendingQuery(query))
+            request.setValue("Bearer \(try await accessToken())", forHTTPHeaderField: "Authorization")
+            request.timeoutInterval = 30
+            let page = try await http.decode(Page.self, request, platform: .googlePlay)
+            all += (page.apps ?? []).map { GooglePlayApp(packageName: $0.packageName, displayName: $0.displayName ?? $0.packageName) }
+            pageToken = page.nextPageToken
+        } while pageToken != nil && all.count < 5_000
+        return all.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
     }
 
     public func reply(packageName: String, reviewId: String, text: String) async throws {

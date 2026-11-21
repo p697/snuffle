@@ -30,15 +30,14 @@ The run scheme uses `Snuffle/Products.storekit`, so purchases work in the simula
 
 ## Configuration
 
-`Config/Shared.xcconfig` holds runtime values. The drafting API defaults to `https://snuffle.ai`; override it, and
-add the Google client id, in `Config/Local.xcconfig` (git-ignored):
+`Config/Shared.xcconfig` holds runtime values: the drafting API (`https://snuffle.ai`) and the iOS OAuth client of
+the "Snuffle" Google Cloud project, which has the Google Play Android Developer API (reviews) and the Play Developer
+Reporting API (listing the account's apps) enabled. While its consent screen is in testing, only listed test users can
+sign in. Override values in `Config/Local.xcconfig` (git-ignored), e.g. a local server:
 
 ```
 SNUFFLE_API_URL = http:/$()/127.0.0.1:8787   // a local `wrangler dev`, see server/README.md
-SNUFFLE_GOOGLE_CLIENT_ID = <iOS OAuth client id>
 ```
-
-Without a Google client id the app still works; Google Play sign-in is hidden.
 
 ## Launch arguments (debug)
 

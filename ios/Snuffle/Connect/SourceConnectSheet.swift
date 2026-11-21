@@ -441,6 +441,10 @@ private struct GooglePlayConnect: View {
     @Environment(AppModel.self) private var model
     @Environment(\.webAuthenticationSession) private var webAuth
     @State private var account: Account?
+    @State private var apps: [GooglePlayApp] = []
+    @State private var appsUnavailable = false
+    @State private var loadingApps = false
+    @State private var manualEntry = false
     @State private var packageName = ""
     @State private var busy = false
     @State private var error: String?
@@ -449,37 +453,92 @@ private struct GooglePlayConnect: View {
         (Bundle.main.object(forInfoDictionaryKey: "SnuffleGoogleClientID") as? String).flatMap { $0.isEmpty ? nil : $0 }
     }
 
+    /// Apps whose name matches the project come first, so the likely one is at the top.
+    private var sortedApps: [GooglePlayApp] {
+        let name = project.name.trimmingCharacters(in: .whitespaces)
+        guard !name.isEmpty else { return apps }
+        let matches = apps.filter { $0.displayName.localizedCaseInsensitiveContains(name) || $0.packageName.localizedCaseInsensitiveContains(name) }
+        return matches + apps.filter { !matches.contains($0) }
+    }
+
     var body: some View {
         Form {
             ExistingAccounts(platform: .googlePlay, selected: $account)
-            if account == nil {
+            if account == nil || appsUnavailable {
                 Section {
                     if clientId == nil {
                         Text("Google Play 登录还没开放，敬请期待。")
                             .foregroundStyle(Palette.ink2)
                     } else {
-                        Button(busy ? "等待授权…" : "用 Google 账号登录") { Task { await signIn() } }
+                        Button(busy ? "等待授权…" : appsUnavailable ? "重新登录以列出 App" : "用 Google 账号登录") { Task { await signIn() } }
                             .disabled(busy)
                     }
                 } footer: {
-                    Text("用能打开 Google Play 管理中心的那个 Google 账号登录。只请求读取和回复评论的权限。")
+                    Text(appsUnavailable
+                         ? "这个登录还没有读取 App 列表的权限，重新登录一次就能直接选，不用填包名。"
+                         : "用能打开 Google Play 管理中心的那个 Google 账号登录。只请求读取 App 列表、读取和回复评论的权限。")
                 }
             }
             if account != nil {
-                Section {
-                    TextField("包名，例如 com.example.app", text: $packageName)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                    Button(busy ? "验证中…" : "读取评论确认") { Task { await verify() } }
-                        .disabled(busy || !packageName.contains("."))
-                } header: {
-                    Text("哪个 App")
-                } footer: {
-                    Text("Google 不提供 App 列表，需要填包名。Google 只返回近 7 天的评论。")
+                if loadingApps {
+                    Section("选择 App") { ProgressView().frame(maxWidth: .infinity) }
+                } else if !apps.isEmpty {
+                    Section {
+                        ForEach(sortedApps) { app in
+                            Button {
+                                Task { await link(app.packageName, name: app.displayName) }
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(app.displayName).foregroundStyle(Palette.ink)
+                                    Text(app.packageName).font(.system(size: 12)).foregroundStyle(Palette.ink2)
+                                }
+                                .frame(minHeight: 44)
+                            }
+                            .disabled(busy)
+                        }
+                    } header: {
+                        Text("选择 App")
+                    } footer: {
+                        Text("Google 只返回近 7 天的评论。")
+                    }
+                } else if !appsUnavailable {
+                    Section {
+                        Text("这个账号在 Google Play 管理中心里还没有 App。").foregroundStyle(Palette.ink2)
+                    }
+                }
+                if manualEntry || appsUnavailable {
+                    Section {
+                        TextField("包名，例如 com.example.app", text: $packageName)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.URL)
+                        Button(busy ? "验证中…" : "读取评论确认") { Task { await link(packageName, name: nil) } }
+                            .disabled(busy || !packageName.contains("."))
+                    } header: {
+                        Text("手动填包名")
+                    }
+                } else if !loadingApps {
+                    Button("列表里没有？手动填包名") { manualEntry = true }
+                        .font(.system(size: 14))
                 }
             }
             ErrorText(text: error)
+        }
+        .task(id: account?.id) { await loadApps() }
+    }
+
+    private func loadApps() async {
+        guard let account else { return }
+        loadingApps = true
+        appsUnavailable = false
+        defer { loadingApps = false }
+        do {
+            let token = try await TokenBroker(store: model.credentials).googleToken(account.id)
+            apps = try await GooglePlayClient { token }.apps()
+        } catch {
+            // Usually a sign-in from before the app list was requested: offer to sign in again, or type the name.
+            apps = []
+            appsUnavailable = true
         }
     }
 
@@ -498,6 +557,8 @@ private struct GooglePlayConnect: View {
             let code = try GoogleOAuth.code(from: callback, pkce: pkce)
             let (token, email) = try await GoogleOAuth.exchange(code: code, pkce: pkce, clientId: clientId)
             account = try model.add(account: Account(platform: .googlePlay, title: email ?? "Google 账号", subtitle: "Google Play"), credential: .googleOAuth(token))
+            // Signing in again keeps the same account id, so the list is reloaded here rather than by `.task(id:)`.
+            await loadApps()
         } catch let authError as ASWebAuthenticationSessionError where authError.code == .canceledLogin {
             return
         } catch {
@@ -505,17 +566,17 @@ private struct GooglePlayConnect: View {
         }
     }
 
-    private func verify() async {
+    private func link(_ rawName: String, name displayName: String?) async {
         guard let account else { return }
         busy = true
         error = nil
         defer { busy = false }
-        let name = packageName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
             let token = try await TokenBroker(store: model.credentials).googleToken(account.id)
             _ = try await GooglePlayClient { token }.reviews(packageName: name, projectId: project.id)
             project.googlePlay = GooglePlayLink(accountId: account.id, packageName: name)
-            if project.name.isEmpty { project.name = name }
+            if project.name.isEmpty { project.name = displayName ?? name }
             done()
         } catch {
             self.error = describe(error)
