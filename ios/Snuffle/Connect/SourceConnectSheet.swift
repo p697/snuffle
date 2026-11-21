@@ -122,7 +122,7 @@ private struct PostHogConnect: View {
                 Section("选择项目") {
                     ForEach(projects) { item in
                         Button {
-                            choose(item)
+                            Task { await choose(item) }
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(item.name).foregroundStyle(Palette.ink)
@@ -132,6 +132,7 @@ private struct PostHogConnect: View {
                             }
                             .frame(minHeight: 44)
                         }
+                        .disabled(busy)
                     }
                 }
             }
@@ -197,11 +198,29 @@ private struct PostHogConnect: View {
         }
     }
 
-    private func choose(_ item: PostHogProject) {
+    private func choose(_ item: PostHogProject) async {
         guard let account else { return }
+        busy = true
+        defer { busy = false }
         project.posthog = PostHogLink(accountId: account.id, projectId: item.id, projectName: item.name, timeZone: item.timezone ?? TimeZone.current.identifier)
         if project.name.isEmpty { project.name = item.name }
+        // Pick defaults from the events this project really sends; keep the standard ones if the check fails.
+        if let seen = try? await seenEvents(account: account, projectId: item.id) {
+            let suggested = MetricSettings.suggested(seenEvents: seen)
+            project.metrics.newUsers = suggested.newUsers
+            project.metrics.extra = suggested.extra
+        }
         done()
+    }
+
+    private func seenEvents(account: Account, projectId: Int) async throws -> Set<String> {
+        let (host, token) = try await TokenBroker(store: model.credentials).posthogToken(account.id)
+        let query = PostHogQueries.eventsSeen(
+            [MetricSettings.signupEvent, MetricSettings.installEvent],
+            since: Date().addingTimeInterval(-30 * 86_400)
+        )
+        let rows = try await PostHogClient(host: host) { token }.query(projectId: projectId, query, name: "snuffle-defaults")
+        return PostHogParsing.eventNames(rows)
     }
 }
 

@@ -53,14 +53,14 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             posthog: PostHogLink(accountId: demoAccount, projectId: 1, projectName: "Lumen Notes", timeZone: TimeZone.current.identifier),
             appStore: AppStoreLink(accountId: demoAccount, appId: "1", appName: "Lumen Notes", bundleId: "com.example.lumen"),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.lumen"),
-            metrics: MetricSettings(newUsers: .event("user_signed_up"), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), extra: .installs)
+            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), extra: .installs)
         ),
         Project(
             id: ferryId, name: "Pocket Ferry", tint: .coral,
             posthog: PostHogLink(accountId: demoAccount, projectId: 2, projectName: "Pocket Ferry", timeZone: TimeZone.current.identifier),
             revenueCat: RevenueCatLink(accountId: demoAccount, projectId: "demo", projectName: "Pocket Ferry"),
             appStore: AppStoreLink(accountId: demoAccount, appId: "2", appName: "Pocket Ferry", bundleId: "com.example.ferry"),
-            metrics: MetricSettings(newUsers: .event("user_signed_up"), revenue: .revenueCat, extra: .none)
+            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .revenueCat, extra: .none)
         ),
         Project(
             id: atlasId, name: "Quiet Atlas", tint: .cocoa,

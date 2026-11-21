@@ -149,7 +149,7 @@ public struct MetricSettings: Codable, Hashable, Sendable {
 
     /// The second small number on the card.
     public enum Extra: Codable, Hashable, Sendable {
-        /// PostHog's `Application Installed` event.
+        /// PostHog's `Application Installed` event (`MetricSettings.installEvent`).
         case installs
         /// Any event, shown as "<count> <label>", e.g. "25 次付费墙浏览".
         case event(name: String, label: String)
@@ -166,5 +166,19 @@ public struct MetricSettings: Codable, Hashable, Sendable {
         self.extra = extra
     }
 
-    public static let standard = MetricSettings(newUsers: .event("user_signed_up"), revenue: .none, extra: .installs)
+    /// PostHog's conventional signup event and the install event its mobile SDKs send.
+    public static let signupEvent = "user_signed_up"
+    public static let installEvent = "Application Installed"
+
+    public static let standard = MetricSettings(newUsers: .event(signupEvent), revenue: .none, extra: .installs)
+
+    /// Defaults for a project, given which of the conventional events it actually sends: a project without signups
+    /// counts first-seen people, and one without installs shows no second number, so nothing sits at zero forever.
+    public static func suggested(seenEvents: Set<String>) -> MetricSettings {
+        MetricSettings(
+            newUsers: seenEvents.contains(signupEvent) ? .event(signupEvent) : .firstSeen,
+            revenue: .none,
+            extra: seenEvents.contains(installEvent) ? .installs : .none
+        )
+    }
 }

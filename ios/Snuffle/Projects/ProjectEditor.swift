@@ -127,7 +127,7 @@ struct MetricsSection: View {
         } header: {
             Text("新增用户")
         } footer: {
-            Text("注册事件按 PostHog 里这个事件的次数算，默认 user_signed_up；第一次出现的人按 PostHog 新建的用户档案算，包括没注册的访客。")
+            Text("注册事件按 PostHog 里这个事件的次数算，默认 user_signed_up；第一次出现的人是今天第一次有事件、之前 30 天都没出现过的人，包括没注册的访客。")
         }
 
         Section {
@@ -169,11 +169,11 @@ struct MetricsSection: View {
         Binding {
             switch project.metrics.newUsers {
             case .firstSeen: .firstSeen
-            case .event(let name): name == "user_signed_up" ? .signup : .custom
+            case .event(let name): name == MetricSettings.signupEvent ? .signup : .custom
             }
         } set: { choice in
             switch choice {
-            case .signup: project.metrics.newUsers = .event("user_signed_up")
+            case .signup: project.metrics.newUsers = .event(MetricSettings.signupEvent)
             case .firstSeen: project.metrics.newUsers = .firstSeen
             case .custom: project.metrics.newUsers = .event("")
             }

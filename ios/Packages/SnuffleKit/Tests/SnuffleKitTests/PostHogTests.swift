@@ -6,6 +6,19 @@ import Testing
 struct PostHogTests {
     let clock = ProjectClock(now: ISO8601.parse("2026-11-20T09:32:00Z")!, timeZoneIdentifier: "UTC")
 
+    @Test func defaultsFollowTheEventsAProjectSends() {
+        let query = PostHogQueries.eventsSeen([MetricSettings.signupEvent, MetricSettings.installEvent], since: Date(timeIntervalSince1970: 1_700_000_000))
+        #expect(query == "SELECT DISTINCT event FROM events WHERE timestamp >= fromUnixTimestamp(1700000000) AND event IN ('user_signed_up', 'Application Installed')")
+
+        let seen = PostHogParsing.eventNames([[.string("Application Installed")], [.null], []])
+        #expect(seen == ["Application Installed"])
+
+        // A project without signups counts first-seen people instead of sitting at zero.
+        #expect(MetricSettings.suggested(seenEvents: seen) == MetricSettings(newUsers: .firstSeen, revenue: .none, extra: .installs))
+        #expect(MetricSettings.suggested(seenEvents: []) == MetricSettings(newUsers: .firstSeen, revenue: .none, extra: .none))
+        #expect(MetricSettings.suggested(seenEvents: [MetricSettings.signupEvent, MetricSettings.installEvent]) == .standard)
+    }
+
     @Test func literalsAreEscaped() {
         #expect(PostHogQueries.literal("it's") == "'it\\'s'")
         #expect(PostHogQueries.literal("a\\b") == "'a\\\\b'")
@@ -28,7 +41,21 @@ struct PostHogTests {
     @Test func countsQueryIsSkippedWhenNothingIsEventBased() {
         let metrics = MetricSettings(newUsers: .firstSeen, revenue: .revenueCat, extra: .none)
         #expect(PostHogQueries.eventCounts(metrics: metrics, clock: clock) == nil)
-        #expect(PostHogQueries.firstSeen(clock: clock).contains("FROM persons"))
+    }
+
+    @Test func firstSeenComesFromEventsWithinABoundedLookback() {
+        // Anonymous events have no person profile, so new people are counted from their first event, and only
+        // the last 30 days (plus the days shown) are scanned.
+        let sql = PostHogQueries.firstSeen(clock: clock)
+        let lookback = Int(clock.yesterdayStart.timeIntervalSince1970) - 30 * 86_400
+        #expect(!sql.contains("persons"))
+        #expect(sql.contains("(SELECT person_id, min(timestamp) AS first FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback)) GROUP BY person_id)"))
+        #expect(sql.contains("countIf(first >= fromUnixTimestamp(\(Int(clock.todayStart.timeIntervalSince1970)))) AS new_today"))
+
+        let history = PostHogQueries.firstSeenHistory(clock: clock, days: 7)
+        let start = Int(clock.historyStart(days: 7).timeIntervalSince1970)
+        #expect(history.contains("timestamp >= fromUnixTimestamp(\(start - 30 * 86_400))"))
+        #expect(history.hasSuffix("WHERE first >= fromUnixTimestamp(\(start)) GROUP BY day ORDER BY day"))
     }
 
     @Test func parsesCountsInBuilderOrder() {
