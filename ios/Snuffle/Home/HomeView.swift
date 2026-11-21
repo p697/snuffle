@@ -38,6 +38,7 @@ struct HomeView: View {
                 .padding(.top, 8)
             }
             .scrollIndicators(.hidden)
+            .clearsTabBar()
             .background(Palette.paper)
             .navigationDestination(for: UUID.self) { id in
                 if let project = model.projects.first(where: { $0.id == id }) {

@@ -41,6 +41,7 @@ struct ReviewsView: View {
                 .padding(.bottom, 24)
             }
             .scrollIndicators(.hidden)
+            .clearsTabBar()
             .background(Palette.paper)
             .toolbar(.hidden, for: .navigationBar)
             .refreshable { await model.refreshAll() }

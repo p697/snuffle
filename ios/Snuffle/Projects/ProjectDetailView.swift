@@ -43,6 +43,7 @@ struct ProjectDetailView: View {
             }
             .padding(16)
         }
+        .clearsTabBar()
         .background(Palette.paper)
         .navigationTitle(project.name)
         .navigationBarTitleDisplayMode(.inline)
