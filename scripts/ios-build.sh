@@ -30,8 +30,10 @@ for d in json.load(open(sys.argv[1]))["result"]["devices"]:
   xcodebuild build -quiet -project Snuffle.xcodeproj -scheme Snuffle -configuration Release \
     -destination "id=$udid" -derivedDataPath "$primary/ios/build/device" -allowProvisioningUpdates
   xcrun devicectl device install app -q --device "$udid" "$primary/ios/build/device/Build/Products/Release-iphoneos/Snuffle.app"
-  xcrun devicectl device process launch -q --device "$udid" ai.snuffle.app
   echo "Installed main $commit on $udid"
+  # A locked phone refuses the launch; the install has already succeeded.
+  xcrun devicectl device process launch -q --device "$udid" ai.snuffle.app >/dev/null 2>&1 \
+    || echo "The phone is locked: unlock it and open Snuffle."
 else
   build=$(git rev-list --count HEAD)
   out="$primary/ios/build/release/$build"
