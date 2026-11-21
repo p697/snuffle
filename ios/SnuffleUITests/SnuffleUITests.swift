@@ -1,3 +1,4 @@
+import StoreKitTest
 import XCTest
 
 /// End-to-end checks in demo mode, where every number is made up and every scenario is reproducible.
@@ -92,16 +93,52 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "project-detail-week")
     }
 
-    func testPaywallShowsThreePlans() {
-        let app = XCUIApplication()
-        app.launchArguments = ["-resetState", "-demo"]
-        app.launch()
+    /// Walks every preview page with the local StoreKit configuration, so prices and the trial are real.
+    func testPaywallPreviewsAndPlans() throws {
+        #if targetEnvironment(simulator)
+        let os = ProcessInfo.processInfo.operatingSystemVersion
+        try XCTSkipIf(os.majorVersion == 26 && os.minorVersion == 5,
+                      "StoreKitTest fails on the iOS 26.5 simulator (SKInternalErrorDomain 3); run on iOS 18 or 26.6+.")
+        #endif
+        let session = try SKTestSession(configurationFileNamed: "Products")
+        session.resetToDefaultState()
+        session.disableDialogs = true
+        session.clearTransactions()
+
+        let app = launch()
+        XCTAssertTrue(app.staticTexts["Lumen Notes"].waitForExistence(timeout: 5))
         app.buttons["设置"].tap()
         app.buttons["upgradePro"].tap()
-        XCTAssertTrue(app.buttons["plan-ai.snuffle.pro.yearly"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["plan-ai.snuffle.pro.monthly"].exists)
-        XCTAssertTrue(app.buttons["plan-ai.snuffle.pro.lifetime"].exists)
-        attach(app, name: "paywall")
+
+        // Opened from settings: the home screen page, yearly selected with its free week.
+        let purchase = app.buttons["purchase"]
+        XCTAssertTrue(purchase.waitForExistence(timeout: 5))
+        let trial = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == '免费试用 7 天'"), object: purchase)
+        XCTAssertEqual(XCTWaiter.wait(for: [trial], timeout: 10), .completed, "button says \(purchase.label)")
+        XCTAssertTrue(app.buttons["page-desk"].isSelected)
+        XCTAssertTrue(app.staticTexts["先免费 7 天"].exists)
+        XCTAssertTrue(app.buttons["previewRefresh"].exists)
+        attach(app, name: "paywall-desk-medium")
+        app.buttons["widgetSize-小号"].tap()
+        attach(app, name: "paywall-desk-small")
+
+        app.buttons["plan-ai.snuffle.pro.monthly"].tap()
+        XCTAssertEqual(purchase.label, "订阅 · $1.99/月")
+        app.buttons["plan-ai.snuffle.pro.lifetime"].tap()
+        XCTAssertEqual(purchase.label, "买断 · $29.99")
+        app.buttons["plan-ai.snuffle.pro.yearly"].tap()
+
+        app.buttons["page-lock"].tap()
+        attach(app, name: "paywall-lock")
+        app.buttons["page-history"].tap()
+        XCTAssertTrue(app.staticTexts["每日新增用户"].waitForExistence(timeout: 5))
+        attach(app, name: "paywall-history")
+        app.buttons["page-projects"].tap()
+        XCTAssertTrue(app.staticTexts["项目想加多少加多少"].waitForExistence(timeout: 5))
+        attach(app, name: "paywall-projects")
+
+        app.buttons["closePaywall"].tap()
+        XCTAssertFalse(purchase.waitForExistence(timeout: 2))
     }
 
     /// Imports a real App Store Connect key through the UI, picks an app and refreshes. Runs only when
