@@ -24,11 +24,15 @@ struct ProjectCard: View {
             HStack(alignment: .bottom, spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     numberRow
-                    Text(subtitle)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Palette.ink2)
-                        .lineLimit(1)
-                        .frame(height: 18)
+                    // Long languages drop the label before the comparison rather than cutting the comparison off.
+                    ViewThatFits(in: .horizontal) {
+                        Text(subtitle).fixedSize()
+                        if let yesterday { Text(yesterday).fixedSize() }
+                        Text(subtitle).lineLimit(1)
+                    }
+                    .font(.system(size: 12))
+                    .foregroundStyle(Palette.ink2)
+                    .frame(height: 18)
                 }
                 Spacer(minLength: 0)
                 if project.posthog != nil {
@@ -124,7 +128,7 @@ struct ProjectCard: View {
 
     /// "+48" for new users, "+$300" for a sale, "+1" for a new review on a store-only card.
     private func chipText(_ change: SnapshotChange) -> String? {
-        if project.posthog == nil { return change.reviews > 0 ? "+\(change.reviews)" : nil }
+        if project.posthog == nil { return change.reviews > 0 ? Format.delta(users: change.reviews) : nil }
         if change.newUsers > 0 { return Format.delta(users: change.newUsers) }
         if change.revenue > 0 { return Format.delta(money: change.revenue) }
         return nil
@@ -133,27 +137,42 @@ struct ProjectCard: View {
     private var subtitle: String {
         guard project.posthog != nil else {
             let stores = [project.appStore != nil ? "App Store" : nil, project.googlePlay != nil ? "Google Play" : nil].compactMap { $0 }
-            return "条评论待回复 · " + stores.joined(separator: " + ")
+            return String(localized: "条评论待回复", comment: "Follows the big number of reviews to answer on a store-only project card.") + " · " + stores.joined(separator: " + ")
         }
-        var text = "今日新增用户"
-        if let yesterday = snapshot?.newUsersYesterday { text += " · 昨天此时 \(Format.number(yesterday))" }
-        return text
+        return [String(localized: "今日新增用户"), yesterday].compactMap { $0 }.joined(separator: " · ")
     }
 
+    private var yesterday: String? {
+        guard project.posthog != nil, let value = snapshot?.newUsersYesterday else { return nil }
+        return String(localized: "昨天此时 \(Format.number(value))")
+    }
+
+    /// Whole pills only: when they do not fit (long languages), the extra count goes first, then the reviews.
     private var pills: some View {
-        HStack(spacing: 6) {
-            if let revenuePill { Pill(text: revenuePill, hot: marked && (mark?.hasSale ?? false)) }
-            if let extra = snapshot?.extra { Pill(text: "\(Format.number(extra.value)) \(extra.label)") }
-            if let reviews = snapshot?.reviewsToAnswer, project.hasStore, project.posthog != nil { Pill(text: "\(reviews) 条评论待回复") }
+        ViewThatFits(in: .horizontal) {
+            pillRow(extra: true, reviews: true)
+            pillRow(extra: false, reviews: true)
+            pillRow(extra: false, reviews: false)
         }
         .frame(height: 28, alignment: .leading)
         .clipped()
     }
 
+    private func pillRow(extra showsExtra: Bool, reviews showsReviews: Bool) -> some View {
+        HStack(spacing: 6) {
+            if let revenuePill { Pill(text: revenuePill, hot: marked && (mark?.hasSale ?? false)) }
+            if showsExtra, let extra = snapshot?.extra { Pill(text: "\(Format.number(extra.value)) \(extra.label)") }
+            if showsReviews, let reviews = snapshot?.reviewsToAnswer, project.hasStore, project.posthog != nil {
+                Pill(text: String(localized: "\(reviews) 条评论待回复"))
+            }
+        }
+        .fixedSize()
+    }
+
     private var revenuePill: String? {
         guard project.metrics.revenue != .none else { return nil }
-        guard let revenue = snapshot?.revenue, revenue > 0 else { return "还没有收入" }
-        if let sales = snapshot?.sales { return "\(Format.money(revenue)) · \(sales) 笔" }
+        guard let revenue = snapshot?.revenue, revenue > 0 else { return String(localized: "还没有收入") }
+        if let sales = snapshot?.sales { return Format.money(revenue) + " · " + String(localized: "\(sales) 笔", comment: "Number of sales today, after the revenue amount.") }
         return "\(Format.money(revenue)) · RevenueCat"
     }
 }

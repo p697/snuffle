@@ -62,7 +62,7 @@ public struct KeychainCredentialStore: CredentialStore {
 
 public struct KeychainError: Error, LocalizedError {
     public var status: OSStatus
-    public var errorDescription: String? { "钥匙串读写失败（\(status)）" }
+    public var errorDescription: String? { String(localized: "钥匙串读写失败（\(String(status))）", bundle: .module) }
 }
 
 /// In-memory store for tests and previews.

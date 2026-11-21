@@ -90,7 +90,7 @@ struct PostHogTests {
              .null, .null, .null, .null, .null, .string("com.app.coins"), .null]
         ]
         let orders = PostHogParsing.orders(rows, projectId: id)
-        #expect(orders.map(\.product) == ["Max 月付", "Lifetime", "com.app.coins"])
+        #expect(orders.map(\.product) == [PostHogQueries.planName("Max", yearly: false), "Lifetime", "com.app.coins"])
         #expect(orders[0].country == "HK")
         #expect(orders[1].country == nil)
         #expect(orders[1].date == ISO8601.parse("2026-11-20T12:55:19.722Z"))
@@ -134,6 +134,6 @@ struct PostHogTests {
         let forged = URL(string: "ai.snuffle.app:/oauth/posthog?code=abc&state=other")!
         #expect(throws: SourceError.self) { try PostHogOAuth.code(from: forged, pkce: pkce) }
         let denied = URL(string: "ai.snuffle.app:/oauth/posthog?error=access_denied&state=expected")!
-        #expect(throws: SourceError.forbidden(.posthog, "你取消了授权")) { try PostHogOAuth.code(from: denied, pkce: pkce) }
+        #expect(throws: SourceError.forbidden(.posthog, String(localized: "你取消了授权", bundle: .module))) { try PostHogOAuth.code(from: denied, pkce: pkce) }
     }
 }

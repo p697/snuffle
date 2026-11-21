@@ -11,6 +11,7 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
 - `SnuffleWidgets/` — home and lock screen widgets with an in-widget refresh button.
 - `SnuffleUITests/` — end-to-end tests in demo mode.
 - `scripts/render-icon.swift` — draws the app icons from the design's geometry.
+- `scripts/localization.py` — syncs, checks and fills the string catalogs (see "Localization").
 
 ## Build and test
 
@@ -27,6 +28,42 @@ cd ios && xcodebuild test -project Snuffle.xcodeproj -scheme Snuffle -destinatio
 ```
 
 The run scheme uses `Snuffle/Products.storekit`, so purchases work in the simulator without App Store Connect.
+
+## Localization
+
+The app, the widgets and SnuffleKit each have a `Localizable.xcstrings` (permission prompts:
+`Snuffle/InfoPlist.xcstrings`). The source language is Simplified Chinese, written directly in the code; the other
+18 languages are the ones YouMind ships: en, zh-Hant, ja, ko, de, es, es-419, fr, it, pt-BR, pt-PT, ru, uk, tr, vi,
+th, hi, ar. A system language outside the list falls back to English (`CFBundleDevelopmentRegion`).
+
+Writing strings:
+
+- `Text("…")`, `Button("…")`, `Toggle`, `Label`, `.accessibilityLabel("…")` and other SwiftUI initializers taking a
+  literal are localized. Anything that becomes a `String` first (a computed property, a ternary mixing literals and
+  variables, a parameter typed `String`) needs `String(localized: "…")`. In SnuffleKit add `bundle: .module`.
+- Interpolate whole values into one localized sentence (`String(localized: "\(count) 个项目")`); never concatenate
+  translated fragments into a sentence. Joining finished pieces with " · " is fine.
+- Counts: an `Int` interpolation becomes `%lld`; give plural forms where the language needs them (`apply` accepts
+  `{"one": …, "other": …}`). Keep one count per string so plurals work. Numbers shown as text go through
+  `Format.number` / `Format.money` (Latin digits, local separators, US dollars).
+- User content and brand names are not keys: use `Text(verbatim:)` or a `String` variable for them.
+- `// l10n-ignore` on a line exempts a literal that must stay as written (demo reviews in Japanese).
+
+Translating, after building the app:
+
+```bash
+cd ios && python3 scripts/localization.py sync --derived-data build/dd
+```
+
+```bash
+cd ios && python3 scripts/localization.py todo > /tmp/todo.json
+```
+
+Translate every listed key into all languages as `{"key": {"en": "…", "ja": "…", …}}` and merge it with
+`python3 scripts/localization.py apply <file>`, then run `check` (also part of CI). Use the official App Store Connect,
+Google Play Console and iOS terms of each language, keep placeholders and `**bold**`, and look at long languages
+(de, ru) and Arabic (right to left) in the simulator; the `testLanguage_*` UI tests attach a
+screenshot of each tab in every language.
 
 ## Configuration
 

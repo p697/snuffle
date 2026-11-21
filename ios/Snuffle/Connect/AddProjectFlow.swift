@@ -90,7 +90,7 @@ private struct StartPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    RoundIconButton(systemName: "xmark", label: "关闭") { dismiss() }
+                    RoundIconButton(systemName: "xmark", label: String(localized: "关闭")) { dismiss() }
                     Spacer()
                     if offersDemo {
                         Button("先用示例数据看看") {
@@ -103,10 +103,10 @@ private struct StartPage: View {
                         .accessibilityIdentifier("startDemo")
                     }
                 }
-                PageTitle(title: "先连上一个\n数据源")
+                PageTitle(title: String(localized: "先连上一个\n数据源"))
                     .padding(.top, 4)
                 postHogCard
-                SectionLabel("也可以先连别的")
+                SectionLabel(String(localized: "也可以先连别的"))
                     .padding(.top, 4)
                 CardGroup {
                     ForEach(Array([Platform.revenueCat, .appStore, .googlePlay].enumerated()), id: \.element) { index, platform in
@@ -121,7 +121,7 @@ private struct StartPage: View {
                                     Text(platform.purpose).font(.system(size: 13)).foregroundStyle(Palette.ink2)
                                 }
                                 Spacer()
-                                Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
+                                Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
                             }
                             .frame(minHeight: 68)
                             .contentShape(Rectangle())
@@ -147,7 +147,7 @@ private struct StartPage: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
                 PlatformLogo(platform: .posthog, size: 44)
-                Text("PostHog").font(.system(size: 20, weight: .heavy)).foregroundStyle(Palette.ink)
+                Text(verbatim: "PostHog").font(.system(size: 20, weight: .heavy)).foregroundStyle(Palette.ink)
                 Spacer()
                 Text("建议先连")
                     .font(.system(size: 12, weight: .heavy))
@@ -157,7 +157,7 @@ private struct StartPage: View {
                     .background(accent, in: Capsule())
             }
             HStack(spacing: 6) {
-                ForEach(["新增用户", "在线人数", "活跃", "付费事件"], id: \.self) { Pill(text: $0) }
+                ForEach([String(localized: "新增用户"), String(localized: "在线人数"), String(localized: "活跃"), String(localized: "付费事件")], id: \.self) { Pill(text: $0) }
             }
             PostHogSignIn(signedIn: postHogSignedIn)
         }
@@ -186,19 +186,19 @@ private struct ConnectedPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
-                    RoundIconButton(systemName: "xmark", label: "不保存，关闭") { confirmingCancel = true }
+                    RoundIconButton(systemName: "xmark", label: String(localized: "不保存，关闭")) { confirmingCancel = true }
                     Spacer()
                 }
-                PageTitle(title: "连上了", subtitle: session.project.name.isEmpty ? nil : "这是 \(session.project.name) 今天到现在的数。")
+                PageTitle(title: String(localized: "连上了"), subtitle: session.project.name.isEmpty ? nil : String(localized: "这是 \(session.project.name) 今天到现在的数。"))
                 ProjectCard(project: session.project, preview: preview, previewLoading: loading)
-                SectionLabel(session.project.platforms.count == Platform.allCases.count ? "数据源" : "再连几个，数更全")
+                SectionLabel(session.project.platforms.count == Platform.allCases.count ? String(localized: "数据源") : String(localized: "再连几个，数更全"))
                     .padding(.top, 6)
                 FlowLayout(spacing: 8) {
                     ForEach(Platform.allCases) { platform in
                         SourceChip(platform: platform, connected: session.project.platforms.contains(platform)) { addSource(platform) }
                     }
                 }
-                SectionLabel("图标、名称和颜色")
+                SectionLabel(String(localized: "图标、名称和颜色"))
                     .padding(.top, 6)
                 identity($session.project)
                 if session.project.posthog != nil || session.project.revenueCat != nil {
@@ -311,7 +311,7 @@ private struct MetricsPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 BackButton()
-                PageTitle(title: "怎么算", subtitle: "已按这个项目最近 30 天发过的事件选好，数不对再改。")
+                PageTitle(title: String(localized: "怎么算"), subtitle: String(localized: "已按这个项目最近 30 天发过的事件选好，数不对再改。"))
                 MetricsCard(project: $session.project)
             }
             .padding(16)

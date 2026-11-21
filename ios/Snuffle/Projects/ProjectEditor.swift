@@ -20,10 +20,10 @@ struct ProjectEditor: View {
                 header
                 identity
                     .padding(.top, 4)
-                SectionLabel("数据源")
+                SectionLabel(String(localized: "数据源"))
                     .padding(.top, 8)
                 sources
-                SectionLabel("怎么算")
+                SectionLabel(String(localized: "怎么算"))
                     .padding(.top, 8)
                 MetricsCard(project: $draft)
                 Button("删除项目", role: .destructive) { confirmDelete = true }
@@ -56,7 +56,7 @@ struct ProjectEditor: View {
 
     private var header: some View {
         HStack {
-            RoundIconButton(systemName: "xmark", label: "取消") { dismiss() }
+            RoundIconButton(systemName: "xmark", label: String(localized: "取消")) { dismiss() }
             Spacer()
             Text("编辑项目").font(.system(size: 17, weight: .heavy)).foregroundStyle(Palette.ink)
             Spacer()

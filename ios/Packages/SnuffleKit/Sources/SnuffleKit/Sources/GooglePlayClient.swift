@@ -100,7 +100,7 @@ public enum GooglePlayParsing {
         do {
             page = try JSONDecoder().decode(Page.self, from: data)
         } catch {
-            throw SourceError.invalidResponse(.googlePlay, "评论列表")
+            throw SourceError.invalidResponse(.googlePlay, "reviews")
         }
         func date(_ stamp: Page.Item.Comment.Stamp?) -> Date? {
             stamp?.seconds.flatMap(TimeInterval.init).map(Date.init(timeIntervalSince1970:))

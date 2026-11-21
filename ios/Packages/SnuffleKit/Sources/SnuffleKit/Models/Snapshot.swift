@@ -80,6 +80,9 @@ public struct ExtraCount: Codable, Hashable, Sendable {
         self.value = value
         self.label = label
     }
+
+    /// The label for PostHog's install event, in the person's language when the snapshot was taken.
+    public static var installsLabel: String { String(localized: "次安装", bundle: .module) }
 }
 
 public struct SourceFailure: Codable, Hashable, Sendable {

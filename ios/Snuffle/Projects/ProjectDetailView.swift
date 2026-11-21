@@ -14,12 +14,18 @@ struct ProjectDetailView: View {
     @State private var historyError: String?
     @State private var editing = false
 
-    enum Range: String, CaseIterable, Identifiable {
-        case today = "今天"
-        case week = "7 天"
-        case month = "30 天"
-        var id: String { rawValue }
+    enum Range: CaseIterable, Identifiable {
+        case today, week, month
+        var id: Self { self }
         var days: Int { self == .week ? 7 : 30 }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .today: "今天"
+            case .week: "7 天"
+            case .month: "30 天"
+            }
+        }
     }
 
     private var snapshot: ProjectSnapshot? { model.snapshot(project.id) }
@@ -30,7 +36,7 @@ struct ProjectDetailView: View {
                 header
                 Picker("范围", selection: Binding(get: { range }, set: select)) {
                     ForEach(Range.allCases) { item in
-                        Text(item == .month && !model.pro.isPro && !model.settings.demoMode ? "30 天 · Pro" : item.rawValue).tag(item)
+                        Text(item == .month && !model.pro.isPro && !model.settings.demoMode ? "30 天 · Pro" : item.title).tag(item)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -73,7 +79,7 @@ struct ProjectDetailView: View {
             ProjectBadge(project: project, size: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(project.name).font(Typeface.title(24))
-                Text(snapshot.map { "更新于 \(Format.ago($0.fetchedAt))" } ?? "还没刷新过")
+                Text(snapshot.map { String(localized: "更新于 \(Format.ago($0.fetchedAt))") } ?? String(localized: "还没刷新过"))
                     .font(.system(size: 13))
                     .foregroundStyle(Palette.ink2)
             }
@@ -88,7 +94,7 @@ struct ProjectDetailView: View {
                     Odometer(text: snapshot?.newUsers.map(Format.number) ?? "–", size: 72)
                     if let yesterday = snapshot?.newUsersYesterday, let now = snapshot?.newUsers {
                         let diff = now - yesterday
-                        Text(diff == 0 ? "和昨天此时一样" : diff > 0 ? "比昨天此时多 \(Format.number(diff))" : "比昨天此时少 \(Format.number(-diff))")
+                        Text(diff == 0 ? String(localized: "和昨天此时一样") : diff > 0 ? String(localized: "比昨天此时多 \(Format.number(diff))") : String(localized: "比昨天此时少 \(Format.number(-diff))"))
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(diff == 0 ? Palette.ink2 : diff > 0 ? Palette.up : Palette.bad)
                     }
@@ -101,23 +107,26 @@ struct ProjectDetailView: View {
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                 if project.metrics.revenue != .none {
-                    tile("收入", snapshot?.revenue.map(Format.money) ?? "–", note: revenueNote)
+                    tile(String(localized: "收入"), snapshot?.revenue.map(Format.money) ?? "–", note: revenueNote)
                 }
-                tile("今天活跃", snapshot?.active.map(Format.number) ?? "–", note: "PostHog 里今天有动作的人")
+                tile(String(localized: "今天活跃"), snapshot?.active.map(Format.number) ?? "–", note: String(localized: "PostHog 里今天有动作的人"))
                 if let extra = snapshot?.extra {
-                    tile(extra.label.replacingOccurrences(of: "次", with: ""), Format.number(extra.value), note: "今天")
+                    // A custom label like "次付费墙浏览" reads "付费墙浏览" as a title.
+                    let title = project.metrics.extra == .installs ? String(localized: "安装") : extra.label.replacingOccurrences(of: "次", with: "")
+                    tile(title, Format.number(extra.value), note: String(localized: "今天"))
                 }
                 if project.hasStore {
-                    tile("待回复评论", snapshot?.reviewsToAnswer.map(String.init) ?? "–", note: storeNote)
+                    tile(String(localized: "待回复评论"), snapshot?.reviewsToAnswer.map(Format.number) ?? "–", note: storeNote)
                 }
-                tile("此刻在线", snapshot?.online.map(Format.number) ?? "–", note: "最近一分钟")
+                tile(String(localized: "此刻在线"), snapshot?.online.map(Format.number) ?? "–", note: String(localized: "最近一分钟"))
             }
         }
     }
 
     private var revenueNote: String {
-        if project.metrics.revenue == .revenueCat { return "RevenueCat 当日总额（UTC）" }
-        return snapshot?.sales.map { "\($0) 笔 · PostHog 付费事件" } ?? "PostHog 付费事件"
+        if project.metrics.revenue == .revenueCat { return String(localized: "RevenueCat 当日总额（UTC）") }
+        let source = String(localized: "PostHog 付费事件")
+        return snapshot?.sales.map { String(localized: "\($0) 笔", comment: "Number of sales today, after the revenue amount.") + " · " + source } ?? source
     }
 
     private var storeNote: String {
@@ -139,7 +148,7 @@ struct ProjectDetailView: View {
     @ViewBuilder
     private var historyView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            chart(title: "每日新增用户", total: history.compactMap(\.newUsers).reduce(0, +).formatted()) { point in
+            chart(title: "每日新增用户", total: Format.number(history.compactMap(\.newUsers).reduce(0, +))) { point in
                 BarMark(x: .value("日期", point.day, unit: .day), y: .value("新增", point.newUsers ?? 0))
                     .foregroundStyle(Palette.ink)
                     .cornerRadius(3)
@@ -151,7 +160,7 @@ struct ProjectDetailView: View {
                         .cornerRadius(3)
                 }
             }
-            chart(title: "每日活跃", total: Format.number(Int(Double(history.compactMap(\.active).reduce(0, +)) / Double(max(1, history.count)))) + " / 天") { point in
+            chart(title: "每日活跃", total: String(localized: "\(Format.number(Int(Double(history.compactMap(\.active).reduce(0, +)) / Double(max(1, history.count))))) / 天", comment: "Average daily active people.")) { point in
                 LineMark(x: .value("日期", point.day, unit: .day), y: .value("活跃", point.active ?? 0))
                     .foregroundStyle(Palette.ink)
                     .interpolationMethod(.monotone)
@@ -165,7 +174,7 @@ struct ProjectDetailView: View {
         }
     }
 
-    private func chart<Mark: ChartContent>(title: String, total: String, @ChartContentBuilder mark: @escaping (DailyPoint) -> Mark) -> some View {
+    private func chart<Mark: ChartContent>(title: LocalizedStringKey, total: String, @ChartContentBuilder mark: @escaping (DailyPoint) -> Mark) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .firstTextBaseline) {
                 Text(title).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink2)
@@ -192,7 +201,7 @@ struct ProjectDetailView: View {
 
     private var sources: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel("数据来自")
+            SectionLabel(String(localized: "数据来自"))
             CardGroup {
                 ForEach(project.platforms) { platform in
                     let failure = snapshot?.failures.first { $0.platform == platform }
@@ -214,10 +223,10 @@ struct ProjectDetailView: View {
 
     private func detail(_ platform: Platform) -> String {
         switch platform {
-        case .posthog: project.posthog.map { "项目 \($0.projectName) · 时区 \($0.timeZone)" } ?? ""
-        case .revenueCat: project.revenueCat.map { "项目 \($0.projectName)" } ?? ""
+        case .posthog: project.posthog.map { String(localized: "项目 \($0.projectName) · 时区 \($0.timeZone)") } ?? ""
+        case .revenueCat: project.revenueCat.map { String(localized: "项目 \($0.projectName)") } ?? ""
         case .appStore: project.appStore.map { "\($0.appName) · \($0.bundleId)" } ?? ""
-        case .googlePlay: project.googlePlay.map { "\($0.packageName) · 只能读到近 7 天的评论" } ?? ""
+        case .googlePlay: project.googlePlay.map { $0.packageName + " · " + String(localized: "只能读到近 7 天的评论") } ?? ""
         }
     }
 

@@ -8,11 +8,13 @@ enum Feature {
     /// features need their own filing. With it off nothing reaches Snuffle's server. Turning it back on also means
     /// restoring the collected data types in PrivacyInfo.xcprivacy, the drafting sections of site/public/privacy
     /// and terms, the App Store privacy answers, the Pro copy in App Store Connect, and a drafting row in
-    /// the paywall's `ProPerk` (its `.drafts` reason highlights no row for now).
+    /// the paywall's `ProPerk` (its `.drafts` reason highlights no row for now). The server also still writes its
+    /// error messages and the review translation in Chinese: send the person's language with the request and let
+    /// the app word errors from their `code`, so drafting works in every language the app speaks.
     static let replyDrafts = false
 }
 
-/// A drafted review reply: the text to post, and a Chinese rendering when the review is in another language.
+/// A drafted review reply: the text to post, and a rendering in the person's language when the review is in another one.
 nonisolated struct ReplyDraft: Codable, Equatable {
     var reply: String
     var translation: String?
@@ -29,14 +31,14 @@ nonisolated struct ReplyDraft: Codable, Equatable {
         if review.rating <= 3 {
             return ReplyDraft(
                 reply: name + "thank you for taking the time to tell us. We're sorry \(appName) let you down here. We're looking into it now and will ship a fix in the next update. If you write to support@example.com we can help you right away.",
-                translation: "你好，谢谢你花时间告诉我们。很抱歉 \(appName) 在这里让你失望了。我们正在排查，会在下个版本修复。如果你写信到 support@example.com，我们可以马上帮你处理。",
+                translation: String(localized: "你好，谢谢你花时间告诉我们。很抱歉 \(appName) 在这里让你失望了。我们正在排查，会在下个版本修复。如果你写信到 support@example.com，我们可以马上帮你处理。"),
                 language: "en",
                 isSample: true
             )
         }
         return ReplyDraft(
             reply: name + "thank you so much for the kind words! It means a lot to our small team. If there's anything you'd like to see next in \(appName), just let us know.",
-            translation: "你好，非常感谢你的好评！这对我们这个小团队意义很大。如果你希望 \(appName) 接下来加什么功能，随时告诉我们。",
+            translation: String(localized: "你好，非常感谢你的好评！这对我们这个小团队意义很大。如果你希望 \(appName) 接下来加什么功能，随时告诉我们。"),
             language: "en",
             isSample: true
         )
@@ -52,9 +54,9 @@ enum CloudError: Error, LocalizedError, Equatable {
 
     var errorDescription: String? {
         switch self {
-        case .notConfigured: "起草服务还没上线，请稍后再试"
+        case .notConfigured: String(localized: "起草服务还没上线，请稍后再试")
         case .proRequired(let message): message
-        case .limitReached: "今天起草得太多了，明天再来"
+        case .limitReached: String(localized: "今天起草得太多了，明天再来")
         case .server(let message): message
         }
     }
@@ -113,7 +115,7 @@ final class CloudClient {
         do {
             return try await http.decode(ReplyDraft.self, request, platform: .posthog)
         } catch SourceError.http(_, 402, let message), SourceError.forbidden(_, let message) {
-            throw CloudError.proRequired(message.isEmpty ? "起草回复是 Pro 功能" : message)
+            throw CloudError.proRequired(message.isEmpty ? String(localized: "起草回复是 Pro 功能") : message)
         } catch SourceError.rateLimited {
             throw CloudError.limitReached
         } catch let error as SourceError {
@@ -123,9 +125,9 @@ final class CloudClient {
 
     private static func reword(_ error: SourceError) -> String {
         switch error {
-        case .network: "连不上 Snuffle 服务器，请检查网络"
-        case .http(_, let code, let detail): "起草失败（\(code)）：\(detail)"
-        default: "起草失败，请稍后再试"
+        case .network: String(localized: "连不上 Snuffle 服务器，请检查网络")
+        case .http(_, let code, let detail): String(localized: "起草失败（\(String(code))）：\(detail)")
+        default: String(localized: "起草失败，请稍后再试")
         }
     }
 }

@@ -144,13 +144,13 @@ struct LiveProviderTests {
         let result = await provider(store: store).refresh(project)
         #expect(result.snapshot.newUsers == 18)
         #expect(result.snapshot.revenue == nil)
-        #expect(result.snapshot.failures == [SourceFailure(platform: .revenueCat, message: "RevenueCat 拒绝了请求：Missing permission charts_metrics:overview:read")])
+        #expect(result.snapshot.failures == [SourceFailure(platform: .revenueCat, message: SourceError.forbidden(.revenueCat, "Missing permission charts_metrics:overview:read").localizedDescription)])
     }
 
     @Test func missingCredentialIsReportedPerSource() async {
         StubProtocol.reset([:])
         let result = await provider(store: MemoryCredentialStore()).refresh(project)
         #expect(Set(result.snapshot.failures.map(\.platform)) == [.posthog, .revenueCat])
-        #expect(result.snapshot.failures.first { $0.platform == .posthog }?.message == "PostHog 还没有登录")
+        #expect(result.snapshot.failures.first { $0.platform == .posthog }?.message == SourceError.missingCredential(.posthog).localizedDescription)
     }
 }

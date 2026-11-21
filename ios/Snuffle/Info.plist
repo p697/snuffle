@@ -5,7 +5,7 @@
 	<key>AppIdentifierPrefix</key>
 	<string>$(AppIdentifierPrefix)</string>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>zh-Hans</string>
+	<string>en</string>
 	<key>SnuffleAPIURL</key>
 	<string>$(SNUFFLE_API_URL)</string>
 	<key>SnuffleGoogleClientID</key>

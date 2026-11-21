@@ -9,9 +9,15 @@ final class SnuffleUITests: XCTestCase {
     }
 
     private func launch(_ arguments: [String] = []) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-resetState", "-demo"] + arguments
+        let app = makeApp(["-resetState", "-demo"] + arguments)
         app.launch()
+        return app
+    }
+
+    /// The flows below look for Chinese labels, the source language, whatever the simulator's language is.
+    private func makeApp(_ arguments: [String], language: String = "zh-Hans") -> XCUIApplication {
+        let app = XCUIApplication()
+        app.launchArguments = arguments + ["-AppleLanguages", "(\(language))", "-AppleLocale", language.replacingOccurrences(of: "-", with: "_")]
         return app
     }
 
@@ -26,8 +32,7 @@ final class SnuffleUITests: XCTestCase {
     }
 
     func testWelcomeOffersDemoAndConnect() {
-        let app = XCUIApplication()
-        app.launchArguments = ["-resetState"]
+        let app = makeApp(["-resetState"])
         app.launch()
         XCTAssertTrue(app.buttons["startConnecting"].waitForExistence(timeout: 5))
         app.buttons["tryDemo"].tap()
@@ -40,7 +45,7 @@ final class SnuffleUITests: XCTestCase {
 
     func testSettingsLeadsWithLeavingDemo() {
         let app = launch()
-        app.buttons["设置"].tap()
+        app.buttons["settings"].tap()
         let leave = app.buttons["settingsLeaveDemo"]
         XCTAssertTrue(leave.waitForExistence(timeout: 5))
         attach(app, name: "demo-settings")
@@ -77,10 +82,10 @@ final class SnuffleUITests: XCTestCase {
     func testTabsAndReply() {
         let app = launch()
         refresh(app)
-        app.buttons["tab-收入"].tap()
+        app.buttons["tab-money"].tap()
         XCTAssertTrue(app.staticTexts["今天的订单"].waitForExistence(timeout: 5))
         attach(app, name: "money")
-        app.buttons["tab-评论"].tap()
+        app.buttons["tab-reviews"].tap()
         let reply = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'reply-'")).firstMatch
         XCTAssertTrue(reply.waitForExistence(timeout: 5))
         attach(app, name: "reviews")
@@ -98,7 +103,7 @@ final class SnuffleUITests: XCTestCase {
         app.buttons["全部"].tap()
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '你的回复'")).firstMatch.waitForExistence(timeout: 5))
         attach(app, name: "reviews-replied")
-        app.buttons["tab-项目"].tap()
+        app.buttons["tab-projects"].tap()
         let row = app.buttons["projectRow-Pocket Ferry"]
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
@@ -123,7 +128,7 @@ final class SnuffleUITests: XCTestCase {
 
         var app = launch()
         XCTAssertTrue(app.staticTexts["Lumen Notes"].waitForExistence(timeout: 5))
-        app.buttons["设置"].tap()
+        app.buttons["settings"].tap()
         app.buttons["upgradePro"].tap()
 
         // Opened from settings: no row stands out, yearly is selected with its free week.
@@ -165,8 +170,7 @@ final class SnuffleUITests: XCTestCase {
               let appName = env["SNUFFLE_LIVE_ASC_APP"] else {
             throw XCTSkip("No live App Store Connect key in the environment")
         }
-        let app = XCUIApplication()
-        app.launchArguments = ["-resetState"]
+        let app = makeApp(["-resetState"])
         app.launch()
         app.buttons["startConnecting"].tap()
         app.buttons["connect-appStore"].tap()
@@ -208,15 +212,14 @@ final class SnuffleUITests: XCTestCase {
         let finished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '刚刚'"), object: app.staticTexts["refreshStatus"])
         XCTAssertEqual(XCTWaiter.wait(for: [finished], timeout: 30), .completed)
         attach(app, name: "live-asc-home")
-        app.buttons["tab-评论"].tap()
+        app.buttons["tab-reviews"].tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'reply-'")).firstMatch.waitForExistence(timeout: 5))
         attach(app, name: "live-asc-reviews")
     }
 
     /// The connect flow and the project and settings pages, without signing in anywhere.
     func testConnectFlowAndManagementPages() {
-        var app = XCUIApplication()
-        app.launchArguments = ["-resetState"]
+        var app = makeApp(["-resetState"])
         app.launch()
         app.buttons["startConnecting"].tap()
         XCTAssertTrue(app.buttons["posthogSignIn"].waitForExistence(timeout: 5))
@@ -233,14 +236,13 @@ final class SnuffleUITests: XCTestCase {
         app.buttons["startDemo"].tap()
         XCTAssertTrue(app.staticTexts["今日"].waitForExistence(timeout: 5))
 
-        app = XCUIApplication()
-        app.launchArguments = ["-resetState", "-sampleWorkspace"]
+        app = makeApp(["-resetState", "-sampleWorkspace"])
         app.launch()
-        app.buttons["设置"].tap()
+        app.buttons["settings"].tap()
         XCTAssertTrue(app.buttons["upgradePro"].waitForExistence(timeout: 5))
         attach(app, name: "settings")
         app.buttons["完成"].tap()
-        app.buttons["tab-项目"].tap()
+        app.buttons["tab-projects"].tap()
         let row = app.buttons["projectRow-Lumen Notes"]
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         attach(app, name: "projects")
@@ -260,7 +262,7 @@ final class SnuffleUITests: XCTestCase {
     func testEveryTabScrollsClearOfTheTabBar() {
         let app = launch()
         refresh(app)
-        for tab in ["今日", "收入", "评论", "项目"] {
+        for tab in ["today", "money", "reviews", "projects"] {
             app.buttons["tab-\(tab)"].tap()
             for _ in 0..<6 { app.swipeUp(velocity: .fast) }
             sleep(1)
@@ -268,10 +270,62 @@ final class SnuffleUITests: XCTestCase {
         }
         // The last card of 今日 can be reached above the bar once scrolled to the end. Its frame is not
         // checked: SwiftUI reports a combined NavigationLink taller than the screen. The screenshot shows the gap.
-        app.buttons["tab-今日"].tap()
+        app.buttons["tab-today"].tap()
         for _ in 0..<6 { app.swipeUp(velocity: .fast) }
         sleep(1)
         XCTAssertTrue(app.buttons["card-Quiet Atlas"].isHittable)
+    }
+
+    // Every shipped language: the tabs and settings show no leftover Chinese, and right-to-left Arabic mirrors the
+    // layout. Screenshots of each language are attached for a look at long words and wrapping. One test per
+    // language, so a slow or stuck launch only fails its own language.
+    func testLanguage_en() { checkLanguage("en") }
+    func testLanguage_zhHant() { checkLanguage("zh-Hant") }
+    func testLanguage_ja() { checkLanguage("ja") }
+    func testLanguage_ko() { checkLanguage("ko") }
+    func testLanguage_de() { checkLanguage("de") }
+    func testLanguage_es() { checkLanguage("es") }
+    func testLanguage_es419() { checkLanguage("es-419") }
+    func testLanguage_fr() { checkLanguage("fr") }
+    func testLanguage_it() { checkLanguage("it") }
+    func testLanguage_ptBR() { checkLanguage("pt-BR") }
+    func testLanguage_ptPT() { checkLanguage("pt-PT") }
+    func testLanguage_ru() { checkLanguage("ru") }
+    func testLanguage_uk() { checkLanguage("uk") }
+    func testLanguage_tr() { checkLanguage("tr") }
+    func testLanguage_vi() { checkLanguage("vi") }
+    func testLanguage_th() { checkLanguage("th") }
+    func testLanguage_hi() { checkLanguage("hi") }
+    func testLanguage_ar() { checkLanguage("ar") }
+
+    private func checkLanguage(_ language: String) {
+        // Han characters belong only in Traditional Chinese and Japanese. Lines with kana are the demo's Japanese
+        // review, which is user content and stays as written.
+        let han = try! NSRegularExpression(pattern: "^[^\\u3040-\\u30ff]*[\\u4e00-\\u9fff][^\\u3040-\\u30ff]*$")
+        let app = makeApp(["-resetState", "-demo"], language: language)
+        app.launch()
+        XCTAssertTrue(app.buttons["tab-today"].waitForExistence(timeout: 10))
+        // One accessibility snapshot per screen; reading elements one by one takes minutes.
+        var screens: [String] = []
+        for tab in ["today", "money", "projects"] {
+            app.buttons["tab-\(tab)"].tap()
+            screens.append(app.debugDescription)
+            attach(app, name: "\(language)-\(tab)")
+        }
+        app.buttons["tab-today"].tap()
+        app.buttons["settings"].tap()
+        XCTAssertTrue(app.buttons["settingsLeaveDemo"].waitForExistence(timeout: 5))
+        screens.append(app.debugDescription)
+        attach(app, name: "\(language)-settings")
+        if !["zh-Hant", "ja"].contains(language) {
+            let leftovers = screens.flatMap { $0.split(separator: "\n") }.map(String.init)
+                .filter { han.firstMatch(in: $0, range: NSRange($0.startIndex..., in: $0)) != nil }
+            XCTAssertEqual(leftovers, [], "Chinese left in \(language)")
+        }
+        if language == "ar" {
+            // Right to left: the first tab sits on the right.
+            XCTAssertGreaterThan(app.buttons["tab-today"].frame.minX, app.buttons["tab-projects"].frame.minX)
+        }
     }
 
     private func attach(_ app: XCUIApplication, name: String) {

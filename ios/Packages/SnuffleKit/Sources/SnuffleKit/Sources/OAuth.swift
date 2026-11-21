@@ -36,7 +36,7 @@ public enum PostHogOAuth {
         case us, eu
         public var id: String { rawValue }
         public var host: URL { URL(string: rawValue == "us" ? "https://us.posthog.com" : "https://eu.posthog.com")! }
-        public var label: String { rawValue == "us" ? "美国区" : "欧洲区" }
+        public var label: String { rawValue == "us" ? String(localized: "美国区", bundle: .module) : String(localized: "欧洲区", bundle: .module) }
     }
 
     public static func authorizeURL(region: Region, pkce: PKCE) -> URL {
@@ -55,11 +55,11 @@ public enum PostHogOAuth {
     public static func code(from callback: URL, pkce: PKCE) throws -> String {
         let items = URLComponents(url: callback, resolvingAgainstBaseURL: false)?.queryItems ?? []
         if let error = items.first(where: { $0.name == "error" })?.value {
-            throw SourceError.forbidden(.posthog, error == "access_denied" ? "你取消了授权" : error)
+            throw SourceError.forbidden(.posthog, error == "access_denied" ? String(localized: "你取消了授权", bundle: .module) : error)
         }
         guard items.first(where: { $0.name == "state" })?.value == pkce.state,
               let code = items.first(where: { $0.name == "code" })?.value else {
-            throw SourceError.invalidResponse(.posthog, "授权回调缺少 code")
+            throw SourceError.invalidResponse(.posthog, "callback without code")
         }
         return code
     }
@@ -136,11 +136,11 @@ public enum GoogleOAuth {
     public static func code(from callback: URL, pkce: PKCE) throws -> String {
         let items = URLComponents(url: callback, resolvingAgainstBaseURL: false)?.queryItems ?? []
         if let error = items.first(where: { $0.name == "error" })?.value {
-            throw SourceError.forbidden(.googlePlay, error == "access_denied" ? "你取消了授权" : error)
+            throw SourceError.forbidden(.googlePlay, error == "access_denied" ? String(localized: "你取消了授权", bundle: .module) : error)
         }
         guard items.first(where: { $0.name == "state" })?.value == pkce.state,
               let code = items.first(where: { $0.name == "code" })?.value else {
-            throw SourceError.invalidResponse(.googlePlay, "授权回调缺少 code")
+            throw SourceError.invalidResponse(.googlePlay, "callback without code")
         }
         return code
     }
@@ -155,7 +155,7 @@ public enum GoogleOAuth {
             "code_verifier": pkce.verifier
         ], http: http)
         guard let refresh = response.refresh_token else {
-            throw SourceError.invalidResponse(.googlePlay, "Google 没有返回长期授权，请重试")
+            throw SourceError.invalidResponse(.googlePlay, String(localized: "Google 没有返回长期授权，请重试", bundle: .module))
         }
         let token = GoogleOAuthToken(clientId: clientId, accessToken: response.access_token, refreshToken: refresh, expiresAt: Date().addingTimeInterval(response.expires_in - 60))
         return (token, response.id_token.flatMap(email(fromIDToken:)))

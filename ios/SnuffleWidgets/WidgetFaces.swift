@@ -85,22 +85,9 @@ nonisolated enum WidgetPalette {
 }
 
 nonisolated enum WidgetText {
-    static func number(_ value: Int) -> String {
-        value.formatted(.number.grouping(.automatic).locale(Locale(identifier: "en_US")))
-    }
-
-    static func money(_ value: Double) -> String {
-        let rounded = (value * 100).rounded() / 100
-        if abs(rounded - rounded.rounded()) < 0.005 { return "$" + number(Int(rounded.rounded())) }
-        return "$" + rounded.formatted(.number.precision(.fractionLength(2)).grouping(.automatic).locale(Locale(identifier: "en_US")))
-    }
-
     static func ago(_ date: Date?, now: Date) -> String {
-        guard let date else { return "还没刷新" }
-        let minutes = Int(now.timeIntervalSince(date) / 60)
-        if minutes < 1 { return "刚刚" }
-        if minutes < 60 { return "\(minutes) 分钟前" }
-        return "\(minutes / 60) 小时前"
+        guard let date else { return String(localized: "还没刷新") }
+        return Format.ago(date, now: now)
     }
 }
 
@@ -127,14 +114,14 @@ struct TodaySmallFace<Refresh: View>: View {
             Text(entry.demo ? "今日新增 · 示例" : "今日新增")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(WidgetPalette.ink2)
-            Text(WidgetText.number(entry.totalUsers))
+            Text(Format.number(entry.totalUsers))
                 .font(.system(size: 44, weight: .heavy).width(.compressed))
                 .foregroundStyle(WidgetPalette.ink)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .contentTransition(.numericText())
             if let revenue = entry.totalRevenue {
-                Text("收入 \(WidgetText.money(revenue))").font(.system(size: 13, weight: .semibold)).foregroundStyle(WidgetPalette.ink)
+                Text("收入 \(Format.money(revenue))").font(.system(size: 13, weight: .semibold)).foregroundStyle(WidgetPalette.ink)
             }
             Spacer(minLength: 0)
             HStack(alignment: .bottom) {
@@ -154,7 +141,7 @@ struct TodayMediumFace<Refresh: View>: View {
     var body: some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("\(entry.demo ? "示例 · " : "")今日新增 · \(WidgetText.ago(entry.lastRefresh, now: entry.date))")
+                Text((entry.demo ? String(localized: "示例") + " · " : "") + String(localized: "今日新增 · \(WidgetText.ago(entry.lastRefresh, now: entry.date))"))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(WidgetPalette.ink2)
                 ForEach(entry.rows.prefix(3)) { row in
@@ -177,7 +164,7 @@ struct TodayMediumFace<Refresh: View>: View {
                         if row.failed {
                             Image(systemName: "exclamationmark.circle.fill").font(.system(size: 12)).foregroundStyle(WidgetPalette.bad)
                         }
-                        Text(row.newUsers.map(WidgetText.number) ?? "–")
+                        Text(row.newUsers.map(Format.number) ?? "–")
                             .font(.system(size: 24, weight: .heavy).width(.compressed))
                             .foregroundStyle(WidgetPalette.ink)
                             .contentTransition(.numericText())
@@ -201,8 +188,8 @@ struct LockRectangularFace: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
             Text("今日 · \(WidgetText.ago(entry.lastRefresh, now: entry.date))").font(.system(size: 12, weight: .semibold))
-            Text("+\(WidgetText.number(entry.totalUsers)) 用户").font(.system(size: 20, weight: .heavy).width(.compressed))
-            if let revenue = entry.totalRevenue { Text("收入 \(WidgetText.money(revenue))").font(.system(size: 13)) }
+            Text("+\(Format.number(entry.totalUsers)) 用户").font(.system(size: 20, weight: .heavy).width(.compressed))
+            if let revenue = entry.totalRevenue { Text("收入 \(Format.money(revenue))").font(.system(size: 13)) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -213,6 +200,6 @@ struct LockInlineFace: View {
     var entry: TodayEntry
 
     var body: some View {
-        Text("新增 \(WidgetText.number(entry.totalUsers))" + (entry.totalRevenue.map { " · \(WidgetText.money($0))" } ?? ""))
+        Text(String(localized: "新增 \(Format.number(entry.totalUsers))") + (entry.totalRevenue.map { " · " + Format.money($0) } ?? ""))
     }
 }

@@ -1,0 +1,126 @@
+{
+  "sourceLanguage" : "zh-Hans",
+  "strings" : {
+    "NSCameraUsageDescription" : {
+      "comment" : "Asked before the camera opens to take a project icon.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التقط صورة لأيقونة المشروع. تبقى الصورة على هذا الـ iPhone."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nimm ein Foto für ein Projektsymbol auf. Das Foto bleibt auf diesem iPhone."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take a photo for a project icon. The photo stays on this iPhone."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz una foto para el icono del proyecto. La foto se queda en este iPhone."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toma una foto para el ícono del proyecto. La foto se queda en este iPhone."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prenez une photo pour l'icône d'un projet. La photo reste sur cet iPhone."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रोजेक्ट आइकन के लिए फ़ोटो लें। फ़ोटो सिर्फ़ इसी iPhone पर रहती है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scatta una foto per l'icona di un progetto. La foto resta su questo iPhone."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "プロジェクトアイコン用に写真を撮影します。写真はこのiPhoneにのみ保存されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "프로젝트 아이콘으로 사용할 사진을 찍어요. 사진은 이 iPhone에만 저장돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tire uma foto para o ícone do projeto. A foto fica neste iPhone."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tira uma fotografia para o ícone do projeto. A fotografia fica neste iPhone."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снимите фото для значка проекта. Фото останется на этом iPhone."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ถ่ายรูปเพื่อใช้เป็นไอคอนโปรเจกต์ รูปจะอยู่บน iPhone เครื่องนี้เท่านั้น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proje simgesi için fotoğraf çekin. Fotoğraf bu iPhone’da kalır."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зробіть фото для іконки проєкту. Фото залишиться на цьому iPhone."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chụp ảnh làm biểu tượng dự án. Ảnh chỉ lưu trên iPhone này."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍一张照片作为项目图标。照片只存在这台 iPhone 上。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "拍一張照片作為專案圖示。照片只會儲存在這部 iPhone 上。"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

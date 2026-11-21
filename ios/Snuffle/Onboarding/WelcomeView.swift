@@ -11,11 +11,13 @@ struct WelcomeView: View {
     @State private var cat = CatState()
     @State private var spinning = Array(repeating: false, count: Self.rows.count)
 
-    private static let rows: [(value: String, label: String)] = [
-        ("+48", "新用户"),
-        ("+$300", "收入"),
-        ("7", "条评论待回复")
-    ]
+    private static var rows: [(value: String, label: String)] {
+        [
+            (Format.delta(users: 48), String(localized: "新用户")),
+            (Format.delta(money: 300), String(localized: "收入")),
+            (Format.number(7), String(localized: "条评论待回复", comment: "Follows the big number of reviews to answer on a store-only project card."))
+        ]
+    }
 
     /// Room above the panel for the cat's head once it is out.
     private static let catHeadroom: CGFloat = 104
@@ -45,7 +47,7 @@ struct WelcomeView: View {
                 .frame(width: 24, height: 24)
                 .overlay(RefreshArrow().stroke(colors.fill, style: StrokeStyle(lineWidth: 2.6, lineCap: .round, lineJoin: .round)).frame(width: 14, height: 14))
                 .accessibilityHidden(true)
-            Text("Snuffle")
+            Text(verbatim: "Snuffle")
                 .font(.system(size: 17, weight: .heavy))
                 .accessibilityAddTraits(.isHeader)
             Spacer()

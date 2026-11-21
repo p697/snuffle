@@ -16,7 +16,7 @@ struct MoneyView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    ScreenTitle(title: "收入", subtitle: "今天 · 全部项目 · 美元")
+                    ScreenTitle(title: String(localized: "收入"), subtitle: String(localized: "今天 · 全部项目 · 美元"))
                     hero
                     if !revenueProjects.isEmpty { split }
                     ordersSection
@@ -43,7 +43,7 @@ struct MoneyView: View {
                 Odometer(text: totals.hasRevenue ? Format.money(totals.revenue) : "–", size: 64)
                 DeltaChip(text: mark.flatMap { $0.revenue > 0 ? Format.delta(money: $0.revenue) : nil }, visible: mark != nil, size: 15)
             }
-            Text(revenueProjects.isEmpty ? "还没有项目连接收入来源，可以在项目设置里选择 PostHog 付费事件或 RevenueCat。" : "\(salesCount) 笔订单 · \(revenueProjects.count) 个项目有收入来源")
+            Text(revenueProjects.isEmpty ? String(localized: "还没有项目连接收入来源，可以在项目设置里选择 PostHog 付费事件或 RevenueCat。") : String(localized: "\(salesCount) 笔订单") + " · " + String(localized: "\(revenueProjects.count) 个项目有收入来源"))
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.ink2)
         }
@@ -60,7 +60,7 @@ struct MoneyView: View {
         let values = revenueProjects.map { ($0, model.snapshot($0.id)?.revenue ?? 0) }
         let peak = max(1, values.map(\.1).max() ?? 1)
         return VStack(alignment: .leading, spacing: 10) {
-            SectionLabel("按项目")
+            SectionLabel(String(localized: "按项目"))
             CardGroup {
                 ForEach(values, id: \.0.id) { project, revenue in
                     VStack(alignment: .leading, spacing: 6) {
@@ -92,7 +92,7 @@ struct MoneyView: View {
     private var ordersSection: some View {
         if !orders.isEmpty || loadError != nil {
             VStack(alignment: .leading, spacing: 10) {
-                SectionLabel("今天的订单")
+                SectionLabel(String(localized: "今天的订单"))
                 CardGroup {
                     if let loadError {
                         Text(loadError).font(.system(size: 14)).foregroundStyle(Palette.bad).padding(.vertical, 12)
@@ -117,7 +117,7 @@ struct MoneyView: View {
         let entries = model.projects.compactMap { project in overviews[project.id].map { (project, $0) } }
         if !entries.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
-                SectionLabel("订阅概况 · RevenueCat")
+                SectionLabel(String(localized: "订阅概况 · RevenueCat"))
                 ForEach(entries, id: \.0.id) { project, overview in
                     CardGroup {
                         HStack {
@@ -126,10 +126,10 @@ struct MoneyView: View {
                         }
                         .padding(.vertical, 10)
                         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], alignment: .leading, spacing: 12) {
-                            Stat(label: "月经常性收入", value: overview.mrr.map(Format.money) ?? "–")
-                            Stat(label: "在订人数", value: overview.activeSubscriptions.map(Format.number) ?? "–")
-                            Stat(label: "试用中", value: overview.activeTrials.map(Format.number) ?? "–")
-                            Stat(label: "近 28 天收入", value: overview.revenueLast28Days.map(Format.money) ?? "–")
+                            Stat(label: String(localized: "月经常性收入"), value: overview.mrr.map(Format.money) ?? "–")
+                            Stat(label: String(localized: "在订人数"), value: overview.activeSubscriptions.map(Format.number) ?? "–")
+                            Stat(label: String(localized: "试用中"), value: overview.activeTrials.map(Format.number) ?? "–")
+                            Stat(label: String(localized: "近 28 天收入"), value: overview.revenueLast28Days.map(Format.money) ?? "–")
                         }
                         .padding(.bottom, 12)
                     }
@@ -164,9 +164,10 @@ private struct OrderRow: View {
             Text(Format.clock(order.date))
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(Palette.ink2)
-                .frame(width: 44, alignment: .leading)
+                .fixedSize()
+                .frame(minWidth: 44, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
-                Text(order.product ?? "订单").font(.system(size: 15, weight: .semibold)).lineLimit(1)
+                Text(order.product ?? String(localized: "订单")).font(.system(size: 15, weight: .semibold)).lineLimit(1)
                 Text([project?.name, Format.place(order.country)].compactMap { $0 }.joined(separator: " · "))
                     .font(.system(size: 12))
                     .foregroundStyle(Palette.ink2)

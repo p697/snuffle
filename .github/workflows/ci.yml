@@ -90,6 +90,9 @@ jobs:
             ARCHS=arm64 ONLY_ACTIVE_ARCH=YES COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGNING_ALLOWED=NO > build.log 2>&1 \
             || { grep -n -E "error|Error|failed" build.log | sort -u | head -80 || true; tail -40 build.log; exit 1; }
           tail -3 build.log
+      - name: Every string is localizable and translated into every language
+        working-directory: ios
+        run: python3 scripts/localization.py check --derived-data build/dd
 
   ci:
     needs: [changes, server, kit, app]

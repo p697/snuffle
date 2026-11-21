@@ -55,7 +55,7 @@ struct PaywallView: View {
                 .frame(width: 24, height: 24)
                 .overlay(RefreshArrow().stroke(colors.fill, style: StrokeStyle(lineWidth: 2.6, lineCap: .round, lineJoin: .round)).frame(width: 14, height: 14))
                 .accessibilityHidden(true)
-            Text("Snuffle Pro")
+            Text(verbatim: "Snuffle Pro")
                 .font(.system(size: 17, weight: .heavy))
                 .accessibilityAddTraits(.isHeader)
             Spacer()
@@ -121,7 +121,7 @@ struct PaywallView: View {
         .padding(.horizontal, focused ? -12 : 0)
         .overlay(alignment: .top) { Rectangle().fill(colors.ink).frame(height: 2) }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(perk.spoken)，\(perk.note)")
+        .accessibilityLabel(String(localized: "\(perk.spoken)，\(perk.note)", comment: "VoiceOver label of a Pro perk: what Pro gives, then what the free version gives."))
         .accessibilityIdentifier("perk-\(perk.rawValue)")
         .accessibilityAddTraits(focused ? .isSelected : [])
     }
@@ -148,9 +148,9 @@ struct PaywallView: View {
 
     private var plans: some View {
         HStack(spacing: 8) {
-            plan(ProStore.monthly, title: "按月", unit: "每月")
-            plan(ProStore.yearly, title: "按年", unit: model.pro.product(ProStore.yearly).map { "每月约 \(model.pro.monthlyEquivalent(of: $0))" } ?? "每年", badge: model.pro.availableTrialDays.map { "先免费 \($0) 天" })
-            plan(ProStore.lifetime, title: "买断", unit: "一次付清")
+            plan(ProStore.monthly, title: String(localized: "按月"), unit: String(localized: "每月"))
+            plan(ProStore.yearly, title: String(localized: "按年"), unit: model.pro.product(ProStore.yearly).map { String(localized: "每月约 \(model.pro.monthlyEquivalent(of: $0))") } ?? String(localized: "每年"), badge: model.pro.availableTrialDays.map { String(localized: "先免费 \($0) 天") })
+            plan(ProStore.lifetime, title: String(localized: "买断"), unit: String(localized: "一次付清"))
         }
     }
 
@@ -197,7 +197,7 @@ struct PaywallView: View {
     private var selectedProduct: Product? { model.pro.product(selected) }
 
     private var purchaseButton: some View {
-        Button(buying ? "处理中…" : callToAction) { Task { await buy() } }
+        Button(buying ? String(localized: "处理中…") : callToAction) { Task { await buy() } }
             .buttonStyle(PrimaryButtonStyle())
             .disabled(buying || selectedProduct == nil)
             .opacity(selectedProduct == nil ? 0.35 : 1)
@@ -205,13 +205,13 @@ struct PaywallView: View {
     }
 
     private var callToAction: String {
-        guard let product = selectedProduct else { return model.pro.loadError == nil ? "正在获取价格…" : "继续" }
+        guard let product = selectedProduct else { return model.pro.loadError == nil ? String(localized: "正在获取价格…") : String(localized: "继续") }
         switch selected {
         case ProStore.yearly:
-            if let days = model.pro.availableTrialDays { return "免费试用 \(days) 天" }
-            return "订阅 · \(product.displayPrice)/年"
-        case ProStore.monthly: return "订阅 · \(product.displayPrice)/月"
-        default: return "买断 · \(product.displayPrice)"
+            if let days = model.pro.availableTrialDays { return String(localized: "免费试用 \(days) 天") }
+            return String(localized: "订阅 · \(product.displayPrice)/年")
+        case ProStore.monthly: return String(localized: "订阅 · \(product.displayPrice)/月")
+        default: return String(localized: "买断 · \(product.displayPrice)")
         }
     }
 
@@ -233,7 +233,7 @@ struct PaywallView: View {
             } else if let product = selectedProduct {
                 Text(terms(for: product))
             } else {
-                Text(" ")
+                Text(verbatim: " ")
             }
         }
         .font(.system(size: 12.5))
@@ -246,13 +246,13 @@ struct PaywallView: View {
         switch selected {
         case ProStore.yearly:
             if let days = model.pro.availableTrialDays {
-                return "今天不扣费，\(days) 天试用结束前 24 小时取消就不花钱。之后 \(product.displayPrice)/年，自动续期。"
+                return String(localized: "今天不扣费，\(days) 天试用结束前 24 小时取消就不花钱。之后 \(product.displayPrice)/年，自动续期。")
             }
-            return "\(product.displayPrice)/年，自动续期，到期前 24 小时取消就不再续费。"
+            return String(localized: "\(product.displayPrice)/年，自动续期，到期前 24 小时取消就不再续费。")
         case ProStore.monthly:
-            return "\(product.displayPrice)/月，自动续期，到期前 24 小时取消就不再续费。"
+            return String(localized: "\(product.displayPrice)/月，自动续期，到期前 24 小时取消就不再续费。")
         default:
-            return "只付一次 \(product.displayPrice)，一直能用，不会续费。"
+            return String(localized: "只付一次 \(product.displayPrice)，一直能用，不会续费。")
         }
     }
 
@@ -276,14 +276,14 @@ struct PaywallView: View {
         do {
             if try await model.pro.purchase(product) { dismiss() }
         } catch {
-            message = "没能完成购买：\(error.localizedDescription)"
+            message = String(localized: "没能完成购买：\(error.localizedDescription)")
         }
     }
 
     private func restore() async {
         message = nil
         await model.pro.restore()
-        if model.pro.isPro { dismiss() } else { message = "这个 Apple 账户下没有找到可以恢复的购买" }
+        if model.pro.isPro { dismiss() } else { message = String(localized: "这个 Apple 账户下没有找到可以恢复的购买") }
     }
 }
 
@@ -319,26 +319,26 @@ enum ProPerk: String, CaseIterable {
 
     var label: String {
         switch self {
-        case .projects: "个项目"
-        case .history: "天走势"
-        case .widgets: "款小组件"
+        case .projects: String(localized: "个项目", comment: "Paywall row after an infinity sign: unlimited projects.")
+        case .history: String(localized: "天走势", comment: "Paywall row after a big 30: 30 days of history charts.")
+        case .widgets: String(localized: "款小组件", comment: "Paywall row after a big 4: four widgets.")
         }
     }
 
     /// What the free version gives instead.
     var note: String {
         switch self {
-        case .projects: "免费版最多 \(AppModel.freeProjectLimit) 个"
-        case .history: "免费版看 7 天"
-        case .widgets: "桌面、锁屏各 2 款，免费版没有"
+        case .projects: String(localized: "免费版最多 \(AppModel.freeProjectLimit) 个", comment: "Projects in the free version.")
+        case .history: String(localized: "免费版看 7 天")
+        case .widgets: String(localized: "桌面、锁屏各 2 款，免费版没有")
         }
     }
 
     var spoken: String {
         switch self {
-        case .projects: "项目不限"
-        case .history: "30 天走势"
-        case .widgets: "4 款小组件"
+        case .projects: String(localized: "项目不限")
+        case .history: String(localized: "30 天走势")
+        case .widgets: String(localized: "4 款小组件")
         }
     }
 }

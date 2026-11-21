@@ -23,13 +23,13 @@ public enum SourceError: Error, Equatable, Sendable, LocalizedError {
 
     public var errorDescription: String? {
         switch self {
-        case .missingCredential(let p): "\(p.displayName) 还没有登录"
-        case .unauthorized(let p): "\(p.displayName) 的登录已失效，请重新连接"
-        case .forbidden(let p, let detail): "\(p.displayName) 拒绝了请求：\(detail)"
-        case .rateLimited(let p): "\(p.displayName) 请求太频繁，稍后再试"
-        case .http(let p, let code, let detail): "\(p.displayName) 返回 \(code)：\(detail)"
-        case .network(let p, let detail): "连不上 \(p.displayName)：\(detail)"
-        case .invalidResponse(let p, let detail): "\(p.displayName) 返回了看不懂的数据：\(detail)"
+        case .missingCredential(let p): String(localized: "\(p.displayName) 还没有登录", bundle: .module)
+        case .unauthorized(let p): String(localized: "\(p.displayName) 的登录已失效，请重新连接", bundle: .module)
+        case .forbidden(let p, let detail): String(localized: "\(p.displayName) 拒绝了请求：\(detail)", bundle: .module)
+        case .rateLimited(let p): String(localized: "\(p.displayName) 请求太频繁，稍后再试", bundle: .module)
+        case .http(let p, let code, let detail): String(localized: "\(p.displayName) 返回 \(String(code))：\(detail)", bundle: .module)
+        case .network(let p, let detail): String(localized: "连不上 \(p.displayName)：\(detail)", bundle: .module)
+        case .invalidResponse(let p, let detail): String(localized: "\(p.displayName) 返回了看不懂的数据：\(detail)", bundle: .module)
         case .invalidKey(let detail): detail
         }
     }
@@ -54,7 +54,7 @@ public struct HTTPClient: Sendable {
             throw SourceError.network(platform, error.localizedDescription)
         }
         guard let http = response as? HTTPURLResponse else {
-            throw SourceError.invalidResponse(platform, "没有 HTTP 响应")
+            throw SourceError.invalidResponse(platform, "no HTTP response")
         }
         switch http.statusCode {
         case 200..<300:
@@ -92,7 +92,7 @@ public struct HTTPClient: Sendable {
             }
         }
         let text = String(decoding: data.prefix(160), as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-        return text.isEmpty ? "没有说明" : text
+        return text.isEmpty ? String(localized: "没有说明", bundle: .module) : text
     }
 }
 

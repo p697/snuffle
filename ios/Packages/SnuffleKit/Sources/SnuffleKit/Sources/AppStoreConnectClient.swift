@@ -25,7 +25,7 @@ public struct AppStoreConnectToken: Sendable {
         do {
             key = try P256.Signing.PrivateKey(pemRepresentation: privateKeyPEM.trimmingCharacters(in: .whitespacesAndNewlines))
         } catch {
-            throw SourceError.invalidKey("这不是有效的 .p8 密钥文件内容")
+            throw SourceError.invalidKey(String(localized: "这不是有效的 .p8 密钥文件内容", bundle: .module))
         }
     }
 
@@ -121,7 +121,7 @@ public enum AppStoreParsing {
                 AppStoreApp(id: $0.id, name: $0.attributes.name, bundleId: $0.attributes.bundleId)
             }
         } catch {
-            throw SourceError.invalidResponse(.appStore, "应用列表")
+            throw SourceError.invalidResponse(.appStore, "apps")
         }
     }
 
@@ -160,7 +160,7 @@ public enum AppStoreParsing {
         do {
             page = try JSONDecoder().decode(Page.self, from: data)
         } catch {
-            throw SourceError.invalidResponse(.appStore, "评论列表")
+            throw SourceError.invalidResponse(.appStore, "reviews")
         }
         let responses = Dictionary((page.included ?? []).filter { $0.type == "customerReviewResponses" }.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         return page.data.compactMap { item in
