@@ -1,7 +1,8 @@
 import SnuffleKit
 import SwiftUI
 
-/// Writing a public reply. "帮我起草" asks the model for a draft in the reviewer's language with a Chinese rendering (Pro).
+/// Writing a public reply. "帮我起草" asks the model for a draft in the reviewer's language with a Chinese rendering
+/// (Pro; hidden while `Feature.replyDrafts` is off).
 struct ReplyView: View {
     var review: Review
     @Environment(AppModel.self) private var model
@@ -87,22 +88,7 @@ struct ReplyView: View {
             HStack {
                 SectionLabel("你的回复")
                 Spacer()
-                Button {
-                    Task { await makeDraft() }
-                } label: {
-                    HStack(spacing: 6) {
-                        if drafting { ProgressView().controlSize(.small) }
-                        Text(drafting ? "起草中…" : "帮我起草")
-                        if !model.pro.isPro && !model.settings.demoMode {
-                            Text("Pro").font(.system(size: 11, weight: .heavy)).padding(.horizontal, 6).padding(.vertical, 1).background(Palette.ink, in: Capsule()).foregroundStyle(Palette.paper)
-                        }
-                    }
-                    .font(.system(size: 14, weight: .bold))
-                    .frame(minHeight: 44)
-                }
-                .buttonStyle(.plain)
-                .disabled(drafting)
-                .accessibilityIdentifier("draftReply")
+                if Feature.replyDrafts { draftButton }
             }
             TextEditor(text: $text)
                 .font(.system(size: 15))
@@ -117,6 +103,25 @@ struct ReplyView: View {
                 .foregroundStyle(text.count > (review.platform == .appStore ? 5970 : 350) ? Palette.bad : Palette.ink2)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
+    }
+
+    private var draftButton: some View {
+        Button {
+            Task { await makeDraft() }
+        } label: {
+            HStack(spacing: 6) {
+                if drafting { ProgressView().controlSize(.small) }
+                Text(drafting ? "起草中…" : "帮我起草")
+                if !model.pro.isPro && !model.settings.demoMode {
+                    Text("Pro").font(.system(size: 11, weight: .heavy)).padding(.horizontal, 6).padding(.vertical, 1).background(Palette.ink, in: Capsule()).foregroundStyle(Palette.paper)
+                }
+            }
+            .font(.system(size: 14, weight: .bold))
+            .frame(minHeight: 44)
+        }
+        .buttonStyle(.plain)
+        .disabled(drafting)
+        .accessibilityIdentifier("draftReply")
     }
 
     private func makeDraft() async {

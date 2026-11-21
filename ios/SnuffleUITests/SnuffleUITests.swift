@@ -58,7 +58,7 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["refreshStatus"].label.contains("今天第 2 次"))
     }
 
-    func testTabsAndReplyDraft() {
+    func testTabsAndReply() {
         let app = launch()
         refresh(app)
         app.buttons["tab-收入"].tap()
@@ -69,9 +69,12 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(reply.waitForExistence(timeout: 5))
         attach(app, name: "reviews")
         reply.tap()
-        app.buttons["draftReply"].tap()
-        XCTAssertTrue(app.staticTexts["中文对照 · 示例草稿"].waitForExistence(timeout: 5))
-        attach(app, name: "reply-draft")
+        // Drafting is hidden (Feature.replyDrafts), so the reply is written by hand.
+        XCTAssertFalse(app.buttons["draftReply"].exists)
+        let field = app.textViews["replyText"]
+        field.tap()
+        field.typeText("Thanks for the review!")
+        attach(app, name: "reply")
         app.buttons["publishReply"].tap()
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH '发布到'")).firstMatch.tap()
         // An answered review leaves the to-answer list; it shows its reply under 全部.
