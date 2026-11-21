@@ -29,6 +29,10 @@ final class ProStoreTests: XCTestCase {
         XCTAssertEqual(yearly.subscription?.introductoryOffer?.paymentMode, .freeTrial)
         XCTAssertEqual(store.product(ProStore.monthly)?.displayPrice, "$1.99")
         XCTAssertEqual(store.product(ProStore.lifetime)?.displayPrice, "$29.99")
+        XCTAssertEqual(store.trialDays, 7, "the trial length comes from the product, not the UI")
+        XCTAssertTrue(store.trialEligible)
+        XCTAssertEqual(store.availableTrialDays, 7)
+        XCTAssertEqual(store.monthlyEquivalent(of: yearly), "$1.67")
 
         let bought = try await store.purchase(yearly)
         XCTAssertTrue(bought)
@@ -51,6 +55,8 @@ final class ProStoreTests: XCTestCase {
         try session.expireSubscription(productIdentifier: ProStore.yearly)
         await Self.waitUntilNotPro(store)
         XCTAssertFalse(store.isPro, "an expired subscription takes Pro away")
+        XCTAssertFalse(store.trialEligible, "the trial is offered once per Apple account")
+        XCTAssertNil(store.availableTrialDays)
     }
 
     func testLifetimePurchaseIsPro() async throws {

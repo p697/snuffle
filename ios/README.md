@@ -9,6 +9,8 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
 - `Snuffle/` — the app. `App/AppModel.swift` owns state and the refresh choreography; `Design/` holds the odometer,
   the cat and the refresh button; one folder per tab.
 - `SnuffleWidgets/` — home and lock screen widgets with an in-widget refresh button.
+- `Shared/` — compiled into both the app and the widgets: the widget data (`TodayEntry`) and faces, so the
+  paywall's widget preview is drawn by the same code as the real widget.
 - `SnuffleUITests/` — end-to-end tests in demo mode.
 - `scripts/render-icon.swift` — draws the app icons from the design's geometry.
 

@@ -7,7 +7,8 @@ enum Feature {
     /// "帮我起草" (AI-drafted review replies). Off so the app can ship in mainland China, where generative AI
     /// features need their own filing. With it off nothing reaches Snuffle's server. Turning it back on also means
     /// restoring the collected data types in PrivacyInfo.xcprivacy, the drafting sections of site/public/privacy
-    /// and terms, the App Store privacy answers, and the Pro copy in App Store Connect.
+    /// and terms, the App Store privacy answers, the Pro copy in App Store Connect, and a drafting page in
+    /// `PaywallPage` (its `.drafts` reason opens on the widgets for now).
     static let replyDrafts = false
 }
 
