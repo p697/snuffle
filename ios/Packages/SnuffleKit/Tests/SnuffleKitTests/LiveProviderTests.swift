@@ -85,6 +85,22 @@ struct LiveProviderTests {
         #expect(!StubProtocol.seen.contains { $0.url?.path() == "/api/organizations/org-a/" }, "the current organization is not read twice")
     }
 
+    @Test func historyTakesDailyRevenueFromRevenueCatCharts() async throws {
+        // The shape the Charts API really returns: one row per day and measure (0 = revenue, 1 = transactions).
+        StubProtocol.reset([
+            "api.revenuecat.com/v2/projects/proj1/charts/revenue": (200, #"{"object":"chart_data","measures":[{"display_name":"Revenue"},{"display_name":"Transactions"}],"values":[{"cohort":1795046400,"incomplete":false,"measure":0,"value":0},{"cohort":1795046400,"incomplete":false,"measure":1,"value":0},{"cohort":1795132800,"incomplete":false,"measure":0,"value":3.28},{"cohort":1795132800,"incomplete":false,"measure":1,"value":1},{"cohort":1795219200,"incomplete":true,"measure":0,"value":null},{"cohort":1795219200,"incomplete":true,"measure":1,"value":0}]}"#)
+        ])
+        var revenueOnly = project
+        revenueOnly.posthog = nil
+        let points = try await provider(store: store).history(for: revenueOnly, days: 3)
+        let clock = ProjectClock(now: ISO8601.parse("2026-11-20T01:30:00Z")!, timeZoneIdentifier: "UTC")
+        #expect(points.map { clock.dayKey($0.day) } == ["2026-11-18", "2026-11-19", "2026-11-20"])
+        #expect(points.map(\.revenue) == [0, 0, 3.28], "11-19 is 0, 11-20 has the 3.28 renewal, 11-21 is outside the range")
+        #expect(points.allSatisfy { $0.newUsers == nil })
+        let request = try #require(StubProtocol.seen.first?.url?.absoluteString)
+        #expect(request.contains("resolution=0") && request.contains("currency=USD") && request.contains("start_date=2026-11-16"))
+    }
+
     @Test func combinesSourcesIntoOneSnapshot() async throws {
         // 01:30 UTC: two hour columns after the two fixed ones.
         StubProtocol.reset([

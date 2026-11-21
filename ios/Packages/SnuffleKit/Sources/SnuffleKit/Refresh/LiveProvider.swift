@@ -196,6 +196,24 @@ public struct LiveProvider: DataProvider {
     }
 
     public func history(for project: Project, days: Int) async throws -> [DailyPoint] {
+        async let posthogPoints = posthogHistory(for: project, days: days)
+        async let revenueByDay = revenueCatHistory(for: project, days: days)
+        let revenue = await revenueByDay
+        var points = try await posthogPoints
+        guard let revenue else { return points }
+        // RevenueCat reports by UTC date; days are matched by calendar date, as the 收入 tile says "(UTC)".
+        let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone ?? "UTC")
+        if points.isEmpty {
+            points = clock.dayStarts(days: days).map { DailyPoint(day: $0, newUsers: nil, revenue: nil, active: nil) }
+        }
+        return points.map { point in
+            var point = point
+            point.revenue = revenue[clock.dayKey(point.day)] ?? 0
+            return point
+        }
+    }
+
+    private func posthogHistory(for project: Project, days: Int) async throws -> [DailyPoint] {
         guard let link = project.posthog else { return [] }
         let clock = ProjectClock(now: now(), timeZoneIdentifier: link.timeZone)
         let metrics = project.metrics
@@ -209,6 +227,15 @@ public struct LiveProvider: DataProvider {
         }
         let hasEventRevenue: Bool = if case .posthogEvent = metrics.revenue { true } else { false }
         return PostHogParsing.history(rows, firstSeen: firstSeen, clock: clock, days: days, hasRevenue: hasEventRevenue)
+    }
+
+    /// Daily RevenueCat revenue for projects that take revenue from it; nil when not used or unavailable, so the
+    /// chart simply leaves revenue out rather than failing the whole history.
+    private func revenueCatHistory(for project: Project, days: Int) async -> [String: Double]? {
+        guard let link = project.revenueCat, project.metrics.revenue == .revenueCat else { return nil }
+        let today = now()
+        let from = RevenueCatClient.utcDate(today.addingTimeInterval(-Double(days + 1) * 86_400))
+        return try? await revenueCat(link.accountId).dailyRevenue(projectId: link.projectId, from: from, to: RevenueCatClient.utcDate(today))
     }
 
     public func reply(to review: Review, text: String, in project: Project) async throws {
