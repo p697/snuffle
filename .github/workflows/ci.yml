@@ -1,0 +1,105 @@
+name: CI
+
+# Required on main, together with "branch must be up to date": a PR merges only after its checks
+# pass against the current main. Only the parts a PR touches run; the `ci` job reports the result.
+on:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      server: ${{ steps.filter.outputs.server }}
+      ios: ${{ steps.filter.outputs.ios }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            server: ["server/**", "site/**", ".github/workflows/ci.yml"]
+            ios: ["ios/**", ".github/workflows/ci.yml"]
+
+  server:
+    needs: changes
+    if: needs.changes.outputs.server == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: server/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: server/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - name: Tests in the Workers runtime, with a local D1 and the real migration
+        run: pnpm test
+      - name: Bundle the Worker and the site
+        run: pnpm exec wrangler deploy --dry-run --outdir dist
+
+  # Same toolchain as development: Xcode 26.6's compiler crashes on this code (Swift frontend fatal error).
+  kit:
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "27.2"
+      - name: SnuffleKit tests
+        working-directory: ios/Packages/SnuffleKit
+        run: swift test
+
+  app:
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
+    runs-on: xcode-27
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "27.2"
+      - name: Build the app and widgets
+        working-directory: ios
+        # One simulator architecture (the runner's arm64) instead of a universal build; no index store.
+        run: |
+          set -o pipefail
+          brew install xcodegen
+          xcodegen generate
+          xcodebuild build -project Snuffle.xcodeproj -scheme Snuffle \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build/dd \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=YES COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGNING_ALLOWED=NO > build.log 2>&1 \
+            || { grep -n -E "error|Error|failed" build.log | sort -u | head -80 || true; tail -40 build.log; exit 1; }
+          tail -3 build.log
+
+  ci:
+    needs: [changes, server, kit, app]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Every job that ran passed
+        run: |
+          echo "${{ join(needs.*.result, ' ') }}"
+          for result in ${{ join(needs.*.result, ' ') }}; do
+            case "$result" in success | skipped) ;; *) exit 1 ;; esac
+          done
