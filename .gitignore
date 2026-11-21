@@ -1,0 +1,28 @@
+.DS_Store
+.claude/scheduled_tasks.lock
+.claude/launch.json
+.agent-scratch/
+
+# Xcode
+ios/*.xcodeproj
+ios/build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# Node
+node_modules/
+.env
+.env.*
+!.env.example
+
+# SwiftPM
+.build/
+
+# Per-machine app config
+ios/Config/Local.xcconfig
+
+# Wrangler local state and secrets
+.wrangler/
+.dev.vars*
+server/dist/

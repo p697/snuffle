@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Snuffle 隐私政策</title>
+<link rel="icon" href="/favicon.png">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <p><a href="/">← Snuffle</a></p>
+  <h1>隐私政策</h1>
+  <p class="updated">更新于 2026 年 11 月 21 日</p>
+
+  <h2>一句话</h2>
+  <p>你连接的账号、密钥和读到的数据都留在你的 iPhone 上。只有你点“帮我起草”时，那一条评论会发到我们的服务器和模型供应商，用来写草稿，我们不保存评论正文。</p>
+
+  <h2>留在你手机上的东西</h2>
+  <ul>
+    <li>PostHog、RevenueCat、App Store Connect、Google Play 的登录凭据和密钥，存放在 iPhone 钥匙串里。</li>
+    <li>新增用户、收入、订单、评论等数据，由 App 从手机直接请求这些平台读取，缓存在手机里，供 App 和桌面小组件显示。</li>
+    <li>回复评论时，App 从手机直接把你写的回复发到 App Store 或 Google Play。</li>
+  </ul>
+  <p>这些数据不会发送给 Snuffle 的服务器。删除 App 或在 App 里移除账号，就会删除对应的数据和密钥。</p>
+
+  <h2>起草回复时发送的内容</h2>
+  <p>当你点“帮我起草”时，App 会把以下内容发送到 Snuffle 的服务器（运行在 Cloudflare 上，数据库为 Cloudflare D1），再由服务器转给当前使用的模型供应商（OpenAI、Anthropic、DeepSeek、阿里云百炼或 OpenRouter 之一）生成草稿：</p>
+  <ul>
+    <li>这条评论的标题、正文、星级、评论者昵称、地区或语言；</li>
+    <li>你的 App 名称、你选择的语气和署名；</li>
+    <li>你的 App Store 购买凭证，用来确认你订阅了 Pro。</li>
+  </ul>
+  <p>我们不保存评论正文和草稿内容。为了计费、防止滥用和排查问题，我们会记录每次请求的时间、星级、语言、正文长度、用到的模型、消耗的 token 数和费用。模型供应商按各自的政策处理收到的内容。</p>
+
+  <h2>账号</h2>
+  <p>Snuffle 没有账号。使用起草功能时，App 会附上一个只保存在这台 iPhone 上的随机安装标识，用来区分设备和计算每日用量，不需要你的姓名、邮箱或手机号。</p>
+
+  <h2>购买</h2>
+  <p>订阅和买断通过 Apple 完成，我们拿不到你的付款信息。我们会保存购买的交易编号、产品、到期时间，用来确认 Pro 是否有效，并限制同一笔购买在过多设备上使用。</p>
+
+  <h2>不做的事</h2>
+  <ul>
+    <li>App 里没有广告，也没有第三方分析或追踪 SDK。</li>
+    <li>我们不出售、不出租、不共享你的数据。</li>
+  </ul>
+
+  <h2>删除</h2>
+  <p>如果你想删除服务器上的请求记录和购买记录，请写信给我们，附上大概的使用时间，或 Apple 发给你的购买收据上的订单号，我们会在 30 天内删除。</p>
+
+  <h2>联系</h2>
+  <p>support@snuffle.ai</p>
+  <footer>
+    <a href="/">首页</a>
+    <a href="/terms/">使用条款</a>
+  </footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,4 @@
+// Values the app reads at runtime through Info.plist. Secrets never go here.
+// Local.xcconfig (ignored by git) can point SNUFFLE_API_URL at another deployment.
+SNUFFLE_API_URL = https:/$()/snuffle.ai
+SNUFFLE_GOOGLE_CLIENT_ID =

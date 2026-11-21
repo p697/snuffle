@@ -1,0 +1,138 @@
+name: Snuffle
+options:
+  bundleIdPrefix: ai.snuffle
+  deploymentTarget:
+    iOS: "18.0"
+  developmentLanguage: zh-Hans
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    DEVELOPMENT_TEAM: C8TM82D73W
+    CODE_SIGN_STYLE: Automatic
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Release: Config/Release.xcconfig
+
+packages:
+  SnuffleKit:
+    path: Packages/SnuffleKit
+
+targets:
+  Snuffle:
+    type: application
+    platform: iOS
+    sources:
+      - path: Snuffle
+    dependencies:
+      - package: SnuffleKit
+      - target: SnuffleWidgets
+        embed: true
+    entitlements:
+      path: Snuffle/Snuffle.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.ai.snuffle.app
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)ai.snuffle.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.snuffle.app
+        PRODUCT_NAME: Snuffle
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "1"
+        SUPPORTS_MACCATALYST: NO
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Snuffle
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.developer-tools
+        INFOPLIST_FILE: Snuffle/Info.plist
+
+  SnuffleWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: SnuffleWidgets
+    dependencies:
+      - package: SnuffleKit
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    entitlements:
+      path: SnuffleWidgets/SnuffleWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.ai.snuffle.app
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)ai.snuffle.shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.snuffle.app.widgets
+        PRODUCT_NAME: SnuffleWidgets
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Snuffle
+        INFOPLIST_FILE: SnuffleWidgets/Info.plist
+        SKIP_INSTALL: YES
+
+  SnuffleTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SnuffleTests
+      - path: Snuffle/Products.storekit
+        buildPhase: resources
+    dependencies:
+      - target: Snuffle
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.snuffle.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Snuffle.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Snuffle
+        BUNDLE_LOADER: $(TEST_HOST)
+
+  SnuffleUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: SnuffleUITests
+    dependencies:
+      - target: Snuffle
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.snuffle.app.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: Snuffle
+        SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+
+schemes:
+  Snuffle:
+    build:
+      targets:
+        Snuffle: all
+        SnuffleTests: [test]
+        SnuffleUITests: [test]
+    run:
+      config: Debug
+      storeKitConfiguration: Snuffle/Products.storekit
+    test:
+      config: Debug
+      targets:
+        - SnuffleTests
+        - SnuffleUITests
+      gatherCoverageData: false
+    archive:
+      config: Release
