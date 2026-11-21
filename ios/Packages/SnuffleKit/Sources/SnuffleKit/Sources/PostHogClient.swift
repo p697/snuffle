@@ -139,8 +139,9 @@ public enum PostHogQueries {
         }
         switch metrics.extra {
         case .installs:
-            events.append("Application Installed")
-            columns.append("countIf(event = 'Application Installed' AND timestamp >= fromUnixTimestamp(\(today))) AS extra")
+            let install = literal(MetricSettings.installEvent)
+            events.append(MetricSettings.installEvent)
+            columns.append("countIf(event = \(install) AND timestamp >= fromUnixTimestamp(\(today))) AS extra")
         case .event(let name, _):
             events.append(name)
             columns.append("countIf(event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today))) AS extra")
@@ -156,16 +157,33 @@ public enum PostHogQueries {
         return "SELECT \(columns.joined(separator: ", ")) FROM events WHERE timestamp >= fromUnixTimestamp(\(yesterday)) AND event IN (\(eventList))"
     }
 
-    /// People seen for the first time, for projects that count new users that way.
+    /// Which of these events the project sent since `since`, to choose defaults when a project is added.
+    public static func eventsSeen(_ names: [String], since: Date) -> String {
+        let list = names.map(literal).joined(separator: ", ")
+        return "SELECT DISTINCT event FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(since))) AND event IN (\(list))"
+    }
+
+    /// How far back a person must be unseen to count as new. Bounds every first-seen query to this window plus the
+    /// days shown, so its cost follows the project's monthly event volume, not its whole history.
+    public static let firstSeenLookbackDays = 30
+
+    /// Each person's first event within the lookback, for `firstSeen` and `firstSeenHistory`. Based on events, not the
+    /// persons table: projects that send anonymous events (no person profiles) still have new people.
+    static func firstEvents(since start: Date) -> String {
+        let lookback = seconds(start) - firstSeenLookbackDays * 86_400
+        return "(SELECT person_id, min(timestamp) AS first FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback)) GROUP BY person_id)"
+    }
+
+    /// People seen for the first time (not in the previous 30 days), for projects that count new users that way.
     public static func firstSeen(clock: ProjectClock) -> String {
         let today = seconds(clock.todayStart)
         let yesterday = seconds(clock.yesterdayStart)
         let yesterdayNow = seconds(clock.sameTimeYesterday)
         let columns = [
-            "countIf(created_at >= fromUnixTimestamp(\(today))) AS new_today",
-            "countIf(created_at >= fromUnixTimestamp(\(yesterday)) AND created_at < fromUnixTimestamp(\(yesterdayNow))) AS new_yesterday"
-        ] + hourColumns("1 = 1", column: "created_at", clock: clock)
-        return "SELECT \(columns.joined(separator: ", ")) FROM persons WHERE created_at >= fromUnixTimestamp(\(yesterday))"
+            "countIf(first >= fromUnixTimestamp(\(today))) AS new_today",
+            "countIf(first >= fromUnixTimestamp(\(yesterday)) AND first < fromUnixTimestamp(\(yesterdayNow))) AS new_yesterday"
+        ] + hourColumns("1 = 1", column: "first", clock: clock)
+        return "SELECT \(columns.joined(separator: ", ")) FROM \(firstEvents(since: clock.yesterdayStart)) WHERE first >= fromUnixTimestamp(\(yesterday))"
     }
 
     /// People active in the last minute and people active today.
@@ -203,9 +221,9 @@ public enum PostHogQueries {
 
     /// Per-day first-seen people, used when new users are counted that way.
     public static func firstSeenHistory(clock: ProjectClock, days: Int) -> String {
-        let start = seconds(clock.historyStart(days: days))
-        return "SELECT toString(toStartOfDay(created_at)) AS day, count() AS new_users FROM persons "
-            + "WHERE created_at >= fromUnixTimestamp(\(start)) GROUP BY day ORDER BY day"
+        let start = clock.historyStart(days: days)
+        return "SELECT toString(toStartOfDay(first)) AS day, count() AS new_users FROM \(firstEvents(since: start)) "
+            + "WHERE first >= fromUnixTimestamp(\(seconds(start))) GROUP BY day ORDER BY day"
     }
 
     /// Readable product name from the order row's property columns.
@@ -228,6 +246,14 @@ public enum PostHogQueries {
 
 /// Turns query rows into the pieces of a snapshot.
 public enum PostHogParsing {
+    /// The event names returned by `PostHogQueries.eventsSeen`.
+    public static func eventNames(_ rows: [[JSONValue]]) -> Set<String> {
+        Set(rows.compactMap { row in
+            if case .string(let name)? = row.first { return name }
+            return nil
+        })
+    }
+
     public struct Counts: Equatable, Sendable {
         public var newToday: Int?
         public var newYesterday: Int?
