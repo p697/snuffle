@@ -197,7 +197,7 @@ struct ProjectDetailView: View {
                 ForEach(project.platforms) { platform in
                     let failure = snapshot?.failures.first { $0.platform == platform }
                     HStack(spacing: 12) {
-                        PlatformMark(platform: platform)
+                        PlatformLogo(platform: platform, size: 32)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(platform.displayName).font(.system(size: 15, weight: .semibold))
                             Text(failure?.message ?? detail(platform))

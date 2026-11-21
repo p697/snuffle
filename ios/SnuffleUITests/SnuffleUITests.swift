@@ -45,7 +45,9 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(leave.waitForExistence(timeout: 5))
         attach(app, name: "demo-settings")
         leave.tap()
-        XCTAssertTrue(app.buttons["startConnecting"].waitForExistence(timeout: 5))
+        let welcome = app.buttons["startConnecting"].waitForExistence(timeout: 5)
+        attach(app, name: "after-leaving-demo")
+        XCTAssertTrue(welcome)
     }
 
     func testRefreshCountsAndShowsCards() {
@@ -97,7 +99,7 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '你的回复'")).firstMatch.waitForExistence(timeout: 5))
         attach(app, name: "reviews-replied")
         app.buttons["tab-项目"].tap()
-        let row = app.collectionViews.cells.containing(.staticText, identifier: "Pocket Ferry").firstMatch
+        let row = app.buttons["projectRow-Pocket Ferry"]
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
         XCTAssertTrue(app.staticTexts["数据来自"].waitForExistence(timeout: 5))
@@ -169,14 +171,14 @@ final class SnuffleUITests: XCTestCase {
         app.buttons["startConnecting"].tap()
         app.buttons["connect-appStore"].tap()
 
-        let keyField = app.textFields["密钥 ID，例如 2X9R4HXF34"]
+        let keyField = app.textFields["ascKeyId"]
         XCTAssertTrue(keyField.waitForExistence(timeout: 5))
         keyField.tap()
         keyField.typeText(keyId)
-        let issuerField = app.textFields["Issuer ID"]
+        let issuerField = app.textFields["ascIssuerId"]
         issuerField.tap()
         issuerField.typeText(issuer)
-        let pemField = app.textViews.firstMatch.exists ? app.textViews.firstMatch : app.textFields["或者直接粘贴 .p8 文件内容"]
+        let pemField = app.textViews["ascPem"].exists ? app.textViews["ascPem"] : app.textFields["ascPem"]
         pemField.tap()
         UIPasteboard.general.string = pem
         pemField.press(forDuration: 1.2)
@@ -184,14 +186,20 @@ final class SnuffleUITests: XCTestCase {
         if paste.waitForExistence(timeout: 3) { paste.tap() } else { pemField.typeText(pem) }
         if app.buttons["允许粘贴"].waitForExistence(timeout: 2) { app.buttons["允许粘贴"].tap() }
 
+        attach(app, name: "live-asc-filled")
         app.buttons["导入并读取 App 列表"].tap()
-        let appRow = app.buttons.containing(.staticText, identifier: appName).firstMatch
-        XCTAssertTrue(appRow.waitForExistence(timeout: 20), "app list did not load")
+        let appRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", appName)).firstMatch
+        let listed = appRow.waitForExistence(timeout: 20)
         attach(app, name: "live-asc-apps")
+        XCTAssertTrue(listed, "app list did not load")
         appRow.tap()
 
-        XCTAssertTrue(app.staticTexts["已连接 · \(appName)"].waitForExistence(timeout: 5))
-        app.buttons["下一步"].tap()
+        // Right after linking: the reviews waiting for a reply, then the summary with today's card.
+        XCTAssertTrue(app.staticTexts["App Store 连上了"].waitForExistence(timeout: 10))
+        attach(app, name: "live-asc-done")
+        app.buttons["continue"].tap()
+        XCTAssertTrue(app.buttons["finishProject"].waitForExistence(timeout: 5))
+        attach(app, name: "live-asc-connected")
         app.buttons["finishProject"].tap()
 
         // A store-only project shows reviews to answer as its big number, described underneath.
@@ -203,6 +211,49 @@ final class SnuffleUITests: XCTestCase {
         app.buttons["tab-评论"].tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'reply-'")).firstMatch.waitForExistence(timeout: 5))
         attach(app, name: "live-asc-reviews")
+    }
+
+    /// The connect flow and the project and settings pages, without signing in anywhere.
+    func testConnectFlowAndManagementPages() {
+        var app = XCUIApplication()
+        app.launchArguments = ["-resetState"]
+        app.launch()
+        app.buttons["startConnecting"].tap()
+        XCTAssertTrue(app.buttons["posthogSignIn"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["startDemo"].exists)
+        attach(app, name: "connect-start")
+        app.buttons["connect-revenueCat"].tap()
+        XCTAssertTrue(app.staticTexts["连接 RevenueCat"].waitForExistence(timeout: 5))
+        attach(app, name: "connect-revenuecat")
+        app.buttons["返回"].tap()
+        app.buttons["connect-appStore"].tap()
+        XCTAssertTrue(app.staticTexts["连接 App Store"].waitForExistence(timeout: 5))
+        attach(app, name: "connect-appstore")
+        app.buttons["返回"].tap()
+        app.buttons["startDemo"].tap()
+        XCTAssertTrue(app.staticTexts["今日"].waitForExistence(timeout: 5))
+
+        app = XCUIApplication()
+        app.launchArguments = ["-resetState", "-sampleWorkspace"]
+        app.launch()
+        app.buttons["设置"].tap()
+        XCTAssertTrue(app.buttons["upgradePro"].waitForExistence(timeout: 5))
+        attach(app, name: "settings")
+        app.buttons["完成"].tap()
+        app.buttons["tab-项目"].tap()
+        let row = app.buttons["projectRow-Lumen Notes"]
+        XCTAssertTrue(row.waitForExistence(timeout: 5))
+        attach(app, name: "projects")
+        app.buttons["accounts"].tap()
+        XCTAssertTrue(app.staticTexts["已登录的账号"].waitForExistence(timeout: 5))
+        attach(app, name: "accounts")
+        app.buttons["返回"].tap()
+        row.tap()
+        app.buttons["编辑"].tap()
+        XCTAssertTrue(app.buttons["projectIcon"].waitForExistence(timeout: 5))
+        attach(app, name: "editor")
+        app.swipeUp()
+        attach(app, name: "editor-metrics")
     }
 
     /// Every tab scrolls its last row clear of the tab bar and the refresh button.
