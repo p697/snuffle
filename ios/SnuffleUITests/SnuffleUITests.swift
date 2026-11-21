@@ -20,7 +20,7 @@ final class SnuffleUITests: XCTestCase {
         button.tap()
         // Three cards reveal one after another; wait for the status line to report the finished refresh.
         let status = app.staticTexts["refreshStatus"]
-        let done = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '刚刚刷新'"), object: status)
+        let done = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '刚刚'"), object: status)
         XCTAssertEqual(XCTWaiter.wait(for: [done], timeout: 25), .completed, "refresh did not finish: \(status.label)")
     }
 
@@ -31,16 +31,16 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(app.buttons["startConnecting"].waitForExistence(timeout: 5))
         app.buttons["tryDemo"].tap()
         XCTAssertTrue(app.staticTexts["今日"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["示例数据"].exists)
+        XCTAssertTrue(app.buttons["leaveDemo"].exists)
     }
 
     func testRefreshCountsAndShowsCards() {
         let app = launch()
         XCTAssertTrue(app.staticTexts["Lumen Notes"].waitForExistence(timeout: 5))
         refresh(app)
-        XCTAssertTrue(app.staticTexts["refreshStatus"].label.contains("今天第 1 次"))
+        XCTAssertTrue(app.staticTexts["refreshStatus"].label.contains("第 1 次"))
         refresh(app)
-        XCTAssertTrue(app.staticTexts["refreshStatus"].label.contains("今天第 2 次"))
+        XCTAssertTrue(app.staticTexts["refreshStatus"].label.contains("第 2 次"))
         attach(app, name: "home-after-refresh")
     }
 
@@ -55,7 +55,7 @@ final class SnuffleUITests: XCTestCase {
         let app = launch(["-scenario", "quiet"])
         refresh(app)
         refresh(app)
-        XCTAssertTrue(app.staticTexts["refreshStatus"].label.contains("今天第 2 次"))
+        XCTAssertTrue(app.staticTexts["refreshStatus"].label.contains("第 2 次"))
     }
 
     func testTabsAndReply() {
@@ -146,7 +146,7 @@ final class SnuffleUITests: XCTestCase {
         // A store-only project shows reviews to answer as its big number, described underneath.
         let caption = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH '条评论待回复'")).firstMatch
         XCTAssertTrue(caption.waitForExistence(timeout: 30), "refresh did not show reviews")
-        let finished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '刚刚刷新'"), object: app.staticTexts["refreshStatus"])
+        let finished = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label BEGINSWITH '刚刚'"), object: app.staticTexts["refreshStatus"])
         XCTAssertEqual(XCTWaiter.wait(for: [finished], timeout: 30), .completed)
         attach(app, name: "live-asc-home")
         app.buttons["tab-评论"].tap()

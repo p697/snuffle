@@ -72,7 +72,7 @@ final class AppModel {
 
     /// Mark stay time chosen with the user: five seconds after the last card lands.
     static let markStay: Duration = .seconds(5)
-    /// The charge ring fills over ten minutes, then the cat flicks an ear: time to refresh again.
+    /// Ten minutes after a refresh the cat starts flicking an ear: time to refresh again.
     static let chargeDuration: TimeInterval = 600
     static let freeProjectLimit = 2
 
