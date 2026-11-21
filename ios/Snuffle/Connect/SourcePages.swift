@@ -106,7 +106,7 @@ private struct KeyField: View {
     }
 }
 
-/// The small print under a form.
+/// The small print under a form. Markdown, so `**bold**` names what to look for.
 private struct FinePrint: View {
     var text: LocalizedStringKey
 
@@ -196,10 +196,11 @@ struct PostHogSignIn: View {
             )
             let code = try PostHogOAuth.code(from: callback, pkce: pkce)
             let token = try await PostHogOAuth.exchange(code: code, pkce: pkce, region: region)
-            try await finish(credential: .posthogOAuth(token), bearer: token.accessToken)
+            try await finish(credential: .posthogOAuth(token), bearer: token.accessToken, method: .oauth)
         } catch let authError as ASWebAuthenticationSessionError where authError.code == .canceledLogin {
-            return
+            session.track(.posthog, .oauth, .cancelled)
         } catch {
+            session.track(.posthog, .oauth, .failed(error))
             self.error = describe(error)
         }
     }
@@ -210,13 +211,14 @@ struct PostHogSignIn: View {
         defer { busy = false }
         let trimmed = key.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
-            try await finish(credential: .posthogPersonalKey(host: region.host.absoluteString, key: trimmed), bearer: trimmed)
+            try await finish(credential: .posthogPersonalKey(host: region.host.absoluteString, key: trimmed), bearer: trimmed, method: .key)
         } catch {
+            session.track(.posthog, .key, .failed(error))
             self.error = describe(error)
         }
     }
 
-    private func finish(credential: Credential, bearer: String) async throws {
+    private func finish(credential: Credential, bearer: String, method: Analytics.ConnectMethod) async throws {
         let result = try await PostHogClient(host: region.host) { bearer }.account()
         let saved = try model.add(
             account: Account(platform: .posthog, title: result.email ?? String(localized: "PostHog 个人密钥"), subtitle: region.label),
@@ -224,6 +226,7 @@ struct PostHogSignIn: View {
         )
         session.postHogAccount = saved
         session.postHogProjects = result.projects
+        session.track(.posthog, method, .succeeded)
         await signedIn()
     }
 
@@ -235,8 +238,10 @@ struct PostHogSignIn: View {
             let (host, token) = try await TokenBroker(store: model.credentials).posthogToken(account.id)
             session.postHogProjects = try await PostHogClient(host: host) { token }.account().projects
             session.postHogAccount = account
+            session.track(.posthog, .saved, .succeeded)
             await signedIn()
         } catch {
+            session.track(.posthog, .saved, .failed(error))
             self.error = describe(error)
         }
     }
@@ -432,8 +437,10 @@ struct RevenueCatConnectPage: View {
                 account: Account(platform: .revenueCat, title: found.map(\.name).formatted(.list(type: .and)).ifEmpty("RevenueCat"), subtitle: String(localized: "密钥 ••••\(String(secret.suffix(4)))")),
                 credential: .revenueCat(secretKey: secret)
             )
+            session.track(.revenueCat, .key, .succeeded)
             use(saved, projects: found)
         } catch {
+            session.track(.revenueCat, .key, .failed(error))
             self.error = describe(error)
         }
     }
@@ -444,8 +451,11 @@ struct RevenueCatConnectPage: View {
         defer { busyAccount = nil }
         do {
             guard case .revenueCat(let secret) = try model.credentials.credential(for: saved.id) else { return }
-            use(saved, projects: try await RevenueCatClient(secretKey: secret).projects())
+            let projects = try await RevenueCatClient(secretKey: secret).projects()
+            session.track(.revenueCat, .saved, .succeeded)
+            use(saved, projects: projects)
         } catch {
+            session.track(.revenueCat, .saved, .failed(error))
             self.error = describe(error)
         }
     }
@@ -467,11 +477,15 @@ struct RevenueCatConnectPage: View {
 
 // MARK: App Store Connect
 
+/// App Store Connect has no sign-in for other apps, so it takes a key file. The default is an individual key from
+/// the person's own profile: the file alone is enough (its name carries the key ID, and individual keys need no
+/// issuer ID). A team key, with its issuer ID, is still accepted.
 struct AppStoreConnectPage: View {
     @Environment(ConnectSession.self) private var session
     @Environment(AppModel.self) private var model
     var linked: () -> Void
     @State private var account: Account?
+    @State private var teamKey = false
     @State private var issuerId = ""
     @State private var keyId = ""
     @State private var pem = ""
@@ -489,45 +503,54 @@ struct AppStoreConnectPage: View {
                     appList
                 } else {
                     SavedAccounts(platform: .appStore, busyId: busyAccount) { saved in Task { await reuse(saved) } }
-                    Text("Apple 不提供一键登录，需要一把密钥。大约两分钟，可以在电脑上生成后隔空投送到手机。")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Palette.ink2)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 4)
                     steps
                     fileButton
-                    fields
-                    Button(busy ? "验证中…" : "导入并读取 App 列表") { Task { await connect() } }
-                        .buttonStyle(PrimaryButtonStyle())
-                        .disabled(busy || pem.isEmpty || keyId.isEmpty || issuerId.isEmpty)
+                    if teamKey || (!pem.isEmpty && keyId.isEmpty) {
+                        fields
+                        Button(busy ? "验证中…" : "导入并读取 App 列表") { Task { await connect() } }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(busy || pem.isEmpty || keyId.isEmpty || (teamKey && issuerId.isEmpty))
+                    }
                     ErrorText(text: error)
-                    FinePrint(text: "密钥只存在这台 iPhone 上，手机直接向 Apple 请求，不会经过我们的服务器。一把密钥能读这个团队的所有 App，下一个项目不用再导入。")
+                    Button(teamKey ? "改用个人密钥" : "已有团队密钥？用团队密钥") {
+                        teamKey.toggle()
+                        error = nil
+                    }
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.ink2)
+                    .frame(minHeight: 36)
+                    .padding(.horizontal, 4)
+                    .accessibilityIdentifier("ascTeamKey")
+                    FinePrint(text: teamKey
+                              ? "团队密钥在 **用户和访问 → 集成 → 团队密钥** 生成，需要管理员权限；Issuer ID 在同一页最上方。"
+                              : "个人密钥的权限和你的账号一样：能读评论，回复需要账号有管理员或客户支持权限。密钥只存在这台 iPhone 上，手机直接向 Apple 请求，不会经过我们的服务器。")
                 }
             }
             .padding(16)
         }
         .sheetPage()
-        .fileImporter(isPresented: $importing, allowedContentTypes: [UTType(filenameExtension: "p8") ?? .data, .plainText, .data]) { result in
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.appStoreConnectKey, .plainText, .data]) { result in
             guard case .success(let url) = result else { return }
-            let scoped = url.startAccessingSecurityScopedResource()
-            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-            if let text = try? String(contentsOf: url, encoding: .utf8) {
-                pem = text
-                // Apple names the file AuthKey_<KEYID>.p8.
-                let name = url.deletingPathExtension().lastPathComponent
-                if keyId.isEmpty, name.hasPrefix("AuthKey_") { keyId = String(name.dropFirst("AuthKey_".count)) }
-            } else {
-                error = String(localized: "读不出这个文件，请确认是 Apple 下载的 .p8 密钥")
+            guard let file = KeyFile(url: url) else {
+                error = String(localized: "读不出这个文件，请确认是 App Store Connect 下载的密钥文件（.p8）")
+                return
             }
+            use(file)
         }
+        .task { takeOpenedFile() }
+        .onChange(of: model.openedKeyFile) { takeOpenedFile() }
     }
 
     private var steps: some View {
         VStack(alignment: .leading, spacing: 14) {
-            NumberedStep(number: 1, text: "在 App Store Connect 打开 **用户和访问 → 集成 → 团队密钥**。")
-            NumberedStep(number: 2, text: "生成一把密钥，权限选 **客户支持**（只能读评论和回复评论）。")
-            NumberedStep(number: 3, text: "下载 **.p8 文件**，记下页面上的 **Issuer ID** 和 **密钥 ID**。")
-            OutLink(title: String(localized: "打开 App Store Connect"), url: URL(string: "https://appstoreconnect.apple.com/access/integrations/api")!)
+            if teamKey {
+                NumberedStep(number: 1, text: "选择团队密钥的 **.p8 文件**。")
+                NumberedStep(number: 2, text: "填上 **密钥 ID** 和 **Issuer ID**。")
+            } else {
+                NumberedStep(number: 1, text: "在 App Store Connect 点右上角你的名字，进入 **个人资料**，在 **个人 API 密钥** 点 **生成 API 密钥**，然后下载。")
+                NumberedStep(number: 2, text: "把下载的文件发到这台 iPhone（隔空投送最快），选 **用 Snuffle 打开**；或者在下面选择文件。")
+            }
+            OutLink(title: String(localized: "打开 App Store Connect"), url: URL(string: "https://appstoreconnect.apple.com")!)
                 .padding(.leading, 38)
         }
         .padding(18)
@@ -539,14 +562,23 @@ struct AppStoreConnectPage: View {
             importing = true
         } label: {
             HStack(spacing: 12) {
-                Image(systemName: pem.isEmpty ? "doc.badge.plus" : "checkmark")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Palette.onAccent)
-                    .frame(width: 44, height: 44)
-                    .background(pem.isEmpty ? Color(hex: 0xFFDD33) : Palette.up, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                Group {
+                    if busy {
+                        ProgressView().tint(Palette.onAccent)
+                    } else {
+                        Image(systemName: pem.isEmpty ? "doc.badge.plus" : "checkmark").font(.system(size: 18, weight: .bold))
+                    }
+                }
+                .foregroundStyle(Palette.onAccent)
+                .frame(width: 44, height: 44)
+                .background(pem.isEmpty || busy ? Color(hex: 0xFFDD33) : Palette.up, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(pem.isEmpty ? "选择 .p8 文件" : "已读取密钥文件").font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.ink)
-                    Text(pem.isEmpty ? "文件名里的密钥 ID 会自动填上" : "点这里重新选择").font(.system(size: 13)).foregroundStyle(Palette.ink2)
+                    Text(busy ? "正在读取 App 列表…" : pem.isEmpty ? "选择密钥文件" : "已读取密钥文件")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Palette.ink)
+                    Text(pem.isEmpty ? "AuthKey_ 开头的 .p8 文件" : keyId.isEmpty ? "点这里重新选择" : "密钥 \(keyId) · 点这里重新选择")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Palette.ink2)
                 }
                 Spacer(minLength: 0)
             }
@@ -555,22 +587,26 @@ struct AppStoreConnectPage: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .disabled(busy)
+        .accessibilityIdentifier("ascChooseFile")
     }
 
     private var fields: some View {
         CardGroup {
             LabeledField(label: "密钥 ID", placeholder: "2X9R4HXF34", text: $keyId, capitalization: .characters, identifier: "ascKeyId")
-            RowDivider()
-            LabeledField(label: "Issuer ID", placeholder: "57246542-96fe-…", text: $issuerId, capitalization: .never, identifier: "ascIssuerId")
+            if teamKey {
+                RowDivider()
+                LabeledField(label: "Issuer ID", placeholder: "57246542-96fe-…", text: $issuerId, capitalization: .never, identifier: "ascIssuerId")
+            }
             if pem.isEmpty {
                 RowDivider()
                 TextField("或者直接粘贴 .p8 文件内容", text: $pem, axis: .vertical)
                     .lineLimit(2...5)
                     .font(.system(size: 13))
-                    .accessibilityIdentifier("ascPem")
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .padding(.vertical, 12)
+                    .accessibilityIdentifier("ascPem")
             }
         }
     }
@@ -587,19 +623,36 @@ struct AppStoreConnectPage: View {
         }
     }
 
+    /// A key file opened from Files or AirDrop while this page is up, or that opened this page.
+    private func takeOpenedFile() {
+        guard let file = model.openedKeyFile else { return }
+        model.openedKeyFile = nil
+        use(file)
+    }
+
+    /// An individual key with its ID in the file name connects straight away.
+    private func use(_ file: KeyFile) {
+        pem = file.pem
+        if let id = file.keyId { keyId = id }
+        error = nil
+        if !teamKey, !keyId.isEmpty { Task { await connect() } }
+    }
+
     private func connect() async {
         busy = true
         error = nil
         defer { busy = false }
         do {
-            let token = try AppStoreConnectToken(issuerId: issuerId.trimmingCharacters(in: .whitespaces), keyId: keyId.trimmingCharacters(in: .whitespaces), privateKeyPEM: pem)
+            let token = try AppStoreConnectToken(issuerId: teamKey ? issuerId.trimmingCharacters(in: .whitespaces) : "", keyId: keyId.trimmingCharacters(in: .whitespaces), privateKeyPEM: pem)
             let found = try await AppStoreConnectClient(token: token).apps()
             let saved = try model.add(
-                account: Account(platform: .appStore, title: found.first.map { String(localized: "\($0.name) 等 \(found.count) 个 App") } ?? "App Store Connect", subtitle: String(localized: "密钥 \(token.keyId)")),
+                account: Account(platform: .appStore, title: found.first.map { String(localized: "\($0.name) 等 \(found.count) 个 App") } ?? "App Store Connect", subtitle: token.isIndividual ? String(localized: "个人密钥 \(token.keyId)") : String(localized: "团队密钥 \(token.keyId)")),
                 credential: .appStoreConnect(issuerId: token.issuerId, keyId: token.keyId, privateKeyPEM: pem)
             )
+            session.track(.appStore, .key, .succeeded)
             use(saved, apps: found)
         } catch {
+            session.track(.appStore, .key, .failed(error))
             self.error = describe(error)
         }
     }
@@ -610,8 +663,11 @@ struct AppStoreConnectPage: View {
         defer { busyAccount = nil }
         do {
             guard case .appStoreConnect(let issuer, let key, let pem) = try model.credentials.credential(for: saved.id) else { return }
-            use(saved, apps: try await AppStoreConnectClient(token: AppStoreConnectToken(issuerId: issuer, keyId: key, privateKeyPEM: pem)).apps())
+            let apps = try await AppStoreConnectClient(token: AppStoreConnectToken(issuerId: issuer, keyId: key, privateKeyPEM: pem)).apps()
+            session.track(.appStore, .saved, .succeeded)
+            use(saved, apps: apps)
         } catch {
+            session.track(.appStore, .saved, .failed(error))
             self.error = describe(error)
         }
     }
@@ -795,10 +851,12 @@ struct GooglePlayConnectPage: View {
             let code = try GoogleOAuth.code(from: callback, pkce: pkce)
             let (token, email) = try await GoogleOAuth.exchange(code: code, pkce: pkce, clientId: clientId)
             account = try model.add(account: Account(platform: .googlePlay, title: email ?? String(localized: "Google 账号"), subtitle: "Google Play"), credential: .googleOAuth(token))
+            session.track(.googlePlay, .oauth, .succeeded)
             await loadApps()
         } catch let authError as ASWebAuthenticationSessionError where authError.code == .canceledLogin {
-            return
+            session.track(.googlePlay, .oauth, .cancelled)
         } catch {
+            session.track(.googlePlay, .oauth, .failed(error))
             self.error = describe(error)
         }
     }

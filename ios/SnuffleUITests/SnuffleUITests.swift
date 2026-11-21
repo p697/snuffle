@@ -17,7 +17,7 @@ final class SnuffleUITests: XCTestCase {
     /// The flows below look for Chinese labels, the source language, whatever the simulator's language is.
     private func makeApp(_ arguments: [String], language: String = "zh-Hans") -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = arguments + ["-AppleLanguages", "(\(language))", "-AppleLocale", language.replacingOccurrences(of: "-", with: "_")]
+        app.launchArguments = arguments + ["-noAnalytics", "-AppleLanguages", "(\(language))", "-AppleLocale", language.replacingOccurrences(of: "-", with: "_")]
         return app
     }
 
@@ -174,6 +174,8 @@ final class SnuffleUITests: XCTestCase {
         app.launch()
         app.buttons["startConnecting"].tap()
         app.buttons["connect-appStore"].tap()
+        // This key is a team key: switch to the team-key form.
+        app.buttons["ascTeamKey"].tap()
 
         let keyField = app.textFields["ascKeyId"]
         XCTAssertTrue(keyField.waitForExistence(timeout: 5))

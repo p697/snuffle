@@ -6,9 +6,50 @@
 	<string>$(AppIdentifierPrefix)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>App Store Connect API Key</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>ai.snuffle.p8</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>ai.snuffle.p8</string>
+			<key>UTTypeDescription</key>
+			<string>App Store Connect API Key</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>p8</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
 	<key>SnuffleAPIURL</key>
 	<string>$(SNUFFLE_API_URL)</string>
 	<key>SnuffleGoogleClientID</key>
 	<string>$(SNUFFLE_GOOGLE_CLIENT_ID)</string>
+	<key>SnufflePostHogHost</key>
+	<string>$(SNUFFLE_POSTHOG_HOST)</string>
+	<key>SnufflePostHogToken</key>
+	<string>$(SNUFFLE_POSTHOG_TOKEN)</string>
 </dict>
 </plist>

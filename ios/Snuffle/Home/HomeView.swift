@@ -205,7 +205,10 @@ private struct EmptyProjects: View {
                 .font(.system(size: 14))
                 .foregroundStyle(Palette.ink2)
                 .multilineTextAlignment(.center)
-            Button("添加第一个项目") { adding = true }
+            Button("添加第一个项目") {
+                adding = true
+                Analytics.addProjectOpened(.home)
+            }
                 .buttonStyle(PrimaryButtonStyle())
         }
         .padding(24)

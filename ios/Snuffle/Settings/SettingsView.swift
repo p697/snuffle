@@ -100,7 +100,12 @@ struct SettingsView: View {
             }
             .buttonStyle(.plain)
             .accessibilityIdentifier("upgradePro")
-            Button("恢复购买") { Task { await model.pro.restore() } }
+            Button("恢复购买") {
+                Task {
+                    await model.pro.restore()
+                    Analytics.restoreResolved(.settings, restored: model.pro.isPro)
+                }
+            }
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(Palette.ink2)
                 .frame(minHeight: 36)

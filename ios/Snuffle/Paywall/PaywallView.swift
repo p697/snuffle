@@ -15,11 +15,13 @@ struct PaywallView: View {
     @State private var message: String?
     @State private var cat = CatState()
     private let focus: ProPerk?
+    private let reason: PaywallReason
 
     /// Room above the panel for the cat's head once it is out.
     private static let catHeadroom: CGFloat = 84
 
     init(reason: PaywallReason) {
+        self.reason = reason
         focus = ProPerk(reason)
     }
 
@@ -37,6 +39,7 @@ struct PaywallView: View {
         }
         .background(colors.fill.ignoresSafeArea())
         .presentationDragIndicator(.visible)
+        .onAppear { Analytics.paywallViewed(reason) }
         .task {
             if model.pro.products.isEmpty { await model.pro.loadProducts() }
         }
@@ -273,9 +276,13 @@ struct PaywallView: View {
         buying = true
         message = nil
         defer { buying = false }
+        let trial = product.id == ProStore.yearly && model.pro.availableTrialDays != nil
         do {
-            if try await model.pro.purchase(product) { dismiss() }
+            let outcome = try await model.pro.purchase(product)
+            Analytics.purchaseResolved(productId: product.id, reason: reason, trial: trial, outcome: outcome)
+            if outcome == .purchased { dismiss() }
         } catch {
+            Analytics.purchaseResolved(productId: product.id, reason: reason, trial: trial, outcome: .failed)
             message = String(localized: "没能完成购买：\(error.localizedDescription)")
         }
     }
@@ -283,6 +290,7 @@ struct PaywallView: View {
     private func restore() async {
         message = nil
         await model.pro.restore()
+        Analytics.restoreResolved(.paywall, restored: model.pro.isPro)
         if model.pro.isPro { dismiss() } else { message = String(localized: "这个 Apple 账户下没有找到可以恢复的购买") }
     }
 }

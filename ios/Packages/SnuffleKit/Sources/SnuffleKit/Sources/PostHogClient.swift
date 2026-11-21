@@ -136,14 +136,25 @@ public enum PostHogQueries {
 
     static func seconds(_ date: Date) -> Int { Int(date.timeIntervalSince1970.rounded(.down)) }
 
-    /// One count column per hour of today so far (at most 25, on the day clocks go back), so the
-    /// response size stays fixed however many people sign up.
-    static func hourColumns(_ condition: String, column: String, clock: ProjectClock) -> [String] {
+    /// One column per hour of today so far (at most 25, on the day clocks go back), so the response size stays
+    /// fixed however many people sign up. `count` turns a condition into the column's aggregate.
+    static func hourColumns(column: String, clock: ProjectClock, count: (String) -> String) -> [String] {
         let today = seconds(clock.todayStart)
         return (0..<min(25, clock.hoursSoFar)).map { hour in
             let from = today + hour * 3600
-            return "countIf(\(condition) AND \(column) >= fromUnixTimestamp(\(from)) AND \(column) < fromUnixTimestamp(\(from + 3600))) AS h\(hour)"
+            return "\(count("\(column) >= fromUnixTimestamp(\(from)) AND \(column) < fromUnixTimestamp(\(from + 3600))")) AS h\(hour)"
         }
+    }
+
+    /// People who did `event` while `condition` holds: a person who signs up twice is still one new user.
+    static func people(did event: String, _ condition: String? = nil) -> String {
+        "uniqExactIf(person_id, event = \(literal(event))\(condition.map { " AND \($0)" } ?? ""))"
+    }
+
+    /// The day an event falls on in the project's zone, as "yyyy-MM-dd", so history days match `ProjectClock`
+    /// even if PostHog's own project zone has since changed.
+    static func day(_ column: String, clock: ProjectClock) -> String {
+        "toString(toDate(toTimeZone(\(column), \(literal(clock.timeZone.identifier)))))"
     }
 
     /// Event-based counts for the card: new users (today and yesterday by now), revenue, orders, the extra count and hourly new users.
@@ -156,8 +167,8 @@ public enum PostHogQueries {
 
         if case .event(let name) = metrics.newUsers {
             events.append(name)
-            columns.append("countIf(event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today))) AS new_today")
-            columns.append("countIf(event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(yesterday)) AND timestamp < fromUnixTimestamp(\(yesterdayNow))) AS new_yesterday")
+            columns.append("\(people(did: name, "timestamp >= fromUnixTimestamp(\(today))")) AS new_today")
+            columns.append("\(people(did: name, "timestamp >= fromUnixTimestamp(\(yesterday)) AND timestamp < fromUnixTimestamp(\(yesterdayNow))")) AS new_yesterday")
         }
         if case .posthogEvent(let name, let valueProperty) = metrics.revenue {
             events.append(name)
@@ -177,7 +188,7 @@ public enum PostHogQueries {
         }
         // Hour columns go last so the fixed columns above keep stable positions.
         if case .event(let name) = metrics.newUsers {
-            columns += hourColumns("event = \(literal(name))", column: "timestamp", clock: clock)
+            columns += hourColumns(column: "timestamp", clock: clock) { people(did: name, $0) }
         }
         guard !columns.isEmpty else { return nil }
         let eventList = Array(Set(events)).sorted().map(literal).joined(separator: ", ")
@@ -194,14 +205,24 @@ public enum PostHogQueries {
     /// days shown, so its cost follows the project's monthly event volume, not its whole history.
     public static let firstSeenLookbackDays = 30
 
-    /// Each person's first event within the lookback, for `firstSeen` and `firstSeenHistory`. Based on events, not the
-    /// persons table: projects that send anonymous events (no person profiles) still have new people.
+    /// An event from someone using the product, as opposed to a visitor: anonymous web traffic (posthog-js without
+    /// an identified person) is someone reading the website. App, desktop, game and server SDKs, and anyone signed
+    /// in on the web, count as use. Both properties are set by PostHog's SDKs, so no setup is needed.
+    static let productUse = "(ifNull(properties.$lib, '') != 'web' OR ifNull(toString(properties.$is_identified), '') = 'true')"
+
+    /// When each person within the lookback started using the product, as `first`, for `firstSeen` and
+    /// `firstSeenHistory`. Visitors are left out (their `first` is the epoch) unless the project has nothing but
+    /// visitors, as a website without sign-in does; then everyone counts from their first event. Based on events,
+    /// not the persons table: projects that send anonymous events (no person profiles) still have new people.
     static func firstEvents(since start: Date) -> String {
         let lookback = seconds(start) - firstSeenLookbackDays * 86_400
-        return "(SELECT person_id, min(timestamp) AS first FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback)) GROUP BY person_id)"
+        let people = "SELECT min(timestamp) AS first_event, minIf(timestamp, \(productUse)) AS first_use, max(\(productUse)) AS uses "
+            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback)) GROUP BY person_id"
+        return "(SELECT if(max(uses) OVER () = 1, first_use, first_event) AS first FROM (\(people)))"
     }
 
-    /// People seen for the first time (not in the previous 30 days), for projects that count new users that way.
+    /// People who started using the product today (not seen in the previous 30 days), for projects without a
+    /// signup event.
     public static func firstSeen(clock: ProjectClock) -> String {
         let today = seconds(clock.todayStart)
         let yesterday = seconds(clock.yesterdayStart)
@@ -209,7 +230,7 @@ public enum PostHogQueries {
         let columns = [
             "countIf(first >= fromUnixTimestamp(\(today))) AS new_today",
             "countIf(first >= fromUnixTimestamp(\(yesterday)) AND first < fromUnixTimestamp(\(yesterdayNow))) AS new_yesterday"
-        ] + hourColumns("1 = 1", column: "first", clock: clock)
+        ] + hourColumns(column: "first", clock: clock) { "countIf(\($0))" }
         return "SELECT \(columns.joined(separator: ", ")) FROM \(firstEvents(since: clock.yesterdayStart)) WHERE first >= fromUnixTimestamp(\(yesterday))"
     }
 
@@ -232,9 +253,9 @@ public enum PostHogQueries {
     /// Per-day new users, revenue and active people for the history chart.
     public static func history(metrics: MetricSettings, clock: ProjectClock, days: Int) -> String {
         let start = seconds(clock.historyStart(days: days))
-        var columns = ["toString(toStartOfDay(timestamp)) AS day", "uniq(person_id) AS active"]
+        var columns = ["\(day("timestamp", clock: clock)) AS day", "uniq(person_id) AS active"]
         if case .event(let name) = metrics.newUsers {
-            columns.append("countIf(event = \(literal(name))) AS new_users")
+            columns.append("\(people(did: name)) AS new_users")
         } else {
             columns.append("0 AS new_users")
         }
@@ -249,7 +270,7 @@ public enum PostHogQueries {
     /// Per-day first-seen people, used when new users are counted that way.
     public static func firstSeenHistory(clock: ProjectClock, days: Int) -> String {
         let start = clock.historyStart(days: days)
-        return "SELECT toString(toStartOfDay(first)) AS day, count() AS new_users FROM \(firstEvents(since: start)) "
+        return "SELECT \(day("first", clock: clock)) AS day, count() AS new_users FROM \(firstEvents(since: start)) "
             + "WHERE first >= fromUnixTimestamp(\(seconds(start))) GROUP BY day ORDER BY day"
     }
 

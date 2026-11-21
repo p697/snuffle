@@ -34,8 +34,8 @@ final class ProStoreTests: XCTestCase {
         XCTAssertEqual(store.availableTrialDays, 7)
         XCTAssertEqual(store.monthlyEquivalent(of: yearly), "$1.67")
 
-        let bought = try await store.purchase(yearly)
-        XCTAssertTrue(bought)
+        let outcome = try await store.purchase(yearly)
+        XCTAssertEqual(outcome, .purchased)
         XCTAssertTrue(store.isPro)
         XCTAssertEqual(store.activeProductId, ProStore.yearly)
 
@@ -63,8 +63,9 @@ final class ProStoreTests: XCTestCase {
         let store = ProStore()
         await store.loadProducts()
         let lifetime = try XCTUnwrap(store.product(ProStore.lifetime))
-        let bought = try await store.purchase(lifetime)
-        XCTAssertTrue(bought)
+        let outcome = try await store.purchase(lifetime)
+        XCTAssertEqual(outcome, .purchased)
+        XCTAssertEqual(ProStore.planName(lifetime.id), "lifetime")
         XCTAssertTrue(store.isPro)
         XCTAssertEqual(store.activeProductId, ProStore.lifetime)
     }
@@ -72,8 +73,8 @@ final class ProStoreTests: XCTestCase {
     func testRefundTakesProAway() async throws {
         let store = ProStore()
         await store.loadProducts()
-        let bought = try await store.purchase(try XCTUnwrap(store.product(ProStore.monthly)))
-        XCTAssertTrue(bought)
+        let outcome = try await store.purchase(try XCTUnwrap(store.product(ProStore.monthly)))
+        XCTAssertEqual(outcome, .purchased)
         let transaction = try XCTUnwrap(session.allTransactions().first { $0.productIdentifier == ProStore.monthly })
         try session.refundTransaction(identifier: transaction.identifier)
         await Self.waitUntilNotPro(store)

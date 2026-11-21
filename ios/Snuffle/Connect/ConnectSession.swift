@@ -7,14 +7,22 @@ import SwiftUI
 @Observable
 final class ConnectSession {
     var project: Project
+    /// Adding a project, rather than connecting one more source to a saved one.
+    let isNewProject: Bool
     var postHogAccount: Account?
     var postHogProjects: [PostHogProject] = []
     var revenueCatProjects: [RevenueCatProject] = []
     var appStoreApps: [AppStoreApp] = []
     var googleApps: [GooglePlayApp] = []
 
-    init(project: Project) {
+    init(project: Project, isNewProject: Bool) {
         self.project = project
+        self.isNewProject = isNewProject
+    }
+
+    /// Records one attempt to sign in to or verify a platform account.
+    func track(_ platform: Platform, _ method: Analytics.ConnectMethod, _ outcome: Analytics.ConnectOutcome) {
+        Analytics.sourceConnectResolved(platform, method: method, newProject: isNewProject, outcome: outcome)
     }
 
     /// A copy of the project reading only `platform`, to show what that one source returns right after connecting.

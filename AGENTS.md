@@ -48,6 +48,10 @@ each folder's README. Product and architecture follow the code; fix docs you fin
   PR, and formats numbers, money and dates with `Format` (SnuffleKit) instead of hand-built strings. CI runs
   `scripts/localization.py check`, which fails on untranslated or non-localizable Chinese strings. How to write
   and translate strings: "Localization" in `ios/README.md`.
+- Usage analytics go to Snuffle's own PostHog project through the typed `Analytics` methods only
+  (`ios/Snuffle/App/Analytics.swift`). A feature change updates its events, `ios/ANALYTICS.md`,
+  `PrivacyInfo.xcprivacy` and the privacy page together, and checks that the events really arrive.
+  Never send names, ids, keys, numbers read from a source or review text.
 - AI reply drafting is built but hidden (`Feature.replyDrafts` in `ios/Snuffle/App/CloudClient.swift`), so the app
   can ship in mainland China. Its comment lists everything to restore when turning it back on.
 - Test what the change touches:

@@ -35,6 +35,37 @@ public enum SourceError: Error, Equatable, Sendable, LocalizedError {
     }
 }
 
+/// What kind of failure an error is, for analytics. Never the message, which can quote server text.
+public enum FailureKind: String, Codable, Sendable {
+    case missingCredential = "missing_credential"
+    case unauthorized
+    case forbidden
+    case rateLimited = "rate_limited"
+    case clientError = "client_error"
+    case serverError = "server_error"
+    case network
+    case invalidResponse = "invalid_response"
+    case invalidKey = "invalid_key"
+    case other
+
+    public init(_ error: Error) {
+        guard let error = error as? SourceError else {
+            self = .other
+            return
+        }
+        switch error {
+        case .missingCredential: self = .missingCredential
+        case .unauthorized: self = .unauthorized
+        case .forbidden: self = .forbidden
+        case .rateLimited: self = .rateLimited
+        case .http(_, let code, _): self = code >= 500 ? .serverError : .clientError
+        case .network: self = .network
+        case .invalidResponse: self = .invalidResponse
+        case .invalidKey: self = .invalidKey
+        }
+    }
+}
+
 /// A small JSON transport shared by every platform client.
 public struct HTTPClient: Sendable {
     public var session: URLSession

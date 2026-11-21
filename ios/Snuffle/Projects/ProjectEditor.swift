@@ -161,6 +161,6 @@ struct ProjectEditor: View {
         model.save(project: draft)
         dismiss()
         // New sources or counting rules: fetch this project's numbers now instead of showing stale ones.
-        if changedNumbers { Task { [draft] in await model.refresh([draft]) } }
+        if changedNumbers { Task { [draft] in await model.refresh([draft], trigger: .project) } }
     }
 }

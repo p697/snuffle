@@ -4967,114 +4967,114 @@
         }
       }
     },
-    "Apple 不提供一键登录，需要一把密钥。大约两分钟，可以在电脑上生成后隔空投送到手机。" : {
+    "AuthKey_ 开头的 .p8 文件" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا توفر Apple تسجيل الدخول بلمسة واحدة، لذا يلزم مفتاح. يستغرق الأمر دقيقتين تقريبًا: أنشئه على كمبيوتر وأرسله إلى هاتفك عبر AirDrop."
+            "value" : "ملف ‎.p8 يبدأ بـ AuthKey_"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple bietet keine Anmeldung mit einem Tippen, daher brauchst du einen Schlüssel. Das dauert etwa zwei Minuten: Erstelle ihn am Computer und sende ihn per AirDrop an dein iPhone."
+            "value" : ".p8-Datei, beginnt mit AuthKey_"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple has no one-tap sign-in, so this needs a key. It takes about two minutes: create it on a computer and AirDrop it to your phone."
+            "value" : "A .p8 file starting with AuthKey_"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple no ofrece inicio de sesión con un toque, así que hace falta una clave. Se tarda unos dos minutos: créala en un ordenador y envíala al móvil con AirDrop."
+            "value" : "Archivo .p8 que empieza por AuthKey_"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple no ofrece inicio de sesión con un toque, así que hace falta una clave. Toma unos dos minutos: créala en una computadora y envíala a tu celular con AirDrop."
+            "value" : "Archivo .p8 que comienza con AuthKey_"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple ne propose pas de connexion en un geste, il faut donc une clé. Comptez environ deux minutes : créez-la sur un ordinateur et envoyez-la sur votre iPhone avec AirDrop."
+            "value" : "Fichier .p8 commençant par AuthKey_"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple में वन-टैप साइन इन नहीं है, इसलिए एक कुंजी चाहिए। इसमें लगभग दो मिनट लगते हैं: कंप्यूटर पर कुंजी बनाएँ और AirDrop से फ़ोन पर भेजें।"
+            "value" : "AuthKey_ से शुरू होने वाली .p8 फ़ाइल"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple non offre l'accesso con un tocco, quindi serve una chiave. Ci vogliono circa due minuti: creala su un computer e inviala al tuo iPhone con AirDrop."
+            "value" : "File .p8 che inizia con AuthKey_"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Appleにはワンタップのサインインがないため、キーが必要です。所要時間は約2分。コンピュータで作成し、AirDropでiPhoneに送信できます。"
+            "value" : "AuthKey_で始まる.p8ファイル"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple은 원탭 로그인을 제공하지 않아 키가 필요해요. 약 2분이면 돼요. 컴퓨터에서 생성한 후 AirDrop으로 iPhone에 보낼 수 있어요."
+            "value" : "AuthKey_로 시작하는 .p8 파일"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A Apple não oferece login com um toque, então é preciso uma chave. Leva uns dois minutos: crie a chave no computador e envie para o celular por AirDrop."
+            "value" : "Arquivo .p8 que começa com AuthKey_"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "A Apple não tem início de sessão com um toque, por isso é preciso uma chave. Demora cerca de dois minutos: cria-a num computador e envia-a para o telemóvel por AirDrop."
+            "value" : "Ficheiro .p8 que começa por AuthKey_"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple не поддерживает вход в одно касание, поэтому нужен ключ. Это займёт около двух минут: создайте его на компьютере и отправьте на телефон через AirDrop."
+            "value" : "Файл .p8, начинается с AuthKey_"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple ไม่มีการลงชื่อเข้าแบบแตะครั้งเดียว จึงต้องใช้คีย์ ใช้เวลาประมาณสองนาที โดยสร้างคีย์บนคอมพิวเตอร์แล้ว AirDrop มาที่โทรศัพท์"
+            "value" : "ไฟล์ .p8 ที่ขึ้นต้นด้วย AuthKey_"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple’da tek dokunuşla giriş yok, bu yüzden bir anahtar gerekiyor. Yaklaşık iki dakika sürer: anahtarı bilgisayarda oluşturun ve AirDrop ile telefonunuza gönderin."
+            "value" : "AuthKey_ ile başlayan .p8 dosyası"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple не має входу в один дотик, тому потрібен ключ. Це займе близько двох хвилин: створіть його на комп’ютері й надішліть на телефон через AirDrop."
+            "value" : "Файл .p8, що починається з AuthKey_"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple không có đăng nhập một chạm nên cần một khóa. Mất khoảng hai phút: tạo khóa trên máy tính rồi AirDrop sang điện thoại."
+            "value" : "Tệp .p8 bắt đầu bằng AuthKey_"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Apple 不提供一鍵登入，需要一組密鑰。大約兩分鐘，可以在電腦上產生後用 AirDrop 傳到手機。"
+            "value" : "以 AuthKey_ 開頭的 .p8 檔案"
           }
         }
       }
@@ -7095,6 +7095,366 @@
         }
       }
     },
+    "strip.newUsers" : {
+      "comment" : "Totals strip label above a number, a third of the screen wide: keep it very short.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جدد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New users"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevos"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveaux"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "नए यूज़र"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuovi"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新規"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "신규"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novos"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novos"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новые"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ผู้ใช้ใหม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нові"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Người mới"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "新增用户"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新增使用者"
+          }
+        }
+      }
+    },
+    "strip.revenue" : {
+      "comment" : "Totals strip label above a number, a third of the screen wide: keep it very short.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإيرادات"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umsatz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revenue"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresos"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresos"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Revenus"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "आय"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrate"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "収益"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "수익"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Receita"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Receitas"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доход"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รายได้"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gelir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дохід"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doanh thu"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "收入"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "收入"
+          }
+        }
+      }
+    },
+    "strip.reviewsToAnswer" : {
+      "comment" : "Totals strip label above the number of reviews to answer, a third of the screen wide: keep it very short.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بلا رد"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Offen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "To answer"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por responder"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por responder"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sans réponse"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "जवाब बाकी"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Da rispondere"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未返信"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "답변 대기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem resposta"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por responder"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без ответа"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รอตอบ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yanıtsız"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Без відповіді"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chờ trả lời"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "待回复评论"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "待回覆評論"
+          }
+        }
+      }
+    },
     "一个来源连不上" : {
       "localizations" : {
         "ar" : {
@@ -7763,118 +8123,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "下次重新整理帶來"
-          }
-        }
-      }
-    },
-    "下载 **.p8 文件**，记下页面上的 **Issuer ID** 和 **密钥 ID**。" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "نزّل **ملف .p8** ودوّن **معرّف المُصدِر** و**معرّف المفتاح** الظاهرين في الصفحة."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lade die **.p8-Datei** herunter und notiere die **Aussteller-ID** und **Schlüssel-ID** auf der Seite."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Download the **.p8 file** and note the **Issuer ID** and **Key ID** on the page."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Descarga el **archivo .p8** y apunta el **ID del emisor** y el **ID de clave** que aparecen en la página."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Descarga el **archivo .p8** y anota el **ID del emisor** y el **ID de clave** que aparecen en la página."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Téléchargez le **fichier .p8** et notez l'**ID de l'émetteur** et l'**ID de clé** indiqués sur la page."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**.p8 फ़ाइल** डाउनलोड करें और पेज पर दिए **Issuer ID** और **Key ID** नोट कर लें।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scarica il **file .p8** e annota l'**ID emittente** e l'**ID chiave** mostrati nella pagina."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**.p8ファイル**をダウンロードし、ページに表示される**Issuer ID**と**キーID**を控えておきます。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**.p8 파일**을 다운로드하고 페이지에 표시된 **발급자 ID**와 **키 ID**를 메모해 두세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Baixe o **arquivo .p8** e anote o **ID do emissor** e o **ID da chave** mostrados na página."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Descarrega o **ficheiro .p8** e aponta o **ID do emissor** e o **ID da chave** indicados na página."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Скачайте **файл .p8** и запишите **Issuer ID** и **ID ключа** на странице."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ดาวน์โหลด **ไฟล์ .p8** และจด **ID ผู้ออก** กับ **ID คีย์** ที่แสดงบนหน้านั้น"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**.p8 dosyasını** indirin; sayfadaki **Issuer ID** ve **Anahtar Kimliği** değerlerini not edin."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Завантажте **файл .p8** і запишіть **Issuer ID** та **ID ключа** зі сторінки."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tải về **tệp .p8** và ghi lại **ID nhà phát hành** và **ID khóa** trên trang."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "下載 **.p8 檔案**，記下頁面上的 **Issuer ID** 和 **密鑰 ID**。"
           }
         }
       }
@@ -8771,6 +9019,230 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "專業"
+          }
+        }
+      }
+    },
+    "个人密钥 %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مفتاح فردي %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Persönlicher Schlüssel %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Individual key %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clave individual %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clave individual %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé individuelle %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "व्यक्तिगत कुंजी %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chiave individuale %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個人キー %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개인 키 %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave individual %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave individual %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Личный ключ %@"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คีย์ส่วนตัว %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bireysel anahtar %@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Особистий ключ %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khóa cá nhân %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個人密鑰 %@"
+          }
+        }
+      }
+    },
+    "个人密钥的权限和你的账号一样：能读评论，回复需要账号有管理员或客户支持权限。密钥只存在这台 iPhone 上，手机直接向 Apple 请求，不会经过我们的服务器。" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "للمفتاح الفردي صلاحيات حسابك نفسها: يمكنه قراءة المراجعات، ويتطلب الرد أن يكون للحساب دور المسؤول أو دعم العملاء. يبقى المفتاح على جهاز iPhone هذا فقط، ويتصل مباشرة بـ Apple دون المرور بخوادمنا."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein persönlicher Schlüssel hat die Rechte deines Accounts: Er kann Bewertungen lesen; zum Antworten braucht der Account die Rolle Admin oder Kundensupport. Der Schlüssel bleibt auf diesem iPhone, das direkt mit Apple spricht, nie über unsere Server."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An individual key has your account's access: it can read reviews, and replying needs the Admin or Customer Support role. The key stays on this iPhone, which talks to Apple directly, never through our servers."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una clave individual tiene los permisos de tu cuenta: puede leer reseñas, y para responder la cuenta necesita el rol de administrador o Atención al cliente. La clave se queda en este iPhone, que habla directamente con Apple, sin pasar por nuestros servidores."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una clave individual tiene los permisos de tu cuenta: puede leer reseñas, y para responder la cuenta necesita el rol de administrador o Atención al cliente. La clave se queda en este iPhone, que se comunica directamente con Apple, sin pasar por nuestros servidores."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Une clé individuelle a les droits de votre compte : elle peut lire les avis, et pour répondre le compte doit avoir le rôle Admin ou Support client. La clé reste sur cet iPhone, qui communique directement avec Apple, jamais via nos serveurs."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "व्यक्तिगत कुंजी के अधिकार आपके खाते जैसे ही होते हैं: यह समीक्षाएँ पढ़ सकती है, और जवाब देने के लिए खाते में Admin या Customer Support भूमिका चाहिए। कुंजी सिर्फ़ इसी iPhone पर रहती है, जो सीधे Apple से बात करता है, हमारे सर्वर से होकर नहीं।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Una chiave individuale ha gli stessi permessi del tuo account: può leggere le recensioni, e per rispondere l'account deve avere il ruolo Admin o Assistenza clienti. La chiave resta su questo iPhone, che comunica direttamente con Apple, mai tramite i nostri server."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個人キーの権限はあなたのアカウントと同じです。レビューを読むことができ、返信には管理者またはカスタマーサポートの役割が必要です。キーはこのiPhoneにのみ保存され、iPhoneが直接Appleと通信し、こちらのサーバを経由しません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개인 키는 계정과 같은 권한을 가져요. 리뷰를 읽을 수 있고, 답변하려면 계정에 관리자 또는 고객 지원 역할이 필요해요. 키는 이 iPhone에만 저장되며, iPhone이 Apple과 직접 통신하고 저희 서버를 거치지 않아요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma chave individual tem as permissões da sua conta: pode ler avaliações, e para responder a conta precisa da função Admin ou Suporte ao Cliente. A chave fica neste iPhone, que fala direto com a Apple, sem passar pelos nossos servidores."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uma chave individual tem as permissões da tua conta: pode ler avaliações e, para responder, a conta precisa da função de administrador ou Apoio ao cliente. A chave fica neste iPhone, que comunica diretamente com a Apple, sem passar pelos nossos servidores."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Личный ключ имеет те же права, что и ваш аккаунт: он может читать отзывы, а для ответов аккаунту нужна роль администратора или «Поддержка клиентов». Ключ хранится только на этом iPhone, который обращается к Apple напрямую, без наших серверов."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คีย์ส่วนตัวมีสิทธิ์เหมือนบัญชีของคุณ อ่านรีวิวได้ ส่วนการตอบกลับต้องมีบทบาทผู้ดูแลหรือฝ่ายสนับสนุนลูกค้า คีย์จะอยู่ใน iPhone เครื่องนี้เท่านั้น และ iPhone ติดต่อ Apple โดยตรง ไม่ผ่านเซิร์ฟเวอร์ของเรา"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bireysel anahtar, hesabınızla aynı yetkilere sahiptir: Yorumları okuyabilir; yanıt vermek için hesabın Yönetici veya Müşteri Desteği rolü olmalıdır. Anahtar yalnızca bu iPhone’da kalır; iPhone doğrudan Apple ile iletişim kurar, sunucularımızdan geçmez."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Особистий ключ має ті самі права, що й ваш обліковий запис: він може читати відгуки, а для відповідей потрібна роль адміністратора або «Підтримка клієнтів». Ключ зберігається лише на цьому iPhone, який звертається до Apple напряму, без наших серверів."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khóa cá nhân có quyền giống tài khoản của bạn: có thể đọc đánh giá, còn để trả lời thì tài khoản cần vai trò Quản trị viên hoặc Hỗ trợ khách hàng. Khóa chỉ lưu trên iPhone này, iPhone gửi yêu cầu thẳng tới Apple, không qua máy chủ của chúng tôi."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個人密鑰的權限與你的帳號相同：可以讀取評論，回覆則需要帳號具備管理員或客戶支援權限。密鑰只存在這台 iPhone 上，手機直接向 Apple 請求，不會經過我們的伺服器。"
           }
         }
       }
@@ -16879,6 +17351,230 @@
         }
       }
     },
+    "团队密钥 %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مفتاح الفريق %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teamschlüssel %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Team key %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clave de equipo %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clave de equipo %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clé d'équipe %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टीम कुंजी %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chiave team %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チームキー %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "팀 키 %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave da equipe %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chave da equipa %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ команды %@"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คีย์ทีม %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekip anahtarı %@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключ команди %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khóa nhóm %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "團隊密鑰 %@"
+          }
+        }
+      }
+    },
+    "团队密钥在 **用户和访问 → 集成 → 团队密钥** 生成，需要管理员权限；Issuer ID 在同一页最上方。" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُنشأ مفاتيح الفريق من **المستخدمون والوصول ← عمليات التكامل ← مفاتيح الفريق** وتتطلب دور المسؤول؛ ومعرّف المُصدِر في أعلى الصفحة نفسها."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teamschlüssel erstellst du unter **Benutzer und Zugriff → Integrationen → Teamschlüssel** mit der Rolle Admin; die Aussteller-ID steht oben auf derselben Seite."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Team keys are generated under **Users and Access → Integrations → Team Keys** and need the Admin role; the Issuer ID is at the top of the same page."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las claves de equipo se generan en **Usuarios y acceso → Integraciones → Claves de equipo** y requieren el rol de administrador; el ID del emisor está arriba en la misma página."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Las claves de equipo se generan en **Usuarios y acceso → Integraciones → Claves de equipo** y requieren el rol de administrador; el ID del emisor está arriba en la misma página."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Les clés d'équipe se génèrent dans **Utilisateurs et accès → Intégrations → Clés d'équipe** et nécessitent le rôle Admin ; l'ID de l'émetteur est en haut de la même page."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टीम कुंजियाँ **Users and Access → Integrations → Team Keys** में बनती हैं और इनके लिए Admin भूमिका चाहिए; Issuer ID उसी पेज पर सबसे ऊपर होता है।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Le chiavi team si generano in **Utenti e accesso → Integrazioni → Chiavi team** e richiedono il ruolo Admin; l'ID emittente è in alto nella stessa pagina."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チームキーは**ユーザとアクセス → 統合 → チームキー**で生成します（管理者の役割が必要）。Issuer IDは同じページの一番上にあります。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "팀 키는 **사용자 및 액세스 → 통합 → 팀 키**에서 생성하며 관리자 역할이 필요해요. 발급자 ID는 같은 페이지 맨 위에 있어요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As chaves da equipe são geradas em **Usuários e Acesso → Integrações → Chaves da Equipe** e exigem a função Admin; o ID do emissor fica no topo da mesma página."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "As chaves da equipa são geradas em **Utilizadores e acesso → Integrações → Chaves da equipa** e exigem a função de administrador; o ID do emissor está no topo da mesma página."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключи команды создаются в разделе **Пользователи и доступ → Интеграции → Ключи команды**, нужна роль администратора; Issuer ID — вверху той же страницы."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คีย์ทีมสร้างได้ที่ **ผู้ใช้และการเข้าถึง → การผสานรวม → คีย์ทีม** และต้องมีบทบาทผู้ดูแล ส่วน ID ผู้ออกอยู่ด้านบนสุดของหน้าเดียวกัน"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekip anahtarları **Kullanıcılar ve Erişim → Entegrasyonlar → Ekip Anahtarları** bölümünde oluşturulur ve Yönetici rolü gerektirir; Issuer ID aynı sayfanın en üstündedir."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ключі команди створюються в розділі **Користувачі та доступ → Інтеграції → Ключі команди**, потрібна роль адміністратора; Issuer ID — угорі тієї ж сторінки."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Khóa nhóm được tạo trong **Người dùng và quyền truy cập → Tích hợp → Khóa nhóm** và cần vai trò Quản trị viên; ID nhà phát hành nằm ở đầu cùng trang."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "團隊密鑰在 **使用者與存取權限 → 整合 → 團隊密鑰** 產生，需要管理員權限；Issuer ID 在同一頁最上方。"
+          }
+        }
+      }
+    },
     "图标、名称和颜色" : {
       "localizations" : {
         "ar" : {
@@ -16991,114 +17687,114 @@
         }
       }
     },
-    "在 App Store Connect 打开 **用户和访问 → 集成 → 团队密钥**。" : {
+    "在 App Store Connect 点右上角你的名字，进入 **个人资料**，在 **个人 API 密钥** 点 **生成 API 密钥**，然后下载。" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "في App Store Connect، افتح **المستخدمون والوصول ← عمليات التكامل ← مفاتيح الفريق**."
+            "value" : "في App Store Connect، اضغط على اسمك أعلى اليسار وافتح **الملف الشخصي**. في **مفتاح API الفردي**، اضغط على **إنشاء مفتاح API** ثم نزّله."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Öffne in App Store Connect **Benutzer und Zugriff → Integrationen → Teamschlüssel**."
+            "value" : "Tippe in App Store Connect oben rechts auf deinen Namen und öffne **Profil**. Tippe unter **Persönlicher API-Schlüssel** auf **API-Schlüssel generieren** und lade ihn herunter."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In App Store Connect, open **Users and Access → Integrations → Team Keys**."
+            "value" : "In App Store Connect, tap your name at the top right and open **Profile**. Under **Individual API Key**, tap **Generate API Key**, then download it."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En App Store Connect, abre **Usuarios y acceso → Integraciones → Claves de equipo**."
+            "value" : "En App Store Connect, toca tu nombre arriba a la derecha y abre **Perfil**. En **Clave de API individual**, toca **Generar clave de API** y descárgala."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En App Store Connect, abre **Usuarios y acceso → Integraciones → Claves de equipo**."
+            "value" : "En App Store Connect, toca tu nombre arriba a la derecha y abre **Perfil**. En **Clave de API individual**, toca **Generar clave de API** y descárgala."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dans App Store Connect, ouvrez **Utilisateurs et accès → Intégrations → Clés d'équipe**."
+            "value" : "Dans App Store Connect, touchez votre nom en haut à droite et ouvrez **Profil**. Sous **Clé API individuelle**, touchez **Générer une clé API**, puis téléchargez-la."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store Connect में **Users and Access → Integrations → Team Keys** खोलें।"
+            "value" : "App Store Connect में ऊपर दाईं ओर अपने नाम पर टैप करें और **Profile** खोलें। **Individual API Key** में **Generate API Key** पर टैप करें, फिर उसे डाउनलोड करें।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In App Store Connect, apri **Utenti e accesso → Integrazioni → Chiavi team**."
+            "value" : "In App Store Connect, tocca il tuo nome in alto a destra e apri **Profilo**. In **Chiave API individuale**, tocca **Genera chiave API** e scaricala."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store Connectで**ユーザとアクセス → 統合 → チームキー**を開きます。"
+            "value" : "App Store Connectで右上の名前をタップして**プロフィール**を開き、**個人APIキー**で**APIキーを生成**をタップしてダウンロードします。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store Connect에서 **사용자 및 액세스 → 통합 → 팀 키**를 여세요."
+            "value" : "App Store Connect에서 오른쪽 위의 이름을 탭해 **프로필**로 이동한 뒤, **개인 API 키**에서 **API 키 생성**을 탭하고 다운로드하세요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No App Store Connect, abra **Usuários e Acesso → Integrações → Chaves da Equipe**."
+            "value" : "No App Store Connect, toque no seu nome no canto superior direito e abra **Perfil**. Em **Chave de API individual**, toque em **Gerar chave de API** e baixe-a."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No App Store Connect, abre **Utilizadores e acesso → Integrações → Chaves da equipa**."
+            "value" : "No App Store Connect, toca no teu nome no canto superior direito e abre **Perfil**. Em **Chave de API individual**, toca em **Gerar chave de API** e descarrega-a."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В App Store Connect откройте **Пользователи и доступ → Интеграции → Ключи команды**."
+            "value" : "В App Store Connect нажмите на своё имя справа вверху и откройте **Профиль**. В разделе **Личный ключ API** нажмите **Создать ключ API** и скачайте его."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ใน App Store Connect ให้เปิด **ผู้ใช้และการเข้าถึง → การผสานรวม → คีย์ทีม**"
+            "value" : "ใน App Store Connect ให้แตะชื่อของคุณที่มุมขวาบนแล้วเปิด **โปรไฟล์** ในส่วน **คีย์ API ส่วนตัว** ให้แตะ **สร้างคีย์ API** แล้วดาวน์โหลด"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "App Store Connect’te **Kullanıcılar ve Erişim → Entegrasyonlar → Ekip Anahtarları** bölümünü açın."
+            "value" : "App Store Connect’te sağ üstteki adınıza dokunup **Profil**’i açın. **Bireysel API Anahtarı** altında **API Anahtarı Oluştur**’a dokunun ve indirin."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "У App Store Connect відкрийте **Користувачі та доступ → Інтеграції → Ключі команди**."
+            "value" : "У App Store Connect торкніться свого імені вгорі праворуч і відкрийте **Профіль**. У розділі **Особистий ключ API** торкніться **Створити ключ API** й завантажте його."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trong App Store Connect, mở **Người dùng và quyền truy cập → Tích hợp → Khóa nhóm**."
+            "value" : "Trong App Store Connect, chạm vào tên bạn ở góc trên bên phải và mở **Hồ sơ**. Trong **Khóa API cá nhân**, chạm **Tạo khóa API** rồi tải về."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 App Store Connect 開啟 **使用者與存取權限 → 整合 → 團隊密鑰**。"
+            "value" : "在 App Store Connect 點右上角你的名字，進入 **個人資料**，在 **個人 API 密鑰** 點 **產生 API 密鑰**，然後下載。"
           }
         }
       }
@@ -17659,6 +18355,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在專案中連接 App Store Connect 或 Google Play，評論會匯總到這裡，可以直接回覆。"
+          }
+        }
+      }
+    },
+    "填上 **密钥 ID** 和 **Issuer ID**。" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل **معرّف المفتاح** و**معرّف المُصدِر**."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gib die **Schlüssel-ID** und die **Aussteller-ID** ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the **Key ID** and **Issuer ID**."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introduce el **ID de clave** y el **ID del emisor**."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa el **ID de clave** y el **ID del emisor**."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Saisissez l'**ID de clé** et l'**ID de l'émetteur**."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Key ID** और **Issuer ID** भरें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inserisci l'**ID chiave** e l'**ID emittente**."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**キーID**と**Issuer ID**を入力します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**키 ID**와 **발급자 ID**를 입력하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digite o **ID da chave** e o **ID do emissor**."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Introduz o **ID da chave** e o **ID do emissor**."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите **ID ключа** и **Issuer ID**."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กรอก **ID คีย์** และ **ID ผู้ออก**"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Anahtar Kimliği**’ni ve **Issuer ID**’yi girin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введіть **ID ключа** та **Issuer ID**."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhập **ID khóa** và **ID nhà phát hành**."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "填入 **密鑰 ID** 和 **Issuer ID**。"
           }
         }
       }
@@ -18672,114 +19480,114 @@
         }
       }
     },
-    "密钥 %@" : {
+    "密钥 %@ · 点这里重新选择" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "المفتاح %@"
+            "value" : "المفتاح %@ · اضغط لإعادة الاختيار"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schlüssel %@"
+            "value" : "Schlüssel %@ · Tippen, um neu zu wählen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Key %@"
+            "value" : "Key %@ · Tap to choose again"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Clave %@"
+            "value" : "Clave %@ · Toca para elegir de nuevo"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Clave %@"
+            "value" : "Clave %@ · Toca para elegir de nuevo"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Clé %@"
+            "value" : "Clé %@ · Touchez pour choisir à nouveau"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "कुंजी %@"
+            "value" : "कुंजी %@ · फिर से चुनने के लिए टैप करें"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chiave %@"
+            "value" : "Chiave %@ · Tocca per scegliere di nuovo"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "キー %@"
+            "value" : "キー %@ · タップして選び直す"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "키 %@"
+            "value" : "키 %@ · 탭하여 다시 선택"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chave %@"
+            "value" : "Chave %@ · Toque para escolher de novo"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chave %@"
+            "value" : "Chave %@ · Toca para escolher de novo"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ключ %@"
+            "value" : "Ключ %@ · Нажмите, чтобы выбрать заново"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "คีย์ %@"
+            "value" : "คีย์ %@ · แตะเพื่อเลือกใหม่"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Anahtar %@"
+            "value" : "Anahtar %@ · Yeniden seçmek için dokunun"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ключ %@"
+            "value" : "Ключ %@ · Торкніться, щоб вибрати знову"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Khóa %@"
+            "value" : "Khóa %@ · Chạm để chọn lại"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "密鑰 %@"
+            "value" : "密鑰 %@ · 點這裡重新選擇"
           }
         }
       }
@@ -19116,118 +19924,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "密鑰會從這部手機上刪除。"
-          }
-        }
-      }
-    },
-    "密钥只存在这台 iPhone 上，手机直接向 Apple 请求，不会经过我们的服务器。一把密钥能读这个团队的所有 App，下一个项目不用再导入。" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يبقى المفتاح على هذا الـ iPhone الذي يتواصل مع Apple مباشرةً، ولا يمر أبدًا عبر خوادمنا. مفتاح واحد يقرأ كل تطبيقات الفريق، فلن يحتاجه مشروعك التالي مجددًا."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Schlüssel bleibt auf diesem iPhone, das direkt mit Apple kommuniziert – nie über unsere Server. Ein Schlüssel liest alle Apps des Teams, dein nächstes Projekt braucht also keinen neuen."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The key stays on this iPhone, which talks to Apple directly, never through our servers. One key reads every app in the team, so your next project won't need it again."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La clave se queda en este iPhone, que se comunica directamente con Apple, nunca a través de nuestros servidores. Una clave lee todas las apps del equipo, así que tu próximo proyecto no tendrá que importarla de nuevo."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La clave se queda en este iPhone, que se comunica directamente con Apple, nunca a través de nuestros servidores. Una clave lee todas las apps del equipo, así que tu próximo proyecto no tendrá que importarla de nuevo."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La clé reste sur cet iPhone, qui communique directement avec Apple, sans jamais passer par nos serveurs. Une clé lit toutes les apps de l'équipe : votre prochain projet n'aura pas besoin d'une nouvelle clé."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कुंजी सिर्फ़ इस iPhone पर रहती है, जो सीधे Apple से बात करता है, हमारे सर्वर से होकर कभी नहीं। एक कुंजी टीम के सभी ऐप पढ़ लेती है, इसलिए अगले प्रोजेक्ट में इसकी ज़रूरत नहीं पड़ेगी।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "La chiave resta su questo iPhone, che comunica direttamente con Apple, senza mai passare dai nostri server. Una chiave legge tutte le app del team, quindi il prossimo progetto non ne richiederà un'altra."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "キーはこのiPhoneにのみ保存され、iPhoneがAppleに直接リクエストするため、当社のサーバを経由しません。1つのキーでチーム内のすべてのAppを読み取れるので、次のプロジェクトでは再度読み込む必要はありません。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "키는 이 iPhone에만 저장되며, iPhone이 Apple에 직접 요청하므로 저희 서버를 거치지 않아요. 키 하나로 이 팀의 모든 앱을 읽을 수 있어 다음 프로젝트에서는 다시 가져올 필요가 없어요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A chave fica neste iPhone, que se comunica direto com a Apple, sem passar pelos nossos servidores. Uma chave lê todos os apps da equipe, então seu próximo projeto não vai precisar importá-la de novo."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "A chave fica neste iPhone, que comunica diretamente com a Apple, nunca através dos nossos servidores. Uma chave lê todas as apps da equipa, por isso o teu próximo projeto não vai precisar de a importar outra vez."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ключ хранится только на этом iPhone, и телефон обращается к Apple напрямую, минуя наши серверы. Один ключ открывает все приложения команды, поэтому для следующего проекта он уже не понадобится."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "คีย์อยู่บน iPhone เครื่องนี้เท่านั้น โทรศัพท์จะติดต่อ Apple โดยตรงโดยไม่ผ่านเซิร์ฟเวอร์ของเรา คีย์เดียวอ่านได้ทุกแอปในทีม โปรเจกต์ถัดไปจึงไม่ต้องนำเข้าอีก"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Anahtar yalnızca bu iPhone’da kalır; telefon sunucularımız üzerinden değil, doğrudan Apple ile konuşur. Tek anahtar ekipteki tüm uygulamaları okur, bu yüzden sonraki projenizde yeniden gerekmez."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ключ зберігається лише на цьому iPhone, і телефон звертається до Apple напряму, оминаючи наші сервери. Один ключ відкриває всі програми команди, тож для наступного проєкту він уже не знадобиться."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Khóa chỉ lưu trên iPhone này, điện thoại kết nối trực tiếp với Apple, không qua máy chủ của chúng tôi. Một khóa đọc được mọi ứng dụng trong nhóm, nên dự án tiếp theo không cần nhập lại."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "密鑰只儲存在這部 iPhone 上，手機直接向 Apple 請求，不會經過我們的伺服器。一組密鑰能讀取這個團隊的所有 App，下一個專案不用再匯入。"
           }
         }
       }
@@ -20140,6 +20836,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已根據這個專案最近 30 天傳送過的事件選好，數字不對再修改。"
+          }
+        }
+      }
+    },
+    "已有团队密钥？用团队密钥" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لديك مفتاح فريق؟ استخدمه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schon einen Teamschlüssel? Den verwenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Have a team key? Use it instead"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Ya tienes una clave de equipo? Úsala"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Ya tienes una clave de equipo? Úsala"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vous avez une clé d'équipe ? Utilisez-la"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "टीम कुंजी है? उसे इस्तेमाल करें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hai già una chiave team? Usala"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "チームキーをお持ちですか？チームキーを使う"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "팀 키가 있나요? 팀 키 사용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já tem uma chave da equipe? Use-a"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já tens uma chave da equipa? Usa-a"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Есть ключ команды? Использовать его"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "มีคีย์ทีมแล้ว? ใช้คีย์ทีม"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekip anahtarınız var mı? Onu kullanın"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Є ключ команди? Використати його"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã có khóa nhóm? Dùng khóa nhóm"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已有團隊密鑰？改用團隊密鑰"
           }
         }
       }
@@ -21280,6 +22088,118 @@
         }
       }
     },
+    "开始使用" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بدأوا الاستخدام"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neu dabei"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Started using"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empezaron a usar"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Empezaron a usar"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nouveaux actifs"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "इस्तेमाल शुरू किया"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hanno iniziato"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "利用開始"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용 시작"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Começaram a usar"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Começaram a usar"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Начали пользоваться"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เริ่มใช้งาน"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kullanmaya başlayan"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Почали користуватися"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bắt đầu dùng"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開始使用"
+          }
+        }
+      }
+    },
     "待回复" : {
       "localizations" : {
         "ar" : {
@@ -22172,6 +23092,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "開啟 RevenueCat"
+          }
+        }
+      }
+    },
+    "把下载的文件发到这台 iPhone（隔空投送最快），选 **用 Snuffle 打开**；或者在下面选择文件。" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أرسل الملف الذي نزّلته إلى جهاز iPhone هذا (AirDrop هو الأسرع) وافتحه باستخدام **Snuffle**، أو اختر الملف أدناه."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schick die geladene Datei an dieses iPhone (AirDrop geht am schnellsten) und öffne sie mit **Snuffle** – oder wähle die Datei unten aus."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Send the downloaded file to this iPhone (AirDrop is fastest) and open it with **Snuffle**, or choose the file below."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envía el archivo descargado a este iPhone (AirDrop es lo más rápido) y ábrelo con **Snuffle**, o elige el archivo abajo."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envía el archivo descargado a este iPhone (AirDrop es lo más rápido) y ábrelo con **Snuffle**, o elige el archivo abajo."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envoyez le fichier téléchargé sur cet iPhone (AirDrop est le plus rapide) et ouvrez-le avec **Snuffle**, ou choisissez le fichier ci-dessous."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "डाउनलोड की गई फ़ाइल इस iPhone पर भेजें (AirDrop सबसे तेज़ है) और उसे **Snuffle** में खोलें, या नीचे फ़ाइल चुनें।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invia il file scaricato a questo iPhone (AirDrop è il modo più rapido) e aprilo con **Snuffle**, oppure scegli il file qui sotto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ダウンロードしたファイルをこのiPhoneに送り（AirDropが最速）、**Snuffle**で開きます。または下でファイルを選択します。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다운로드한 파일을 이 iPhone으로 보내고(AirDrop이 가장 빨라요) **Snuffle**로 여세요. 또는 아래에서 파일을 선택하세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envie o arquivo baixado para este iPhone (o AirDrop é mais rápido) e abra com o **Snuffle**, ou escolha o arquivo abaixo."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Envia o ficheiro descarregado para este iPhone (o AirDrop é mais rápido) e abre-o com a **Snuffle**, ou escolhe o ficheiro abaixo."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправьте скачанный файл на этот iPhone (быстрее всего через AirDrop) и откройте его в **Snuffle** — или выберите файл ниже."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ส่งไฟล์ที่ดาวน์โหลดมายัง iPhone เครื่องนี้ (AirDrop เร็วที่สุด) แล้วเปิดด้วย **Snuffle** หรือเลือกไฟล์ด้านล่าง"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İndirdiğiniz dosyayı bu iPhone’a gönderin (en hızlısı AirDrop) ve **Snuffle** ile açın ya da dosyayı aşağıdan seçin."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Надішліть завантажений файл на цей iPhone (найшвидше через AirDrop) і відкрийте його в **Snuffle** — або виберіть файл нижче."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gửi tệp đã tải về sang iPhone này (AirDrop nhanh nhất) rồi mở bằng **Snuffle**, hoặc chọn tệp ở bên dưới."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "把下載的檔案傳到這台 iPhone（AirDrop 最快），選擇用 **Snuffle** 開啟；或在下方選擇檔案。"
           }
         }
       }
@@ -23520,6 +24552,118 @@
         }
       }
     },
+    "改用个人密钥" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدام مفتاح فردي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Persönlichen Schlüssel verwenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use an individual key instead"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar una clave individual"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar una clave individual"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser une clé individuelle"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "व्यक्तिगत कुंजी इस्तेमाल करें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa una chiave individuale"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "個人キーを使う"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "개인 키 사용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar uma chave individual"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar uma chave individual"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использовать личный ключ"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้คีย์ส่วนตัว"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bireysel anahtar kullan"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Використати особистий ключ"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng khóa cá nhân"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改用個人密鑰"
+          }
+        }
+      }
+    },
     "改用账号登录" : {
       "localizations" : {
         "ar" : {
@@ -24076,118 +25220,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "資料來源"
-          }
-        }
-      }
-    },
-    "文件名里的密钥 ID 会自动填上" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يُملأ معرّف المفتاح تلقائيًا من اسم الملف"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Schlüssel-ID aus dem Dateinamen wird automatisch eingetragen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The Key ID in the file name fills in automatically"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El ID de clave del nombre del archivo se rellena solo"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El ID de clave del nombre del archivo se completa solo"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L'ID de clé contenu dans le nom du fichier est rempli automatiquement"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "फ़ाइल नाम से Key ID अपने आप भर जाएगी"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "L'ID chiave nel nome del file viene inserito automaticamente"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ファイル名のキーIDが自動入力されます"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "파일 이름의 키 ID가 자동으로 입력돼요"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O ID da chave no nome do arquivo é preenchido automaticamente"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O ID da chave no nome do ficheiro é preenchido automaticamente"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ID ключа из имени файла подставится автоматически"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ID คีย์ในชื่อไฟล์จะถูกกรอกให้อัตโนมัติ"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dosya adındaki Anahtar Kimliği otomatik doldurulur"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ID ключа з назви файлу підставиться автоматично"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ID khóa trong tên tệp sẽ được tự động điền"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "檔名中的密鑰 ID 會自動填入"
           }
         }
       }
@@ -28132,6 +29164,118 @@
         }
       }
     },
+    "正在读取 App 列表…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ قراءة قائمة التطبيقات…"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apps werden gelesen …"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading the app list…"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leyendo la lista de apps…"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Leyendo la lista de apps…"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lecture de la liste des apps…"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ऐप सूची पढ़ी जा रही है…"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lettura dell'elenco delle app…"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Appの一覧を読み込み中…"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱 목록을 읽는 중…"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lendo a lista de apps…"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A ler a lista de apps…"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Читаем список приложений…"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "กำลังอ่านรายการแอป…"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Uygulama listesi okunuyor…"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Читаємо список програм…"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đang đọc danh sách app…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在讀取 App 列表…"
+          }
+        }
+      }
+    },
     "此刻在线" : {
       "localizations" : {
         "ar" : {
@@ -29700,114 +30844,114 @@
         }
       }
     },
-    "注册事件按今天发生的次数算；第一次出现是今天第一次有事件、之前 30 天都没出现过的人，包括没注册的访客。" : {
+    "注册事件和自定义事件按今天触发的人数算；开始使用是今天第一次打开 App 或在网站登录、之前 30 天没出现过的人，不含没登录的网站访客。项目里只有网站访客时，才按访客算。" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يَحسب حدث التسجيل عدد مرات وقوعه اليوم. ويَحسب «أول ظهور» الأشخاص الذين وقع أول حدث لهم اليوم دون أي حدث في الـ 30 يومًا السابقة، بمن فيهم الزوار غير المسجّلين."
+            "value" : "تحسب أحداث التسجيل والأحداث المخصصة عدد الأشخاص الذين أطلقوها اليوم. أما «بدأوا الاستخدام» فهم من فتحوا التطبيق أو سجّلوا الدخول في الموقع لأول مرة اليوم ولم يظهروا خلال الثلاثين يومًا السابقة، دون زوار الموقع غير المسجلين. لا يُحسب الزوار إلا إذا لم يكن في المشروع سوى زوار الموقع."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Das Registrierungs-Event zählt, wie oft es heute ausgelöst wurde. Erstmals gesehen zählt Personen mit ihrem ersten Event heute und keinem in den 30 Tagen davor, auch Besucher ohne Registrierung."
+            "value" : "Registrierungs- und eigene Events zählen die Personen, die sie heute ausgelöst haben. Neu dabei zählt Personen, die heute zum ersten Mal die App geöffnet oder sich auf der Website angemeldet haben und in den 30 Tagen davor nicht da waren – ohne nicht angemeldete Website-Besucher. Nur wenn ein Projekt ausschließlich Website-Besucher hat, zählen Besucher."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sign-up event counts how many times it happened today. First seen counts people with their first event today and none in the 30 days before, including visitors who haven't signed up."
+            "value" : "Sign-up and custom events count the people who triggered them today. Started using counts people who opened the app or signed in on the website for the first time today and weren't seen in the 30 days before, not signed-out website visitors. Only a project with nothing but website visitors counts visitors."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El evento de registro cuenta cuántas veces ha ocurrido hoy. Primera vez cuenta a las personas con su primer evento hoy y ninguno en los 30 días anteriores, incluidos los visitantes que no se han registrado."
+            "value" : "Los eventos de registro y personalizados cuentan las personas que los activaron hoy. Empezaron a usar cuenta a quienes abrieron la app o iniciaron sesión en la web por primera vez hoy y no aparecieron en los 30 días anteriores, sin contar visitantes de la web sin sesión. Solo si el proyecto únicamente tiene visitantes de la web, se cuentan los visitantes."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "El evento de registro cuenta cuántas veces ocurrió hoy. Primera vez cuenta a las personas con su primer evento hoy y ninguno en los 30 días anteriores, incluidos los visitantes que no se registraron."
+            "value" : "Los eventos de registro y personalizados cuentan las personas que los activaron hoy. Empezaron a usar cuenta a quienes abrieron la app o iniciaron sesión en el sitio web por primera vez hoy y no aparecieron en los 30 días anteriores, sin contar visitantes sin sesión. Solo si el proyecto únicamente tiene visitantes del sitio, se cuentan los visitantes."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L'événement d'inscription compte le nombre de fois où il a eu lieu aujourd'hui. Première apparition compte les personnes dont le premier événement date d'aujourd'hui, sans aucun dans les 30 jours précédents, y compris les visiteurs non inscrits."
+            "value" : "Les événements d'inscription et personnalisés comptent les personnes qui les ont déclenchés aujourd'hui. Nouveaux actifs compte les personnes qui ont ouvert l'app ou se sont connectées sur le site pour la première fois aujourd'hui, sans être apparues les 30 jours précédents, hors visiteurs non connectés. Les visiteurs ne sont comptés que si le projet n'a que des visiteurs du site."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "साइन-अप इवेंट गिनता है कि वह आज कितनी बार हुआ। पहली बार दिखे में वे लोग गिने जाते हैं जिनका पहला इवेंट आज हुआ और उससे पहले के 30 दिनों में कोई इवेंट नहीं था, जिनमें साइन अप न करने वाले विज़िटर भी शामिल हैं।"
+            "value" : "साइन-अप और कस्टम इवेंट आज उन्हें ट्रिगर करने वाले लोगों को गिनते हैं। इस्तेमाल शुरू किया उन लोगों को गिनता है जिन्होंने आज पहली बार ऐप खोला या वेबसाइट पर साइन इन किया और पिछले 30 दिनों में नहीं दिखे; बिना साइन इन वाले वेबसाइट विज़िटर शामिल नहीं हैं। विज़िटर सिर्फ़ तभी गिने जाते हैं जब प्रोजेक्ट में केवल वेबसाइट विज़िटर हों।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "L'evento di registrazione conta quante volte si è verificato oggi. Visti per la prima volta conta le persone con il primo evento oggi e nessuno nei 30 giorni precedenti, inclusi i visitatori non registrati."
+            "value" : "Gli eventi di registrazione e personalizzati contano le persone che li hanno attivati oggi. Hanno iniziato conta chi oggi ha aperto l'app o ha effettuato l'accesso al sito per la prima volta e non si era visto nei 30 giorni precedenti, esclusi i visitatori del sito senza accesso. I visitatori contano solo se il progetto ha soltanto visitatori del sito."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "サインアップイベントは今日の発生回数で数えます。初回出現は、今日初めてイベントがあり、それ以前の30日間に一度も現れていない人で、未登録の訪問者も含みます。"
+            "value" : "サインアップイベントとカスタムイベントは、今日それを発生させた人数で数えます。利用開始は、今日初めてAppを開いたかWebサイトでログインし、過去30日間に現れていない人で、ログインしていないWebサイト訪問者は含みません。プロジェクトにWebサイト訪問者しかいない場合のみ、訪問者で数えます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "가입 이벤트는 오늘 발생한 횟수로 계산해요. 첫 등장은 오늘 처음 이벤트가 있었고 이전 30일 동안 나타나지 않은 사람으로, 가입하지 않은 방문자도 포함돼요."
+            "value" : "가입 이벤트와 사용자 지정 이벤트는 오늘 이벤트를 발생시킨 사람 수로 셉니다. 사용 시작은 오늘 처음 앱을 열었거나 웹사이트에 로그인했고 지난 30일 동안 나타나지 않은 사람으로, 로그인하지 않은 웹사이트 방문자는 제외해요. 프로젝트에 웹사이트 방문자만 있을 때만 방문자로 셉니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O evento de cadastro conta quantas vezes aconteceu hoje. Primeira vez conta as pessoas com o primeiro evento hoje e nenhum nos 30 dias anteriores, incluindo visitantes que não se cadastraram."
+            "value" : "Eventos de cadastro e personalizados contam as pessoas que os acionaram hoje. Começaram a usar conta quem abriu o app ou entrou no site pela primeira vez hoje e não apareceu nos 30 dias anteriores, sem contar visitantes do site sem login. Só quando o projeto tem apenas visitantes do site é que eles são contados."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O evento de registo conta quantas vezes ocorreu hoje. Primeira vez conta as pessoas com o primeiro evento hoje e nenhum nos 30 dias anteriores, mesmo os visitantes que não se registaram."
+            "value" : "Os eventos de registo e personalizados contam as pessoas que os acionaram hoje. Começaram a usar conta quem abriu a app ou iniciou sessão no site pela primeira vez hoje e não apareceu nos 30 dias anteriores, sem contar visitantes do site sem sessão iniciada. Só quando o projeto tem apenas visitantes do site é que estes são contados."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Событие регистрации считается по числу срабатываний за сегодня. «Первое появление» — люди, у которых первое событие было сегодня и ни одного за предыдущие 30 дней, включая незарегистрированных посетителей."
+            "value" : "События регистрации и свои события считают людей, вызвавших их сегодня. «Начали пользоваться» — люди, которые сегодня впервые открыли приложение или вошли на сайте и не появлялись 30 дней до этого, без посетителей сайта, не выполнивших вход. Посетителей считаем, только если в проекте нет никого, кроме них."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "อีเวนต์ลงทะเบียนนับจำนวนครั้งที่เกิดขึ้นวันนี้ ส่วนเห็นครั้งแรกนับผู้ที่มีอีเวนต์แรกในวันนี้และไม่มีอีเวนต์เลยใน 30 วันก่อนหน้า รวมถึงผู้เยี่ยมชมที่ยังไม่ได้ลงทะเบียน"
+            "value" : "อีเวนต์สมัครสมาชิกและอีเวนต์ที่กำหนดเองนับจำนวนคนที่ทำให้เกิดอีเวนต์วันนี้ เริ่มใช้งานคือคนที่เปิดแอปหรือเข้าสู่ระบบบนเว็บไซต์เป็นครั้งแรกวันนี้และไม่เคยปรากฏใน 30 วันก่อนหน้า ไม่รวมผู้เยี่ยมชมเว็บไซต์ที่ไม่ได้เข้าสู่ระบบ จะนับผู้เยี่ยมชมก็ต่อเมื่อโปรเจกต์มีแต่ผู้เยี่ยมชมเว็บไซต์เท่านั้น"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kayıt olayı, bugün kaç kez gerçekleştiğine göre sayılır. İlk görülme, ilk olayı bugün olan ve önceki 30 günde hiç olayı olmayan kişileri sayar; kayıt olmamış ziyaretçiler de dahildir."
+            "value" : "Kayıt ve özel etkinlikler, bunları bugün tetikleyen kişileri sayar. Kullanmaya başlayan; bugün uygulamayı ilk kez açan ya da web sitesinde ilk kez oturum açan ve önceki 30 günde görülmeyen kişileri sayar, oturum açmamış site ziyaretçileri hariçtir. Ziyaretçiler yalnızca projede sadece site ziyaretçisi varsa sayılır."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Подія реєстрації рахується за кількістю спрацювань сьогодні. «Перша поява» — люди, у яких перша подія була сьогодні й жодної за попередні 30 днів, зокрема незареєстровані відвідувачі."
+            "value" : "Події реєстрації та власні події рахують людей, які викликали їх сьогодні. «Почали користуватися» — люди, які сьогодні вперше відкрили програму або увійшли на сайті й не з’являлися 30 днів до цього, без відвідувачів сайту, які не ввійшли. Відвідувачів рахуємо, лише якщо в проєкті немає нікого, крім них."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sự kiện đăng ký tài khoản được tính theo số lần xảy ra hôm nay. Lần đầu xuất hiện tính những người có sự kiện đầu tiên hôm nay và không có sự kiện nào trong 30 ngày trước đó, kể cả khách truy cập chưa đăng ký."
+            "value" : "Sự kiện đăng ký tài khoản và sự kiện tùy chỉnh đếm số người đã kích hoạt chúng hôm nay. Bắt đầu dùng là những người hôm nay lần đầu mở app hoặc đăng nhập trên website và chưa xuất hiện trong 30 ngày trước, không tính khách truy cập website chưa đăng nhập. Chỉ khi dự án chỉ có khách truy cập website thì mới tính khách truy cập."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "註冊事件按今天發生的次數計算；首次出現是今天第一次有事件、之前 30 天都沒出現過的人，包括未註冊的訪客。"
+            "value" : "註冊事件和自訂事件按今天觸發的人數計算；開始使用是今天第一次開啟 App 或在網站登入、之前 30 天沒出現過的人，不含未登入的網站訪客。專案中只有網站訪客時，才按訪客計算。"
           }
         }
       }
@@ -31152,118 +32296,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "珊瑚"
-          }
-        }
-      }
-    },
-    "生成一把密钥，权限选 **客户支持**（只能读评论和回复评论）。" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أنشئ مفتاحًا بدور **دعم العملاء** (يمكنه فقط قراءة المراجعات والرد عليها)."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erstelle einen Schlüssel mit der Rolle **Kundensupport** (kann nur Bewertungen lesen und beantworten)."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Generate a key with the **Customer Support** role (it can only read and reply to reviews)."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Genera una clave con el rol **Atención al cliente** (solo puede leer y responder reseñas)."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Genera una clave con el rol **Atención al cliente** (solo puede leer y responder reseñas)."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Générez une clé avec le rôle **Support client** (il permet uniquement de lire les avis et d'y répondre)."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Customer Support** भूमिका के साथ एक कुंजी बनाएँ (यह सिर्फ़ समीक्षाएँ पढ़ और उनका जवाब दे सकती है)।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Genera una chiave con il ruolo **Assistenza clienti** (può solo leggere e rispondere alle recensioni)."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**カスタマーサポート**の役割でキーを生成します（レビューの読み取りと返信のみ可能）。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**고객 지원** 역할로 키를 생성하세요(리뷰 읽기 및 답변만 가능)."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gere uma chave com a função **Suporte ao Cliente** (só pode ler e responder avaliações)."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gera uma chave com a função **Apoio ao cliente** (só pode ler e responder a avaliações)."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Создайте ключ с ролью **Поддержка клиентов** (он может только читать отзывы и отвечать на них)."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "สร้างคีย์โดยเลือกบทบาท **ฝ่ายสนับสนุนลูกค้า** (อ่านและตอบรีวิวได้เท่านั้น)"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "**Müşteri Desteği** rolüyle bir anahtar oluşturun (yalnızca yorumları okuyabilir ve yanıtlayabilir)."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Створіть ключ із роллю **Підтримка клієнтів** (він може лише читати відгуки й відповідати на них)."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tạo một khóa với vai trò **Hỗ trợ khách hàng** (chỉ có thể đọc và trả lời đánh giá)."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "產生一組密鑰，權限選擇 **客戶支援**（只能讀取和回覆評論）。"
           }
         }
       }
@@ -33392,118 +34424,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "移除這個帳號？"
-          }
-        }
-      }
-    },
-    "第一次出现" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أول ظهور"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erstmals gesehen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "First seen"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Primera vez"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Primera vez"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Première apparition"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "पहली बार दिखे"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Visti per la prima volta"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "初回出現"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "첫 등장"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Primeira vez"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Primeira vez"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Первое появление"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เห็นครั้งแรก"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "İlk görülme"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Перша поява"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lần đầu xuất hiện"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "首次出現"
           }
         }
       }
@@ -36084,114 +37004,114 @@
         }
       }
     },
-    "读不出这个文件，请确认是 Apple 下载的 .p8 密钥" : {
+    "读不出这个文件，请确认是 App Store Connect 下载的密钥文件（.p8）" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تعذّرت قراءة هذا الملف. تأكد أنه مفتاح .p8 الذي نزّلته من Apple."
+            "value" : "تعذّرت قراءة هذا الملف. تأكد أنه ملف المفتاح (‎.p8) الذي نزّلته من App Store Connect."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Diese Datei kann nicht gelesen werden. Stelle sicher, dass es der von Apple geladene .p8-Schlüssel ist."
+            "value" : "Diese Datei kann nicht gelesen werden. Stelle sicher, dass es die Schlüsseldatei (.p8) aus App Store Connect ist."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Can't read this file. Make sure it's the .p8 key downloaded from Apple."
+            "value" : "Can't read this file. Make sure it's the key file (.p8) downloaded from App Store Connect."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se puede leer este archivo. Asegúrate de que sea la clave .p8 descargada de Apple."
+            "value" : "No se puede leer este archivo. Asegúrate de que sea el archivo de clave (.p8) descargado de App Store Connect."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No se puede leer este archivo. Asegúrate de que sea la clave .p8 descargada de Apple."
+            "value" : "No se puede leer este archivo. Asegúrate de que sea el archivo de clave (.p8) descargado de App Store Connect."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossible de lire ce fichier. Vérifiez qu'il s'agit bien de la clé .p8 téléchargée depuis Apple."
+            "value" : "Impossible de lire ce fichier. Vérifiez qu'il s'agit du fichier de clé (.p8) téléchargé depuis App Store Connect."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "यह फ़ाइल पढ़ी नहीं जा सकी। पक्का करें कि यह Apple से डाउनलोड की गई .p8 कुंजी है।"
+            "value" : "यह फ़ाइल पढ़ी नहीं जा सकी। पक्का करें कि यह App Store Connect से डाउनलोड की गई कुंजी फ़ाइल (.p8) है।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Impossibile leggere questo file. Assicurati che sia la chiave .p8 scaricata da Apple."
+            "value" : "Impossibile leggere questo file. Assicurati che sia il file della chiave (.p8) scaricato da App Store Connect."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "このファイルを読み込めません。Appleからダウンロードした.p8キーであることを確認してください"
+            "value" : "このファイルを読み込めません。App Store Connectからダウンロードしたキーファイル（.p8）であることを確認してください"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "이 파일을 읽을 수 없어요. Apple에서 다운로드한 .p8 키인지 확인하세요"
+            "value" : "이 파일을 읽을 수 없어요. App Store Connect에서 다운로드한 키 파일(.p8)인지 확인하세요"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não foi possível ler este arquivo. Verifique se é a chave .p8 baixada da Apple."
+            "value" : "Não foi possível ler este arquivo. Verifique se é o arquivo de chave (.p8) baixado do App Store Connect."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Não é possível ler este ficheiro. Confirma que é a chave .p8 descarregada da Apple."
+            "value" : "Não é possível ler este ficheiro. Confirma que é o ficheiro de chave (.p8) descarregado do App Store Connect."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удаётся прочитать файл. Убедитесь, что это ключ .p8, скачанный из Apple."
+            "value" : "Не удаётся прочитать файл. Убедитесь, что это файл ключа (.p8), скачанный из App Store Connect."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "อ่านไฟล์นี้ไม่ได้ โปรดตรวจสอบว่าเป็นคีย์ .p8 ที่ดาวน์โหลดจาก Apple"
+            "value" : "อ่านไฟล์นี้ไม่ได้ โปรดตรวจสอบว่าเป็นไฟล์คีย์ (.p8) ที่ดาวน์โหลดจาก App Store Connect"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bu dosya okunamıyor. Apple’dan indirilen .p8 anahtarı olduğundan emin olun."
+            "value" : "Bu dosya okunamıyor. App Store Connect’ten indirilen anahtar dosyası (.p8) olduğundan emin olun."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не вдається прочитати файл. Переконайтеся, що це ключ .p8, завантажений з Apple."
+            "value" : "Не вдається прочитати файл. Переконайтеся, що це файл ключа (.p8), завантажений з App Store Connect."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Không đọc được tệp này. Hãy đảm bảo đó là khóa .p8 tải về từ Apple."
+            "value" : "Không đọc được tệp này. Hãy đảm bảo đó là tệp khóa (.p8) tải về từ App Store Connect."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "無法讀取這個檔案，請確認是從 Apple 下載的 .p8 密鑰"
+            "value" : "無法讀取這個檔案，請確認是從 App Store Connect 下載的密鑰檔案（.p8）"
           }
         }
       }
@@ -41946,114 +42866,226 @@
         }
       }
     },
-    "选择 .p8 文件" : {
+    "选择团队密钥的 **.p8 文件**。" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "اختيار ملف .p8"
+            "value" : "اختر **ملف ‎.p8** لمفتاح الفريق."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ".p8-Datei auswählen"
+            "value" : "Wähle die **.p8-Datei** des Teamschlüssels."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose the .p8 file"
+            "value" : "Choose the team key's **.p8 file**."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elegir el archivo .p8"
+            "value" : "Elige el **archivo .p8** de la clave de equipo."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Elegir el archivo .p8"
+            "value" : "Elige el **archivo .p8** de la clave de equipo."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choisir le fichier .p8"
+            "value" : "Choisissez le **fichier .p8** de la clé d'équipe."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ".p8 फ़ाइल चुनें"
+            "value" : "टीम कुंजी की **.p8 फ़ाइल** चुनें।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Scegli il file .p8"
+            "value" : "Scegli il **file .p8** della chiave team."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ".p8ファイルを選択"
+            "value" : "チームキーの**.p8ファイル**を選択します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ".p8 파일 선택"
+            "value" : "팀 키의 **.p8 파일**을 선택하세요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escolher o arquivo .p8"
+            "value" : "Escolha o **arquivo .p8** da chave da equipe."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escolher o ficheiro .p8"
+            "value" : "Escolhe o **ficheiro .p8** da chave da equipa."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выбрать файл .p8"
+            "value" : "Выберите **файл .p8** ключа команды."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "เลือกไฟล์ .p8"
+            "value" : "เลือก **ไฟล์ .p8** ของคีย์ทีม"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : ".p8 dosyasını seç"
+            "value" : "Ekip anahtarının **.p8 dosyasını** seçin."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Вибрати файл .p8"
+            "value" : "Виберіть **файл .p8** ключа команди."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chọn tệp .p8"
+            "value" : "Chọn **tệp .p8** của khóa nhóm."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "選擇 .p8 檔案"
+            "value" : "選擇團隊密鑰的 **.p8 檔案**。"
+          }
+        }
+      }
+    },
+    "选择密钥文件" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختيار ملف المفتاح"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schlüsseldatei wählen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose the key file"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir el archivo de clave"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Elegir el archivo de clave"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choisir le fichier de clé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कुंजी फ़ाइल चुनें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scegli il file della chiave"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "キーファイルを選択"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키 파일 선택"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher o arquivo de chave"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Escolher o ficheiro de chave"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбрать файл ключа"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เลือกไฟล์คีย์"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anahtar dosyasını seç"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вибрати файл ключа"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chọn tệp khóa"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "選擇密鑰檔案"
           }
         }
       }
