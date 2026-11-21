@@ -12,11 +12,11 @@ struct MetricsCard: View {
     var body: some View {
         CardGroup {
             block(title: "新增用户") {
-                ChoiceBar(options: [(.signup, "注册事件"), (.firstSeen, "第一次出现"), (.custom, "自定义事件")], selection: newUsers)
+                ChoiceBar(options: [(.signup, "注册事件"), (.firstSeen, "开始使用"), (.custom, "自定义事件")], selection: newUsers)
                 if case .event(let name) = project.metrics.newUsers {
                     EventField(label: "事件名", text: Binding(get: { name }, set: { project.metrics.newUsers = .event($0) }))
                 }
-                Note(text: "注册事件按今天发生的次数算；第一次出现是今天第一次有事件、之前 30 天都没出现过的人，包括没注册的访客。")
+                Note(text: "注册事件和自定义事件按今天触发的人数算；开始使用是今天第一次打开 App 或在网站登录、之前 30 天没出现过的人，不含没登录的网站访客。项目里只有网站访客时，才按访客算。")
             }
             RowDivider()
             block(title: "收入") {
