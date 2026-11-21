@@ -33,16 +33,13 @@ jobs:
         run: pnpm exec wrangler deploy --dry-run --outdir dist
 
   ios:
-    runs-on: macos-26
+    # Same toolchain as development: Xcode 26.6's compiler crashes on this code (Swift frontend fatal error).
+    runs-on: xcode-27
     steps:
       - uses: actions/checkout@v4
-      - name: Available Xcode versions
-        run: |
-          ls -d /Applications/Xcode*.app
-          /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -version
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: "27.2"
       - name: SnuffleKit tests
         working-directory: ios/Packages/SnuffleKit
         run: swift test
