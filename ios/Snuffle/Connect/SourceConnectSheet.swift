@@ -125,8 +125,8 @@ private struct PostHogConnect: View {
                             Task { await choose(item) }
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(item.name).foregroundStyle(Palette.ink)
-                                Text([item.organizationName, item.timezone].compactMap { $0 }.joined(separator: " · "))
+                                Text(item.displayName).foregroundStyle(Palette.ink)
+                                Text([item.displayName == item.name ? item.organizationName : item.name, item.timezone].compactMap { $0 }.joined(separator: " · "))
                                     .font(.system(size: 12))
                                     .foregroundStyle(Palette.ink2)
                             }
@@ -202,8 +202,8 @@ private struct PostHogConnect: View {
         guard let account else { return }
         busy = true
         defer { busy = false }
-        project.posthog = PostHogLink(accountId: account.id, projectId: item.id, projectName: item.name, timeZone: item.timezone ?? TimeZone.current.identifier)
-        if project.name.isEmpty { project.name = item.name }
+        project.posthog = PostHogLink(accountId: account.id, projectId: item.id, projectName: item.displayName, timeZone: item.timezone ?? TimeZone.current.identifier)
+        if project.name.isEmpty { project.name = item.displayName }
         // Pick defaults from the events this project really sends; keep the standard ones if the check fails.
         if let seen = try? await seenEvents(account: account, projectId: item.id) {
             let suggested = MetricSettings.suggested(seenEvents: seen)

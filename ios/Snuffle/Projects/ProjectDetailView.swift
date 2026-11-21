@@ -7,6 +7,7 @@ struct ProjectDetailView: View {
     var project: Project
     @Environment(AppModel.self) private var model
     @Environment(\.openPaywall) private var openPaywall
+    @Environment(\.dismiss) private var dismiss
     @State private var range = Range.today
     @State private var history: [DailyPoint] = []
     @State private var loading = false
@@ -51,6 +52,10 @@ struct ProjectDetailView: View {
             }
         }
         .sheet(isPresented: $editing) { ProjectEditor(project: project) }
+        // Deleted from the editor: leave the page instead of showing an empty one.
+        .onChange(of: model.workspace.projects.contains { $0.id == project.id }) { _, exists in
+            if !exists { dismiss() }
+        }
         .task(id: range) { await loadHistory() }
     }
 
@@ -82,9 +87,9 @@ struct ProjectDetailView: View {
                     Odometer(text: snapshot?.newUsers.map(Format.number) ?? "–", size: 72)
                     if let yesterday = snapshot?.newUsersYesterday, let now = snapshot?.newUsers {
                         let diff = now - yesterday
-                        Text(diff >= 0 ? "比昨天此时多 \(Format.number(diff))" : "比昨天此时少 \(Format.number(-diff))")
+                        Text(diff == 0 ? "和昨天此时一样" : diff > 0 ? "比昨天此时多 \(Format.number(diff))" : "比昨天此时少 \(Format.number(-diff))")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(diff >= 0 ? Palette.up : Palette.bad)
+                            .foregroundStyle(diff == 0 ? Palette.ink2 : diff > 0 ? Palette.up : Palette.bad)
                     }
                 }
                 HourBars(values: snapshot?.hourlyNewUsers ?? []).frame(height: 56)

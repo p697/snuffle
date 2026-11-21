@@ -63,6 +63,28 @@ struct LiveProviderTests {
         ])
     }
 
+    @Test func listsProjectsFromEveryOrganization() async throws {
+        // @me carries projects only for the current organization; the others are read separately, and one the
+        // credential cannot open is skipped.
+        StubProtocol.reset([
+            "us.posthog.com/api/users/@me": (200, #"{"email":"me@example.com","organization":{"id":"org-a","name":"Isaac Codex","teams":[{"id":1,"name":"Isaac Codex","timezone":"UTC"}]},"organizations":[{"id":"org-a","name":"Isaac Codex"},{"id":"org-b","name":"Clawket"},{"id":"org-c","name":"Locked"}]}"#),
+            "us.posthog.com/api/organizations/org-b": (200, #"{"id":"org-b","name":"Clawket","teams":[{"id":7,"name":"Clawket","timezone":"Asia/Shanghai"}],"projects":[{"id":7,"name":"Clawket","timezone":"Asia/Shanghai"}]}"#),
+            "us.posthog.com/api/organizations/org-c": (403, #"{"detail":"not in scope"}"#)
+        ])
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StubProtocol.self]
+        let client = PostHogClient(host: URL(string: "https://us.posthog.com")!, http: HTTPClient(session: URLSession(configuration: configuration))) { "token" }
+        let account = try await client.account()
+        #expect(account.email == "me@example.com")
+        #expect(account.projects.map(\.name) == ["Isaac Codex", "Clawket"])
+        #expect(account.projects.map(\.organizationName) == ["Isaac Codex", "Clawket"])
+        #expect(account.projects.last?.timezone == "Asia/Shanghai")
+        #expect(PostHogProject(id: 9, name: "Default project", timezone: nil, organizationName: "Clawket").displayName == "Clawket")
+        #expect(PostHogProject(id: 9, name: "Default project", timezone: nil, organizationName: nil).displayName == "Default project")
+        #expect(account.projects.first?.displayName == "Isaac Codex")
+        #expect(!StubProtocol.seen.contains { $0.url?.path() == "/api/organizations/org-a/" }, "the current organization is not read twice")
+    }
+
     @Test func combinesSourcesIntoOneSnapshot() async throws {
         // 01:30 UTC: two hour columns after the two fixed ones.
         StubProtocol.reset([
