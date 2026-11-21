@@ -44,3 +44,21 @@ SNUFFLE_API_URL = http:/$()/127.0.0.1:8787   // a local `wrangler dev`, see serv
 - `-demo` starts in demo mode; `-scenario sale|quiet|failure` shapes the next demo refresh.
 - `-resetState` clears saved projects, settings and caches.
 - `-forcePro` unlocks Pro in debug builds only.
+
+## Release
+
+The App Store record is "Snuffle" (`ai.snuffle.app`, team C8TM82D73W); the Pro products are already configured in
+App Store Connect with the same ids as `Products.storekit`. Bump `CURRENT_PROJECT_VERSION` (and `MARKETING_VERSION`
+for a new version) in `project.yml`, then archive and upload with the Apple ID signed into Xcode:
+
+```
+xcodegen generate
+xcodebuild archive -project Snuffle.xcodeproj -scheme Snuffle -configuration Release \
+  -destination 'generic/platform=iOS' -archivePath build/release/Snuffle.xcarchive -allowProvisioningUpdates
+xcodebuild -exportArchive -archivePath build/release/Snuffle.xcarchive \
+  -exportOptionsPlist ExportOptions.plist -exportPath build/release/export -allowProvisioningUpdates
+```
+
+`ExportOptions.plist` uses `method` `app-store-connect` and `destination` `upload`. `PrivacyInfo.xcprivacy` in each
+target declares the App Group defaults and what drafting sends to the server; keep it in step with the App Store
+privacy answers.
