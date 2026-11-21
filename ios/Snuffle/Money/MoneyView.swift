@@ -27,6 +27,7 @@ struct MoneyView: View {
                 .padding(.bottom, 24)
             }
             .scrollIndicators(.hidden)
+            .clearsTabBar()
             .background(Palette.paper)
             .toolbar(.hidden, for: .navigationBar)
             .task(id: model.lastRefresh) { await load() }

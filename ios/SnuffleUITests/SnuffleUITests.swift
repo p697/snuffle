@@ -154,6 +154,25 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "live-asc-reviews")
     }
 
+    /// Every tab scrolls its last row clear of the tab bar and the refresh button.
+    func testEveryTabScrollsClearOfTheTabBar() {
+        let app = launch()
+        refresh(app)
+        for tab in ["今日", "收入", "评论", "项目"] {
+            app.buttons["tab-\(tab)"].tap()
+            for _ in 0..<6 { app.swipeUp(velocity: .fast) }
+            sleep(1)
+            attach(app, name: "bottom-\(tab)")
+        }
+        // The last row of 今日 sits fully above the bar once scrolled to the end.
+        app.buttons["tab-今日"].tap()
+        for _ in 0..<6 { app.swipeUp(velocity: .fast) }
+        sleep(1)
+        let last = app.buttons["leaveDemo"]
+        XCTAssertTrue(last.isHittable)
+        XCTAssertLessThanOrEqual(last.frame.maxY, app.buttons["tab-今日"].frame.minY)
+    }
+
     private func attach(_ app: XCUIApplication, name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = name

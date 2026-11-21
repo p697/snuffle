@@ -59,6 +59,7 @@ struct ProjectsView: View {
                 }
             }
             .scrollContentBackground(.hidden)
+            .clearsTabBar()
             .background(Palette.paper)
             .toolbar(.hidden, for: .navigationBar)
             .navigationDestination(for: UUID.self) { id in

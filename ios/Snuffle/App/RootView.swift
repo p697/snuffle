@@ -12,6 +12,7 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var tab = Tab.today
     @State private var paywall: PaywallReason?
+    @State private var barHeight: CGFloat = 0
 
     var body: some View {
         Group {
@@ -29,15 +30,20 @@ struct RootView: View {
         .task { await model.refreshOnOpenIfNeeded() }
     }
 
+    /// The bar floats over the pages. A bottom safe-area inset does not reach the scroll views inside each tab's
+    /// NavigationStack, so every scrolling page adds the bar's measured height itself (`clearsTabBar()`).
     private var tabs: some View {
-        ZStack {
-            page(.today) { HomeView() }
-            page(.money) { MoneyView() }
-            page(.reviews) { ReviewsView() }
-            page(.projects) { ProjectsView() }
-        }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        ZStack(alignment: .bottom) {
+            ZStack {
+                page(.today) { HomeView() }
+                page(.money) { MoneyView() }
+                page(.reviews) { ReviewsView() }
+                page(.projects) { ProjectsView() }
+            }
+            .environment(\.tabBarClearance, barHeight)
             TabBar(tab: $tab)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { barHeight = $0 }
+                .ignoresSafeArea(.keyboard)
         }
     }
 
@@ -108,6 +114,21 @@ enum PaywallReason: String, Identifiable {
 
 extension EnvironmentValues {
     @Entry var openPaywall: (PaywallReason) -> Void = { _ in }
+    /// Height of the floating tab bar, including the room above it for the cat. Zero outside the tabs.
+    @Entry var tabBarClearance: CGFloat = 0
+}
+
+extension View {
+    /// For a tab's scroll view or list: its last row can scroll above the tab bar and the refresh button.
+    func clearsTabBar() -> some View { modifier(TabBarClearance()) }
+}
+
+private struct TabBarClearance: ViewModifier {
+    @Environment(\.tabBarClearance) private var clearance
+
+    func body(content: Content) -> some View {
+        content.contentMargins(.bottom, clearance, for: .scrollContent)
+    }
 }
 
 struct PrimaryButtonStyle: ButtonStyle {
