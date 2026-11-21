@@ -11,7 +11,7 @@ let package = Package(
         .library(name: "SnuffleKit", targets: ["SnuffleKit"])
     ],
     targets: [
-        .target(name: "SnuffleKit"),
+        .target(name: "SnuffleKit", resources: [.process("Resources")]),
         .testTarget(
             name: "SnuffleKitTests",
             dependencies: ["SnuffleKit"]

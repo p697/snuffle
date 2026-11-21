@@ -45,7 +45,7 @@ struct ChoiceRow: View {
                 if busy {
                     ProgressView()
                 } else {
-                    Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
+                    Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
                 }
             }
             .frame(minHeight: 60)
@@ -66,7 +66,7 @@ private struct SavedAccounts: View {
         let accounts = model.workspace.accounts.filter { $0.platform == platform }
         if !accounts.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                SectionLabel("用已登录的账号")
+                SectionLabel(String(localized: "用已登录的账号"))
                 CardGroup {
                     ForEach(Array(accounts.enumerated()), id: \.element.id) { index, account in
                         if index > 0 { RowDivider() }
@@ -80,7 +80,7 @@ private struct SavedAccounts: View {
 
 /// A text field in a white card with an ink outline: the one thing to fill on the page.
 private struct KeyField: View {
-    var placeholder: String
+    var placeholder: LocalizedStringKey
     @Binding var text: String
     @Environment(\.accent) private var accent
 
@@ -108,10 +108,10 @@ private struct KeyField: View {
 
 /// The small print under a form. Markdown, so `**bold**` names what to look for.
 private struct FinePrint: View {
-    var text: String
+    var text: LocalizedStringKey
 
     var body: some View {
-        Text(LocalizedStringKey(text))
+        Text(text)
             .font(.system(size: 12))
             .foregroundStyle(Palette.ink2)
             .fixedSize(horizontal: false, vertical: true)
@@ -221,7 +221,7 @@ struct PostHogSignIn: View {
     private func finish(credential: Credential, bearer: String, method: Analytics.ConnectMethod) async throws {
         let result = try await PostHogClient(host: region.host) { bearer }.account()
         let saved = try model.add(
-            account: Account(platform: .posthog, title: result.email ?? "PostHog 个人密钥", subtitle: region.label),
+            account: Account(platform: .posthog, title: result.email ?? String(localized: "PostHog 个人密钥"), subtitle: region.label),
             credential: credential
         )
         session.postHogAccount = saved
@@ -282,7 +282,7 @@ struct PostHogConnectPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 BackButton()
-                SourceHeader(platform: .posthog, title: "连接 PostHog", subtitle: Platform.posthog.purpose)
+                SourceHeader(platform: .posthog, title: String(localized: "连接 PostHog"), subtitle: Platform.posthog.purpose)
                 PostHogSignIn(signedIn: signedIn)
                     .padding(18)
                     .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -307,9 +307,9 @@ struct PostHogPickPage: View {
                 HStack {
                     BackButton()
                     Spacer()
-                    SuccessBadge(text: "PostHog 已登录")
+                    SuccessBadge(text: String(localized: "PostHog 已登录"))
                 }
-                PageTitle(title: "选一个产品", subtitle: subtitle)
+                PageTitle(title: String(localized: "选一个产品"), subtitle: subtitle)
                 if session.postHogProjects.isEmpty {
                     Text("这个账号下还没有项目。先在 PostHog 里建一个，或换一个账号登录。")
                         .font(.system(size: 15))
@@ -335,7 +335,7 @@ struct PostHogPickPage: View {
     }
 
     private var subtitle: String {
-        [session.postHogAccount?.title, "\(session.postHogProjects.count) 个项目"].compactMap { $0 }.joined(separator: " · ")
+        [session.postHogAccount?.title, String(localized: "\(session.postHogProjects.count) 个项目")].compactMap { $0 }.joined(separator: " · ")
     }
 
     private func detail(_ item: PostHogProject) -> String {
@@ -382,7 +382,7 @@ struct RevenueCatConnectPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 BackButton()
-                SourceHeader(platform: .revenueCat, title: "连接 RevenueCat", subtitle: "每日收入、在订人数、试用和 MRR")
+                SourceHeader(platform: .revenueCat, title: String(localized: "连接 RevenueCat"), subtitle: String(localized: "每日收入、在订人数、试用和 MRR"))
                 if account != nil, !session.revenueCatProjects.isEmpty {
                     projectList
                 } else {
@@ -407,7 +407,7 @@ struct RevenueCatConnectPage: View {
             NumberedStep(number: 1, text: "在 RevenueCat 打开 **项目设置 → API keys**，新建一把 **V2 密钥**。")
             NumberedStep(number: 2, text: "权限只开 **Charts metrics: overview** 和 **Project configuration: projects** 的读取，其他保持关闭。")
             NumberedStep(number: 3, text: "复制密钥，回到这里粘贴。")
-            OutLink(title: "打开 RevenueCat", url: URL(string: "https://app.revenuecat.com")!)
+            OutLink(title: String(localized: "打开 RevenueCat"), url: URL(string: "https://app.revenuecat.com")!)
                 .padding(.leading, 38)
         }
         .padding(18)
@@ -416,7 +416,7 @@ struct RevenueCatConnectPage: View {
 
     private var projectList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel("选一个 RevenueCat 项目")
+            SectionLabel(String(localized: "选一个 RevenueCat 项目"))
             CardGroup {
                 ForEach(Array(session.revenueCatProjects.enumerated()), id: \.element.id) { index, item in
                     if index > 0 { RowDivider() }
@@ -434,7 +434,7 @@ struct RevenueCatConnectPage: View {
         do {
             let found = try await RevenueCatClient(secretKey: secret).projects()
             let saved = try model.add(
-                account: Account(platform: .revenueCat, title: found.map(\.name).joined(separator: "、").ifEmpty("RevenueCat"), subtitle: "密钥 ••••" + secret.suffix(4)),
+                account: Account(platform: .revenueCat, title: found.map(\.name).formatted(.list(type: .and)).ifEmpty("RevenueCat"), subtitle: String(localized: "密钥 ••••\(String(secret.suffix(4)))")),
                 credential: .revenueCat(secretKey: secret)
             )
             session.track(.revenueCat, .key, .succeeded)
@@ -498,7 +498,7 @@ struct AppStoreConnectPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 BackButton()
-                SourceHeader(platform: .appStore, title: "连接 App Store", subtitle: "全部评论和回复状态，在这里直接回复")
+                SourceHeader(platform: .appStore, title: String(localized: "连接 App Store"), subtitle: String(localized: "全部评论和回复状态，在这里直接回复"))
                 if account != nil, !session.appStoreApps.isEmpty {
                     appList
                 } else {
@@ -532,7 +532,7 @@ struct AppStoreConnectPage: View {
         .fileImporter(isPresented: $importing, allowedContentTypes: [.appStoreConnectKey, .plainText, .data]) { result in
             guard case .success(let url) = result else { return }
             guard let file = KeyFile(url: url) else {
-                error = "读不出这个文件，请确认是 App Store Connect 下载的密钥文件（.p8）"
+                error = String(localized: "读不出这个文件，请确认是 App Store Connect 下载的密钥文件（.p8）")
                 return
             }
             use(file)
@@ -550,7 +550,7 @@ struct AppStoreConnectPage: View {
                 NumberedStep(number: 1, text: "在 App Store Connect 点右上角你的名字，进入 **个人资料**，在 **个人 API 密钥** 点 **生成 API 密钥**，然后下载。")
                 NumberedStep(number: 2, text: "把下载的文件发到这台 iPhone（隔空投送最快），选 **用 Snuffle 打开**；或者在下面选择文件。")
             }
-            OutLink(title: "打开 App Store Connect", url: URL(string: "https://appstoreconnect.apple.com")!)
+            OutLink(title: String(localized: "打开 App Store Connect"), url: URL(string: "https://appstoreconnect.apple.com")!)
                 .padding(.leading, 38)
         }
         .padding(18)
@@ -613,7 +613,7 @@ struct AppStoreConnectPage: View {
 
     private var appList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel("选一个 App")
+            SectionLabel(String(localized: "选一个 App"))
             CardGroup {
                 ForEach(Array(session.appStoreApps.enumerated()), id: \.element.id) { index, app in
                     if index > 0 { RowDivider() }
@@ -646,7 +646,7 @@ struct AppStoreConnectPage: View {
             let token = try AppStoreConnectToken(issuerId: teamKey ? issuerId.trimmingCharacters(in: .whitespaces) : "", keyId: keyId.trimmingCharacters(in: .whitespaces), privateKeyPEM: pem)
             let found = try await AppStoreConnectClient(token: token).apps()
             let saved = try model.add(
-                account: Account(platform: .appStore, title: found.first.map { "\($0.name) 等 \(found.count) 个 App" } ?? "App Store Connect", subtitle: (token.isIndividual ? "个人密钥 " : "团队密钥 ") + token.keyId),
+                account: Account(platform: .appStore, title: found.first.map { String(localized: "\($0.name) 等 \(found.count) 个 App") } ?? "App Store Connect", subtitle: token.isIndividual ? String(localized: "个人密钥 \(token.keyId)") : String(localized: "团队密钥 \(token.keyId)")),
                 credential: .appStoreConnect(issuerId: token.issuerId, keyId: token.keyId, privateKeyPEM: pem)
             )
             session.track(.appStore, .key, .succeeded)
@@ -688,7 +688,7 @@ struct AppStoreConnectPage: View {
 
 /// A label and a field on one row of a card.
 private struct LabeledField: View {
-    var label: String
+    var label: LocalizedStringKey
     var placeholder: String
     @Binding var text: String
     var capitalization: TextInputAutocapitalization
@@ -697,7 +697,7 @@ private struct LabeledField: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(label).font(.system(size: 15)).foregroundStyle(Palette.ink2)
-            TextField(placeholder, text: $text)
+            TextField(text: $text) { Text(verbatim: placeholder) }
                 .accessibilityIdentifier(identifier)
                 .font(.system(size: 15).monospaced())
                 .multilineTextAlignment(.trailing)
@@ -732,7 +732,7 @@ struct GooglePlayConnectPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 BackButton()
-                SourceHeader(platform: .googlePlay, title: "连接 Google Play", subtitle: "评论和回复，在这里直接回复")
+                SourceHeader(platform: .googlePlay, title: String(localized: "连接 Google Play"), subtitle: String(localized: "评论和回复，在这里直接回复"))
                 if account == nil || appsUnavailable {
                     SavedAccounts(platform: .googlePlay, busyId: nil) { saved in
                         account = saved
@@ -782,7 +782,7 @@ struct GooglePlayConnectPage: View {
 
     private var appList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel("选一个 App")
+            SectionLabel(String(localized: "选一个 App"))
             CardGroup {
                 ForEach(Array(session.googleApps.enumerated()), id: \.element.id) { index, app in
                     if index > 0 { RowDivider() }
@@ -850,7 +850,7 @@ struct GooglePlayConnectPage: View {
             )
             let code = try GoogleOAuth.code(from: callback, pkce: pkce)
             let (token, email) = try await GoogleOAuth.exchange(code: code, pkce: pkce, clientId: clientId)
-            account = try model.add(account: Account(platform: .googlePlay, title: email ?? "Google 账号", subtitle: "Google Play"), credential: .googleOAuth(token))
+            account = try model.add(account: Account(platform: .googlePlay, title: email ?? String(localized: "Google 账号"), subtitle: "Google Play"), credential: .googleOAuth(token))
             session.track(.googlePlay, .oauth, .succeeded)
             await loadApps()
         } catch let authError as ASWebAuthenticationSessionError where authError.code == .canceledLogin {

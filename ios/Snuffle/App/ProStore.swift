@@ -79,9 +79,9 @@ final class ProStore {
         loadError = nil
         do {
             products = try await Product.products(for: Self.productIds)
-            loadError = products.isEmpty ? "暂时拿不到价格，请稍后再试" : nil
+            loadError = products.isEmpty ? String(localized: "暂时拿不到价格，请稍后再试") : nil
         } catch {
-            loadError = "暂时拿不到价格：\(error.localizedDescription)"
+            loadError = String(localized: "暂时拿不到价格：\(error.localizedDescription)")
         }
         await refreshTrialEligibility()
     }

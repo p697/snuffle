@@ -41,7 +41,13 @@ each folder's README. Product and architecture follow the code; fix docs you fin
 
 - The repository is public. Never commit secrets, account or key ids, personal emails, or data from other
   companies' products. Secrets live in Worker secrets, GitHub secrets or the Keychain; never print them.
-- UI text is Simplified Chinese. Code, comments, commits and docs are English.
+- Code, comments, commits and docs are English. UI text is written in Simplified Chinese in the Swift code (the
+  source language) and ships in 19 languages; English is the fallback for any other system language.
+- **Every feature ships localized.** A change that adds or edits user-facing text (screens, alerts, errors,
+  VoiceOver labels, widgets, App Intents, permission prompts) translates it into all 18 other languages in the same
+  PR, and formats numbers, money and dates with `Format` (SnuffleKit) instead of hand-built strings. CI runs
+  `scripts/localization.py check`, which fails on untranslated or non-localizable Chinese strings. How to write
+  and translate strings: "Localization" in `ios/README.md`.
 - Usage analytics go to Snuffle's own PostHog project through the typed `Analytics` methods only
   (`ios/Snuffle/App/Analytics.swift`). A feature change updates its events, `ios/ANALYTICS.md`,
   `PrivacyInfo.xcprivacy` and the privacy page together, and checks that the events really arrive.
@@ -53,4 +59,6 @@ each folder's README. Product and architecture follow the code; fix docs you fin
   - SnuffleKit: `cd ios/Packages/SnuffleKit && swift test`
   - app: `cd ios && xcodegen generate`, then `xcodebuild test -project Snuffle.xcodeproj -scheme Snuffle`
     on an iPhone simulator (Xcode 27).
+  - user-facing text: after a build, `cd ios && python3 scripts/localization.py check --derived-data <its derived
+    data>`.
   - docs only: nothing to build.

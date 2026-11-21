@@ -15,13 +15,13 @@ struct RevenueCatDonePage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                SuccessBadge(text: "密钥没问题")
-                SourceHeader(platform: .revenueCat, title: "RevenueCat 连上了", subtitle: "\(session.project.revenueCat?.projectName ?? "") · 刚刚读到")
+                SuccessBadge(text: String(localized: "密钥没问题"))
+                SourceHeader(platform: .revenueCat, title: String(localized: "RevenueCat 连上了"), subtitle: String(localized: "\(session.project.revenueCat?.projectName ?? "") · 刚刚读到"))
                 numbers
                 if session.project.posthog != nil {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("首页的收入用哪边的数").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
-                        ChoiceBar(options: [(RevenueChoice.posthog, "PostHog 付费事件"), (RevenueChoice.revenueCat, "RevenueCat")], selection: revenueChoice)
+                        ChoiceBar(options: [(.posthog, "PostHog 付费事件"), (.revenueCat, "RevenueCat")], selection: revenueChoice)
                         Text("RevenueCat 含续订，更接近实际到账；PostHog 能看到每一笔订单。")
                             .font(.system(size: 12))
                             .foregroundStyle(Palette.ink2)
@@ -40,7 +40,7 @@ struct RevenueCatDonePage: View {
             do {
                 overview = try await model.provider.overview(for: session.probe(.revenueCat))
             } catch {
-                self.error = "连上了，但这次没读到数字：\(describe(error))"
+                self.error = String(localized: "连上了，但这次没读到数字：\(describe(error))")
             }
         }
     }
@@ -74,7 +74,7 @@ struct RevenueCatDonePage: View {
 
 /// One labelled number on a done page; rolls while loading.
 private struct Metric: View {
-    var label: String
+    var label: LocalizedStringKey
     var value: String?
     var loading: Bool
     var highlighted = false
@@ -109,7 +109,7 @@ struct StoreDonePage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 SuccessBadge(text: badge)
-                SourceHeader(platform: platform, title: "\(platform.displayName) 连上了", subtitle: "已选 \(appName)")
+                SourceHeader(platform: platform, title: String(localized: "\(platform.displayName) 连上了"), subtitle: String(localized: "已选 \(appName)"))
                 reviewsCard
                 if apps.count > 1 { switcher }
             }
@@ -121,7 +121,7 @@ struct StoreDonePage: View {
     }
 
     private var badge: String {
-        platform == .appStore ? "密钥没问题 · 读到 \(session.appStoreApps.count) 个 App" : "已登录 · \(session.googleApps.count) 个 App"
+        platform == .appStore ? String(localized: "密钥没问题 · 读到 \(session.appStoreApps.count) 个 App") : String(localized: "已登录 · \(session.googleApps.count) 个 App")
     }
 
     private var appName: String {
@@ -181,7 +181,7 @@ struct StoreDonePage: View {
     private var switcher: some View {
         let shown = showAll ? apps : Array(apps.prefix(3))
         return VStack(alignment: .leading, spacing: 8) {
-            SectionLabel("不是这个 App？换一个")
+            SectionLabel(String(localized: "不是这个 App？换一个"))
             CardGroup {
                 ForEach(Array(shown.enumerated()), id: \.element.id) { index, app in
                     if index > 0 { RowDivider() }

@@ -1,3 +1,4 @@
+import SnuffleKit
 import SwiftUI
 
 /// A number whose digits sit on rolling columns.
@@ -27,13 +28,15 @@ struct Odometer: View {
             }
         }
         .fixedSize()
+        // Numbers read left to right in every language; one view per character would otherwise reverse in Arabic.
+        .environment(\.layoutDirection, .leftToRight)
         // Each digit column hides 22 stacked rows; without these, baseline alignment would use the last hidden row.
         .alignmentGuide(.firstTextBaseline) { $0[.bottom] - size * 0.14 }
         .alignmentGuide(.lastTextBaseline) { $0[.bottom] - size * 0.14 }
         .font(Typeface.number(size))
         .foregroundStyle(color)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(spinning ? "正在刷新" : text)
+        .accessibilityLabel(spinning ? String(localized: "正在刷新") : text)
         .accessibilityAddTraits(.updatesFrequently)
     }
 }
@@ -155,7 +158,7 @@ private struct DigitColumn: View {
     @Previewable @State var value = 3406
     VStack(spacing: 20) {
         Odometer(text: Format.number(value), size: 56, spinning: spinning)
-        Button(spinning ? "落定" : "转起来") {
+        Button(String(spinning ? "Land" : "Spin")) {
             if spinning { value += Int.random(in: 1...60) }
             spinning.toggle()
         }

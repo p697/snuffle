@@ -69,7 +69,7 @@ final class CloudClientTests: XCTestCase {
         XCTAssertEqual(limited, .limitReached)
         CloudStub.handler = { _ in (503, #"{"code":"unavailable","message":"起草服务暂时不可用"}"#) }
         let unavailable = await failure(of: client)
-        XCTAssertEqual(unavailable, .server("起草失败（503）：起草服务暂时不可用"))
+        XCTAssertEqual(unavailable, .server(String(localized: "起草失败（\("503")）：\("起草服务暂时不可用")")))
     }
 
     func testAMissingAddressIsNotConfigured() async {

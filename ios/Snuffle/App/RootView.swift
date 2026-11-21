@@ -87,11 +87,11 @@ private struct TabBar: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
-            item(.today, "今日", "waveform.path.ecg")
-            item(.money, "收入", "dollarsign.circle")
+            item(.today, String(localized: "今日"), "waveform.path.ecg")
+            item(.money, String(localized: "收入"), "dollarsign.circle")
             Color.clear.frame(width: 104, height: 46)
-            item(.reviews, "评论", "text.bubble", badge: model.totals.reviewsToAnswer)
-            item(.projects, "项目", "square.grid.2x2")
+            item(.reviews, String(localized: "评论"), "text.bubble", badge: model.totals.reviewsToAnswer)
+            item(.projects, String(localized: "项目"), "square.grid.2x2")
         }
         .padding(.horizontal, 12)
         .padding(.top, 10)
@@ -122,6 +122,8 @@ private struct TabBar: View {
                     }
                 Text(title)
                     .font(.system(size: 11, weight: tab == value ? .bold : .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .foregroundStyle(tab == value ? Palette.ink : Palette.ink2)
             .frame(maxWidth: .infinity, minHeight: 46)
@@ -129,7 +131,7 @@ private struct TabBar: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(tab == value ? .isSelected : [])
-        .accessibilityIdentifier("tab-\(title)")
+        .accessibilityIdentifier("tab-\(String(describing: value))")
     }
 }
 

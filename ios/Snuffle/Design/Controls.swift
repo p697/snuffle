@@ -8,10 +8,9 @@ extension Platform {
     /// What a project gets from this platform, in a few words.
     var purpose: String {
         switch self {
-        case .posthog: "新增用户、在线和付费事件"
-        case .revenueCat: "收入和订阅"
-        case .appStore: "评论和回复"
-        case .googlePlay: "评论和回复"
+        case .posthog: String(localized: "新增用户、在线和付费事件")
+        case .revenueCat: String(localized: "收入和订阅")
+        case .appStore, .googlePlay: String(localized: "评论和回复")
         }
     }
 }
@@ -80,7 +79,7 @@ struct BackButton: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        RoundIconButton(systemName: "chevron.left", label: "返回") { dismiss() }
+        RoundIconButton(systemName: "chevron.backward", label: String(localized: "返回")) { dismiss() }
     }
 }
 
@@ -142,13 +141,13 @@ struct InkToggleStyle: ToggleStyle {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityValue(configuration.isOn ? "开" : "关")
+        .accessibilityValue(configuration.isOn ? String(localized: "开") : String(localized: "关"))
     }
 }
 
 /// Two to four mutually exclusive choices on a pill track; the chosen one is ink.
 struct ChoiceBar<Value: Hashable>: View {
-    var options: [(value: Value, label: String)]
+    var options: [(value: Value, label: LocalizedStringKey)]
     @Binding var selection: Value
 
     var body: some View {
@@ -210,12 +209,12 @@ struct TintDots: View {
 extension ProjectTint {
     var label: String {
         switch self {
-        case .ink: "墨黑"
-        case .coral: "珊瑚"
-        case .cocoa: "可可"
-        case .ocean: "海蓝"
-        case .moss: "苔绿"
-        case .plum: "梅紫"
+        case .ink: String(localized: "墨黑")
+        case .coral: String(localized: "珊瑚")
+        case .cocoa: String(localized: "可可")
+        case .ocean: String(localized: "海蓝")
+        case .moss: String(localized: "苔绿")
+        case .plum: String(localized: "梅紫")
         }
     }
 }
@@ -223,17 +222,17 @@ extension ProjectTint {
 /// A numbered instruction. `text` is Markdown, so `**bold**` marks what to look for on the other site.
 struct NumberedStep: View {
     var number: Int
-    var text: String
+    var text: LocalizedStringKey
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
-            Text("\(number)")
+            Text(verbatim: "\(number)")
                 .font(.system(size: 13, weight: .heavy))
                 .foregroundStyle(Palette.paper)
                 .frame(width: 26, height: 26)
                 .background(Palette.ink, in: Circle())
                 .alignmentGuide(.firstTextBaseline) { $0[VerticalAlignment.center] + 5 }
-            Text(LocalizedStringKey(text))
+            Text(text)
                 .font(.system(size: 15))
                 .foregroundStyle(Palette.ink)
                 .fixedSize(horizontal: false, vertical: true)
@@ -267,7 +266,7 @@ struct OutLink: View {
         Link(destination: url) {
             HStack(spacing: 6) {
                 Text(title)
-                Image(systemName: "arrow.up.right").font(.system(size: 12, weight: .heavy))
+                Image(systemName: "arrow.up.forward").font(.system(size: 12, weight: .heavy))
             }
             .font(.system(size: 14, weight: .bold))
             .foregroundStyle(Palette.ink)

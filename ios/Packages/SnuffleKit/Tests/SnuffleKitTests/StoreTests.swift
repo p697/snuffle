@@ -124,6 +124,6 @@ struct StoreTests {
         #expect(HTTPClient.detail(from: Data(#"{"detail":"Permission denied"}"#.utf8)) == "Permission denied")
         #expect(HTTPClient.detail(from: Data(#"{"errors":[{"title":"Forbidden","detail":"Key lacks role"}]}"#.utf8)) == "Key lacks role")
         #expect(HTTPClient.detail(from: Data(#"{"error":{"message":"bad key"}}"#.utf8)) == "bad key")
-        #expect(HTTPClient.detail(from: Data()) == "没有说明")
+        #expect(HTTPClient.detail(from: Data()) == String(localized: "没有说明", bundle: .module))
     }
 }

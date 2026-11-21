@@ -48,10 +48,10 @@ extension AppSettings.Accent {
 
     var label: String {
         switch self {
-        case .lemon: "柠檬黄"
-        case .mint: "薄荷绿"
-        case .peach: "蜜桃橙"
-        case .lilac: "丁香紫"
+        case .lemon: String(localized: "柠檬黄")
+        case .mint: String(localized: "薄荷绿")
+        case .peach: String(localized: "蜜桃橙")
+        case .lilac: String(localized: "丁香紫")
         }
     }
 }
@@ -110,53 +110,5 @@ extension Color {
                 alpha: 1
             )
         })
-    }
-}
-
-/// Number and money formatting shared by every screen.
-enum Format {
-    static func number(_ value: Int) -> String {
-        value.formatted(.number.grouping(.automatic).locale(Locale(identifier: "en_US")))
-    }
-
-    /// "$943", or "$3.28" when there are cents.
-    static func money(_ value: Double) -> String {
-        let rounded = (value * 100).rounded() / 100
-        if abs(rounded - rounded.rounded()) < 0.005 {
-            return "$" + number(Int(rounded.rounded()))
-        }
-        return "$" + rounded.formatted(.number.precision(.fractionLength(2)).grouping(.automatic).locale(Locale(identifier: "en_US")))
-    }
-
-    /// "+48" or "+$300".
-    static func delta(users: Int) -> String { "+" + number(users) }
-    static func delta(money value: Double) -> String { "+" + money(value) }
-
-    /// "刚刚", "3 分钟前", "2 小时前", "昨天".
-    static func ago(_ date: Date, now: Date = .now) -> String {
-        let seconds = now.timeIntervalSince(date)
-        if seconds < 60 { return "刚刚" }
-        if seconds < 3600 { return "\(Int(seconds / 60)) 分钟前" }
-        if seconds < 86_400 { return "\(Int(seconds / 3600)) 小时前" }
-        if Calendar.current.isDateInYesterday(date) { return "昨天" }
-        return "\(Int(seconds / 86_400)) 天前"
-    }
-
-    static func clock(_ date: Date) -> String {
-        date.formatted(.dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
-    }
-
-    /// A country or territory name in Chinese from an ISO alpha-2 or alpha-3 code.
-    static func place(_ code: String?) -> String? {
-        guard let code, !code.isEmpty else { return nil }
-        let alpha2 = code.count == 3 ? (Territory.alpha2(fromAlpha3: code) ?? code) : code.uppercased()
-        return Locale(identifier: "zh-Hans").localizedString(forRegionCode: alpha2) ?? code
-    }
-
-    /// A language name in Chinese from a code like "uk_UA".
-    static func language(_ code: String?) -> String? {
-        guard let code else { return nil }
-        let base = String(code.split(whereSeparator: { $0 == "_" || $0 == "-" }).first ?? "")
-        return Locale(identifier: "zh-Hans").localizedString(forLanguageCode: base)
     }
 }

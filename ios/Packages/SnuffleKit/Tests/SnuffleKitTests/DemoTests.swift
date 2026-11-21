@@ -25,7 +25,7 @@ struct DemoTests {
         let ferry = world.snapshot(for: DemoWorld.ferryId)!
         #expect(ferry.revenue == 3.28)
         #expect(ferry.sales == nil)
-        #expect(world.snapshot(for: DemoWorld.atlasId)!.extra?.label == "次付费墙浏览")
+        #expect(world.snapshot(for: DemoWorld.atlasId)!.extra?.label == String(localized: "次付费墙浏览", bundle: .module))
     }
 
     @Test func advancingAddsUsersAndNeverGoesBackInTime() {

@@ -274,6 +274,11 @@ public enum PostHogQueries {
             + "WHERE first >= fromUnixTimestamp(\(seconds(start))) GROUP BY day ORDER BY day"
     }
 
+    /// "Pro 月付" / "Pro 年付" in the person's language.
+    static func planName(_ tier: String, yearly: Bool) -> String {
+        yearly ? String(localized: "\(tier) 年付", bundle: .module) : String(localized: "\(tier) 月付", bundle: .module)
+    }
+
     /// Readable product name from the order row's property columns.
     public static func productName(_ values: [String?]) -> String? {
         let named = values.prefix(3).compactMap { $0 }.first { !$0.isEmpty && $0 != "null" }
@@ -283,8 +288,8 @@ public enum PostHogQueries {
         if let tier {
             let label = tier.prefix(1).uppercased() + tier.dropFirst()
             switch interval?.lowercased() {
-            case "month", "monthly": return label + " 月付"
-            case "year", "yearly", "annual", "annually": return label + " 年付"
+            case "month", "monthly": return planName(label, yearly: false)
+            case "year", "yearly", "annual", "annually": return planName(label, yearly: true)
             default: return label
             }
         }

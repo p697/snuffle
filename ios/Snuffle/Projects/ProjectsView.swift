@@ -97,9 +97,9 @@ struct ProjectsView: View {
     @ViewBuilder
     private var footnote: some View {
         let lines = [
-            model.projects.count > 1 && !model.settings.demoMode ? "长按拖动可以调整顺序。" : nil,
-            !model.pro.isPro && !model.settings.demoMode ? "免费版可以添加两个项目，Pro 不限数量。" : nil,
-            model.settings.demoMode ? "示例数据，退出示例后显示你自己的项目。" : nil
+            model.projects.count > 1 && !model.settings.demoMode ? String(localized: "长按拖动可以调整顺序。") : nil,
+            !model.pro.isPro && !model.settings.demoMode ? String(localized: "免费版可以添加两个项目，Pro 不限数量。") : nil,
+            model.settings.demoMode ? String(localized: "示例数据，退出示例后显示你自己的项目。") : nil
         ].compactMap { $0 }
         if !lines.isEmpty {
             Text(lines.joined(separator: " "))
@@ -120,10 +120,10 @@ struct ProjectsView: View {
                     .overlay(Circle().strokeBorder(Palette.line))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("已登录的账号").font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.ink)
-                    Text("\(model.workspace.accounts.count) 个 · 只存在这台 iPhone 上").font(.system(size: 13)).foregroundStyle(Palette.ink2)
+                    Text(String(localized: "\(model.workspace.accounts.count) 个 · 只存在这台 iPhone 上", comment: "Number of signed-in accounts.")).font(.system(size: 13)).foregroundStyle(Palette.ink2)
                 }
                 Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
+                Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
             }
             .padding(16)
             .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Palette.line))
@@ -195,7 +195,7 @@ private struct ProjectRow: View {
             if model.isLocked(project) {
                 Image(systemName: "lock.fill").foregroundStyle(Palette.ink2)
             }
-            Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
+            Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
         }
         .frame(minHeight: 72)
         .contentShape(Rectangle())
@@ -207,9 +207,9 @@ private struct ProjectRow: View {
 
     /// Plain grey sources; red only when something needs attention.
     private var detail: String {
-        if let failure { return "\(failure.displayName) 没连上" }
+        if let failure { return String(localized: "\(failure.displayName) 没连上") }
         let sources = project.platforms.map(\.displayName).joined(separator: " · ")
-        return project.includeInRefresh ? sources : sources + " · 不参与一键刷新"
+        return project.includeInRefresh ? sources : sources + " · " + String(localized: "不参与一键刷新")
     }
 }
 
@@ -222,7 +222,7 @@ struct AccountsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 BackButton()
-                PageTitle(title: "已登录的账号", subtitle: "只存在这台 iPhone 上。添加下一个项目时可以直接用。")
+                PageTitle(title: String(localized: "已登录的账号"), subtitle: String(localized: "只存在这台 iPhone 上。添加下一个项目时可以直接用。"))
                 if model.workspace.accounts.isEmpty {
                     Text("添加项目时登录的账号会出现在这里。")
                         .font(.system(size: 15))
@@ -251,7 +251,7 @@ struct AccountsView: View {
             Button("移除 \(account.title)", role: .destructive) { model.remove(account: account) }
         } message: { account in
             let count = model.workspace.projects(using: account.id).count
-            Text(count > 0 ? "有 \(count) 个项目在用它，移除后这些项目会断开 \(account.platform.displayName)。密钥会从这台手机上删除。" : "密钥会从这台手机上删除。")
+            Text(count > 0 ? String(localized: "有 \(count) 个项目在用它。") + String(localized: "移除后这些项目会断开 \(account.platform.displayName)。密钥会从这台手机上删除。") : String(localized: "密钥会从这台手机上删除。"))
         }
     }
 
@@ -260,7 +260,7 @@ struct AccountsView: View {
             PlatformLogo(platform: account.platform, size: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(account.title).font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink).lineLimit(1)
-                Text("\(account.platform.displayName) · \(account.subtitle) · \(model.workspace.projects(using: account.id).count) 个项目在用")
+                Text(verbatim: "\(account.platform.displayName) · \(account.subtitle) · " + String(localized: "\(model.workspace.projects(using: account.id).count) 个项目在用"))
                     .font(.system(size: 12))
                     .foregroundStyle(Palette.ink2)
                     .lineLimit(1)

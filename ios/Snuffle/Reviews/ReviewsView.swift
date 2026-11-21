@@ -7,10 +7,16 @@ struct ReviewsView: View {
     @State private var filter = Filter.toAnswer
     @State private var replying: Review?
 
-    enum Filter: String, CaseIterable, Identifiable {
-        case toAnswer = "待回复"
-        case all = "全部"
-        var id: String { rawValue }
+    enum Filter: CaseIterable, Identifiable {
+        case toAnswer, all
+        var id: Self { self }
+
+        var title: LocalizedStringKey {
+            switch self {
+            case .toAnswer: "待回复"
+            case .all: "全部"
+            }
+        }
     }
 
     private var reviews: [Review] {
@@ -22,9 +28,9 @@ struct ReviewsView: View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 12) {
-                    ScreenTitle(title: "评论", subtitle: subtitle)
+                    ScreenTitle(title: String(localized: "评论"), subtitle: subtitle)
                     Picker("显示", selection: $filter) {
-                        ForEach(Filter.allCases) { Text($0.rawValue).tag($0) }
+                        ForEach(Filter.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     if reviews.isEmpty {
@@ -54,9 +60,9 @@ struct ReviewsView: View {
     private var subtitle: String {
         let toAnswer = model.allReviews.filter(\.needsReply).count
         let stores = Set(model.projects.flatMap { [$0.appStore != nil ? Platform.appStore : nil, $0.googlePlay != nil ? .googlePlay : nil].compactMap { $0 } })
-        var parts = ["\(toAnswer) 条待回复"]
-        if stores.contains(.appStore) { parts.append("App Store 最近 200 条") }
-        if stores.contains(.googlePlay) { parts.append("Google Play 近 7 天") }
+        var parts = [String(localized: "\(toAnswer) 条待回复")]
+        if stores.contains(.appStore) { parts.append(String(localized: "App Store 最近 200 条")) }
+        if stores.contains(.googlePlay) { parts.append(String(localized: "Google Play 近 7 天")) }
         return parts.joined(separator: " · ")
     }
 
@@ -152,6 +158,6 @@ struct Stars: View {
         }
         .foregroundStyle(rating <= 2 ? Palette.bad : Palette.ink)
         .accessibilityElement()
-        .accessibilityLabel("\(rating) 星")
+        .accessibilityLabel(String(localized: "\(rating) 星"))
     }
 }

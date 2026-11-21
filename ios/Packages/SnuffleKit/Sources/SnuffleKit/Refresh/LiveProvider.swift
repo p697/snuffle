@@ -156,7 +156,7 @@ public struct LiveProvider: DataProvider {
                     }
                     if let extra = counts.extra {
                         switch project.metrics.extra {
-                        case .installs: snapshot.extra = ExtraCount(value: extra, label: "次安装")
+                        case .installs: snapshot.extra = ExtraCount(value: extra, label: ExtraCount.installsLabel)
                         case .event(_, let label): snapshot.extra = ExtraCount(value: extra, label: label)
                         case .none: break
                         }

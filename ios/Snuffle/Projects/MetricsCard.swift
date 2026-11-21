@@ -42,7 +42,7 @@ struct MetricsCard: View {
         }
     }
 
-    private func block(title: String, @ViewBuilder content: () -> some View) -> some View {
+    private func block(title: LocalizedStringKey, @ViewBuilder content: () -> some View) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
             content()
@@ -50,8 +50,8 @@ struct MetricsCard: View {
         .padding(.vertical, 12)
     }
 
-    private var revenueOptions: [(value: Revenue, label: String)] {
-        var options: [(value: Revenue, label: String)] = [(.posthog, "PostHog 事件")]
+    private var revenueOptions: [(value: Revenue, label: LocalizedStringKey)] {
+        var options: [(value: Revenue, label: LocalizedStringKey)] = [(.posthog, "PostHog 事件")]
         if project.revenueCat != nil { options.append((.revenueCat, "RevenueCat")) }
         options.append((.none, "不统计"))
         return options
@@ -98,7 +98,7 @@ struct MetricsCard: View {
         } set: { choice in
             switch choice {
             case .installs: project.metrics.extra = .installs
-            case .custom: project.metrics.extra = .event(name: "", label: "次")
+            case .custom: project.metrics.extra = .event(name: "", label: String(localized: "次", comment: "Default word after the count of a custom event on a project card; the person can change it."))
             case .none: project.metrics.extra = .none
             }
         }
@@ -107,7 +107,7 @@ struct MetricsCard: View {
 
 /// A grey field with a small label, for an event or property name.
 private struct EventField: View {
-    var label: String
+    var label: LocalizedStringKey
     @Binding var text: String
     var monospaced = true
 
@@ -127,7 +127,7 @@ private struct EventField: View {
 }
 
 private struct Note: View {
-    var text: String
+    var text: LocalizedStringKey
 
     var body: some View {
         Text(text)

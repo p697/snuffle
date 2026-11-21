@@ -113,7 +113,7 @@ struct TodayWidgetView: View {
 
     private var locked: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Snuffle Pro").font(.system(size: 15, weight: .heavy)).foregroundStyle(WidgetPalette.ink)
+            Text(verbatim: "Snuffle Pro").font(.system(size: 15, weight: .heavy)).foregroundStyle(WidgetPalette.ink)
             Text("升级 Pro 后，小组件会显示今天的数字，还能直接刷新。")
                 .font(.system(size: 12))
                 .foregroundStyle(WidgetPalette.ink2)
@@ -144,7 +144,7 @@ struct LockScreenView: View {
 
     var body: some View {
         if !entry.unlocked {
-            Text("Snuffle Pro")
+            Text(verbatim: "Snuffle Pro")
         } else if family == .accessoryInline {
             LockInlineFace(entry: entry)
         } else {

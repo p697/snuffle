@@ -66,7 +66,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             id: atlasId, name: "Quiet Atlas", tint: .cocoa,
             posthog: PostHogLink(accountId: demoAccount, projectId: 3, projectName: "Quiet Atlas", timeZone: TimeZone.current.identifier),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.atlas"),
-            metrics: MetricSettings(newUsers: .firstSeen, revenue: .none, extra: .event(name: "paywall_viewed", label: "次付费墙浏览"))
+            metrics: MetricSettings(newUsers: .firstSeen, revenue: .none, extra: .event(name: "paywall_viewed", label: String(localized: "次付费墙浏览", bundle: .module)))
         )
     ]
 
@@ -170,7 +170,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             break
         }
         switch project.metrics.extra {
-        case .installs: snapshot.extra = ExtraCount(value: book.extra, label: "次安装")
+        case .installs: snapshot.extra = ExtraCount(value: book.extra, label: ExtraCount.installsLabel)
         case .event(_, let label): snapshot.extra = ExtraCount(value: book.extra, label: label)
         case .none: break
         }
@@ -178,7 +178,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             snapshot.reviewsToAnswer = reviews.filter { $0.projectId == projectId && $0.needsReply }.count
         }
         if scenario == .failure, projectId == DemoWorld.ferryId {
-            snapshot.failures = [SourceFailure(platform: .revenueCat, message: "RevenueCat 返回 503：服务暂时不可用", kind: .serverError)]
+            snapshot.failures = [SourceFailure(platform: .revenueCat, message: SourceError.http(.revenueCat, 503, String(localized: "服务暂时不可用", bundle: .module)).localizedDescription, kind: .serverError)]
         }
         return snapshot
     }
@@ -242,7 +242,11 @@ public struct DemoWorld: Codable, Sendable, Equatable {
     }
 
     static func demoOrder(_ projectId: UUID, at date: Date, random: inout some RandomNumberGenerator) -> Order {
-        let catalog: [(String, Double)] = [("Pro 月付", 20), ("Pro 月付", 20), ("Plus 月付", 40), ("Pro 年付", 192), ("Max 月付", 300)]
+        let catalog: [(String, Double)] = [
+            (PostHogQueries.planName("Pro", yearly: false), 20), (PostHogQueries.planName("Pro", yearly: false), 20),
+            (PostHogQueries.planName("Plus", yearly: false), 40), (PostHogQueries.planName("Pro", yearly: true), 192),
+            (PostHogQueries.planName("Max", yearly: false), 300)
+        ]
         let countries = ["US", "JP", "HK", "SG", "DE", "GB", "KR", "TW", "FR", "CA"]
         let item = catalog.randomElement(using: &random)!
         return Order(
@@ -267,8 +271,8 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             Review(storeId: "d3", platform: .googlePlay, projectId: lumenId, rating: 2,
                    body: "La app se cierra cuando adjunto un PDF grande. Por lo demás me gusta mucho.",
                    author: "Diego R.", language: "es_ES", createdAt: ago(5)),
-            Review(storeId: "d4", platform: .appStore, projectId: lumenId, rating: 4, title: "良い",
-                   body: "シンプルで使いやすいです。ウィジェットがもっと大きいと嬉しいです。",
+            Review(storeId: "d4", platform: .appStore, projectId: lumenId, rating: 4, title: "良い", // l10n-ignore: a Japanese review
+                   body: "シンプルで使いやすいです。ウィジェットがもっと大きいと嬉しいです。", // l10n-ignore
                    author: "haru", territory: "JPN", createdAt: ago(9)),
             Review(storeId: "d5", platform: .appStore, projectId: lumenId, rating: 3, title: "Subscription price",
                    body: "Good app but the yearly price went up without notice. A student discount would help.",

@@ -26,7 +26,7 @@ struct ReplyView: View {
                     editor
                     if let translation = draft?.translation {
                         VStack(alignment: .leading, spacing: 6) {
-                            SectionLabel(draft?.isSample == true ? "中文对照 · 示例草稿" : "中文对照")
+                            SectionLabel(draft?.isSample == true ? String(localized: "中文对照 · 示例草稿") : String(localized: "中文对照"))
                             Text(translation)
                                 .font(.system(size: 14))
                                 .foregroundStyle(Palette.ink2)
@@ -86,7 +86,7 @@ struct ReplyView: View {
     private var editor: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                SectionLabel("你的回复")
+                SectionLabel(String(localized: "你的回复"))
                 Spacer()
                 if Feature.replyDrafts { draftButton }
             }
@@ -98,7 +98,7 @@ struct ReplyView: View {
                 .background(Palette.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(Palette.line))
                 .accessibilityIdentifier("replyText")
-            Text("\(text.count) / \(review.platform == .appStore ? 5970 : 350)")
+            Text(verbatim: "\(text.count) / \(review.platform == .appStore ? 5970 : 350)")
                 .font(.system(size: 12).monospacedDigit())
                 .foregroundStyle(text.count > (review.platform == .appStore ? 5970 : 350) ? Palette.bad : Palette.ink2)
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -113,7 +113,7 @@ struct ReplyView: View {
                 if drafting { ProgressView().controlSize(.small) }
                 Text(drafting ? "起草中…" : "帮我起草")
                 if !model.pro.isPro && !model.settings.demoMode {
-                    Text("Pro").font(.system(size: 11, weight: .heavy)).padding(.horizontal, 6).padding(.vertical, 1).background(Palette.ink, in: Capsule()).foregroundStyle(Palette.paper)
+                    Text(verbatim: "Pro").font(.system(size: 11, weight: .heavy)).padding(.horizontal, 6).padding(.vertical, 1).background(Palette.ink, in: Capsule()).foregroundStyle(Palette.paper)
                 }
             }
             .font(.system(size: 14, weight: .bold))

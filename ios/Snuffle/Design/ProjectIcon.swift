@@ -105,7 +105,7 @@ struct ProjectIconPicker: View {
             Task {
                 defer { photo = nil }
                 guard let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) else {
-                    error = "读不出这张图片"
+                    error = String(localized: "读不出这张图片")
                     return
                 }
                 use(image)
