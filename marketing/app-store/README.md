@@ -1,6 +1,7 @@
 # App Store screenshots
 
-Six 1320 × 2868 posters per language (the 6.9" iPhone size; App Store Connect scales it down for smaller phones):
+Six posters per language, drawn at 1320 × 2868 and uploaded at 1206 × 2622 ("iPhone with Dynamic Island, medium display",
+the one size App Store Connect requires; it scales those for every other iPhone):
 
 1. Every app and platform in one place: the four sources wired into the home screen.
 2. Today's revenue across apps, down to each order.
@@ -16,7 +17,8 @@ The phones show real simulator screenshots of demo mode's made-up products.
 - `copy.js`: the text of every poster in every language, and the font each language uses.
 - `index.html`: the layout. Open it in Chrome for a contact sheet of all languages; `?lang=de&shot=3` shows one poster.
 - `capture.sh`: takes the simulator screenshots into `screens/<lang>/` (git-ignored).
-- `render.sh`: renders the posters into `out/<lang>/1.png` … `6.png` (git-ignored).
+- `render.sh`: renders the posters into `out/<lang>/1.png` … `6.png`, plus the 1206 × 2622 copies App Store Connect
+  takes in `out/<lang>/upload/` (git-ignored).
 
 ## Making them
 
