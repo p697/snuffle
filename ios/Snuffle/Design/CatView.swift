@@ -4,7 +4,7 @@ import SwiftUI
 /// At rest only its ear tips clear the button; `out` brings its head up and its paws onto the rim.
 struct PeekingCat: View {
     var state: CatState
-    /// Set once the charge ring is full: the right ear flicks now and then.
+    /// Set ten minutes after the last refresh: the right ear flicks now and then.
     var ready: Bool
     var buttonSize: CGFloat
 
@@ -122,7 +122,7 @@ private struct CatHead: View {
         return Sniff(bob: -3 * p, nose: 1 + 0.45 * p, puff: max(pulse(0.09), pulse(0.25)) * 1.2)
     }
 
-    /// The right ear flicks twice at the start of every 3.2 s while the charge ring is full.
+    /// The right ear flicks twice at the start of every 3.2 s while `ready`.
     private func twitchAngle(at date: Date) -> Double {
         guard ready, !state.out, !reduceMotion else { return 0 }
         let t = date.timeIntervalSince1970.truncatingRemainder(dividingBy: 3.2) / 3.2

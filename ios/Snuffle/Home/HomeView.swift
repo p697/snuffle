@@ -21,6 +21,18 @@ struct HomeView: View {
                     if model.projects.isEmpty {
                         EmptyProjects()
                     }
+                    if model.settings.demoMode {
+                        Button {
+                            model.update { $0.demoMode = false }
+                        } label: {
+                            (Text("现在看的是示例数据 · ") + Text(model.workspace.projects.isEmpty ? "连接真实项目" : "回到我的项目").bold().foregroundStyle(Palette.ink))
+                                .font(.system(size: 13))
+                                .foregroundStyle(Palette.ink2)
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityIdentifier("leaveDemo")
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -37,33 +49,36 @@ struct HomeView: View {
         }
     }
 
+    /// 今日, then a short muted line beside it: "示例" in demo mode and when the last refresh was.
     private var header: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text("今日")
                     .font(Typeface.title(40))
                     .foregroundStyle(Palette.ink)
-                TimelineView(.periodic(from: .now, by: 30)) { context in
-                    Text(status(now: context.date))
-                        .font(.system(size: 13))
-                        .foregroundStyle(Palette.ink2)
-                        .accessibilityIdentifier("refreshStatus")
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    TimelineView(.periodic(from: .now, by: 30)) { context in
+                        let status = status(now: context.date)
+                        HStack(alignment: .firstTextBaseline, spacing: 6) {
+                            if model.settings.demoMode {
+                                DemoMark()
+                                if !status.isEmpty { Text("·").accessibilityHidden(true) }
+                            }
+                            Text(status).accessibilityIdentifier("refreshStatus")
+                        }
+                    }
                 }
+                .font(.system(size: 13))
+                .foregroundStyle(Palette.ink2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
             }
-            Spacer()
-            if model.settings.demoMode {
-                Text("示例数据")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Palette.ink2)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .overlay(Capsule().strokeBorder(Palette.line))
-            }
+            Spacer(minLength: 0)
             Button {
                 showSettings = true
             } label: {
                 Image(systemName: "person")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Palette.ink)
                     .frame(width: 44, height: 44)
                     .background(Palette.card, in: Circle())
@@ -74,16 +89,30 @@ struct HomeView: View {
         .padding(.horizontal, 4)
     }
 
+    /// Empty before the first refresh: the button says what to do.
     private func status(now: Date) -> String {
         if model.isRefreshing { return "正在刷新…" }
-        guard let last = model.lastRefresh else { return "还没刷新过 · 按下面的按钮" }
+        guard let last = model.lastRefresh else { return "" }
+        let when = Format.ago(last, now: now)
         let count = model.refreshCountToday
-        let when = Format.ago(last, now: now) == "刚刚" ? "刚刚刷新" : "\(Format.ago(last, now: now))刷新"
-        return count > 0 ? "\(when) · 今天第 \(count) 次" : when
+        return count > 0 ? "\(when) · 第 \(count) 次" : when
     }
 }
 
-/// The three totals across every project. Deltas sit on their own reserved line under each number.
+private struct DemoMark: View {
+    @Environment(\.accent) private var accent
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Circle().fill(accent).frame(width: 6, height: 6)
+            Text("示例").fontWeight(.semibold)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("示例数据")
+    }
+}
+
+/// The three totals across every project. A delta pops in beside its label, so the strip never changes height.
 struct TotalsStrip: View {
     @Environment(AppModel.self) private var model
     @Environment(\.accent) private var accent
@@ -96,24 +125,32 @@ struct TotalsStrip: View {
             tile("收入", value: totals.hasRevenue ? Format.money(totals.revenue.rounded()) : "–", delta: mark.flatMap { $0.revenue > 0 ? Format.delta(money: $0.revenue) : nil })
             tile("待回复评论", value: totals.hasReviews ? Format.number(totals.reviewsToAnswer) : "–", delta: mark.flatMap { $0.reviews > 0 ? "+\($0.reviews)" : nil }, unit: totals.hasReviews ? "条" : nil)
         }
-        .padding(EdgeInsets(top: 14, leading: 18, bottom: 10, trailing: 18))
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
         .background(Palette.strip, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
     private func tile(_ label: String, value: String, delta: String?, unit: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(label)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(Palette.stripMuted)
-            Odometer(text: value, size: 26, color: Palette.stripText)
-            ZStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text(label)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Palette.stripMuted)
+                    .lineLimit(1)
+                // A wide delta (rare) squeezes the label rather than spilling into the next tile.
+                DeltaChip(text: delta, visible: delta != nil, size: 12)
+                    .lineLimit(1)
+                    .fixedSize()
+                    .layoutPriority(1)
+            }
+            .frame(height: 20, alignment: .leading)
+            HStack(alignment: .lastTextBaseline, spacing: 3) {
+                Odometer(text: value, size: 30, color: Palette.stripText)
                 if let unit {
                     Text(unit).font(.system(size: 12)).foregroundStyle(Palette.stripMuted)
                 }
-                DeltaChip(text: delta, visible: delta != nil, size: 12)
             }
-            .frame(height: 20)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

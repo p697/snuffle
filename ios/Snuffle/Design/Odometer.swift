@@ -20,12 +20,16 @@ struct Odometer: View {
                     let column = characters[..<index].filter(\.isNumber).count
                     DigitColumn(digit: digit, spinning: spinning, column: column, fromRight: digitCount - 1 - column, size: size)
                 } else {
-                    // Separators keep their width; otherwise a busy layout squeezes the comma out.
-                    Text(String(character)).fixedSize()
+                    // Separators keep their width; otherwise a busy layout squeezes the comma out. They share the
+                    // digits' row height, so "2,882" sits exactly where "9" does.
+                    Text(String(character)).fixedSize().frame(height: size)
                 }
             }
         }
         .fixedSize()
+        // Each digit column hides 22 stacked rows; without these, baseline alignment would use the last hidden row.
+        .alignmentGuide(.firstTextBaseline) { $0[.bottom] - size * 0.14 }
+        .alignmentGuide(.lastTextBaseline) { $0[.bottom] - size * 0.14 }
         .font(Typeface.number(size))
         .foregroundStyle(color)
         .accessibilityElement(children: .ignore)

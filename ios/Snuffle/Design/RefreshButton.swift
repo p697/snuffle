@@ -1,8 +1,8 @@
 import SnuffleKit
 import SwiftUI
 
-/// The big yellow button with the cat behind it. The ring shows progress while refreshing, then slowly charges
-/// over ten minutes; when it is full the cat flicks an ear.
+/// The big yellow button with the cat behind it: a flat circle and the arrow. A progress ring shows only while
+/// refreshing. Ten minutes after the last refresh the cat starts flicking an ear: worth another sniff.
 struct RefreshButton: View {
     @Environment(AppModel.self) private var model
     @Environment(\.accent) private var accent
@@ -11,40 +11,35 @@ struct RefreshButton: View {
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
-            let charge = chargeProgress(at: context.date)
             ZStack(alignment: .top) {
-                PeekingCat(state: model.cat, ready: charge >= 1 && !model.isRefreshing, buttonSize: size)
-                button(charge: charge)
+                PeekingCat(state: model.cat, ready: isCharged(at: context.date) && !model.isRefreshing, buttonSize: size)
+                button
                 CatPaws(out: model.cat.out, buttonSize: size)
             }
             .frame(width: size, height: size)
         }
     }
 
-    private func button(charge: Double) -> some View {
+    private var button: some View {
         ZStack {
             Circle().fill(accent)
-            Circle()
-                .trim(from: 0, to: model.isRefreshing ? model.refreshProgress : charge)
-                .stroke(Palette.onAccent.opacity(model.isRefreshing ? 0.85 : 0.35), style: StrokeStyle(lineWidth: model.isRefreshing ? 4 : 3, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .padding(size * 0.045 + 4)
-                .animation(.linear(duration: 0.25), value: model.refreshProgress)
+            if model.isRefreshing {
+                Circle()
+                    .trim(from: 0, to: model.refreshProgress)
+                    .stroke(Palette.onAccent.opacity(0.85), style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .padding(size * 0.045 + 4)
+                    .animation(.linear(duration: 0.25), value: model.refreshProgress)
+                    .transition(.opacity)
+            }
             RefreshArrow()
                 .stroke(Palette.onAccent, style: StrokeStyle(lineWidth: 2.4, lineCap: .round, lineJoin: .round))
                 .frame(width: size * 0.43, height: size * 0.43)
                 .rotationEffect(.degrees(model.isRefreshing ? 360 : 0))
                 .animation(model.isRefreshing ? .linear(duration: 0.8).repeatForever(autoreverses: false) : .default, value: model.isRefreshing)
         }
-        .overlay(Circle().strokeBorder(Palette.paper, lineWidth: 4))
-        .shadow(color: Palette.shadow.opacity(pressed ? 0.2 : 0.22), radius: pressed ? 4 : 11, y: pressed ? 2 : 8)
-        .overlay(alignment: .bottom) {
-            // The bottom lip that makes the button look pressable.
-            Circle().trim(from: 0.12, to: 0.38).stroke(Palette.onAccent.opacity(0.14), lineWidth: 5)
-                .rotationEffect(.degrees(pressed ? 180 : 0))
-                .padding(6)
-                .opacity(pressed ? 0.6 : 1)
-        }
+        .animation(.easeOut(duration: 0.2), value: model.isRefreshing)
+        .shadow(color: Palette.shadow.opacity(pressed ? 0.14 : 0.18), radius: pressed ? 4 : 10, y: pressed ? 2 : 6)
         .scaleEffect(pressed ? 0.94 : 1)
         .animation(pressed ? .easeOut(duration: 0.08) : .spring(response: 0.3, dampingFraction: 0.55), value: pressed)
         .contentShape(Circle())
@@ -65,9 +60,9 @@ struct RefreshButton: View {
         .accessibilityAction { Task { await model.refreshAll() } }
     }
 
-    private func chargeProgress(at date: Date) -> Double {
-        guard let last = model.lastRefresh else { return 1 }
-        return min(1, date.timeIntervalSince(last) / AppModel.chargeDuration)
+    private func isCharged(at date: Date) -> Bool {
+        guard let last = model.lastRefresh else { return true }
+        return date.timeIntervalSince(last) >= AppModel.chargeDuration
     }
 }
 
