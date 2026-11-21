@@ -28,6 +28,15 @@ struct DemoTests {
         #expect(world.snapshot(for: DemoWorld.atlasId)!.extra?.label == String(localized: "次付费墙浏览", bundle: .module))
     }
 
+    @Test func lateInDayFillsTheDayButKeepsReviewsInThePast() {
+        var random = SplitMix64(seed: 4)
+        let night = ISO8601.parse("2026-11-20T01:30:00Z")!
+        let world = DemoWorld.make(now: night, calendar: calendar, lateInDay: true, random: &random)
+        #expect(world.simulatedNow == ISO8601.parse("2026-11-20T21:30:00Z")!)
+        #expect(world.snapshot(for: DemoWorld.lumenId)!.hourlyNewUsers.count == 22)
+        #expect(world.reviews.allSatisfy { $0.createdAt < night })
+    }
+
     @Test func advancingAddsUsersAndNeverGoesBackInTime() {
         var random = SplitMix64(seed: 2)
         var world = DemoWorld.make(now: afternoon, calendar: calendar, random: &random)

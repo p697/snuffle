@@ -124,6 +124,13 @@ public enum SharedContainer {
     public static var demoCache: FileStore<RefreshCache> { FileStore(directory: directory, name: "cache-demo.json") }
     public static var demoWorld: FileStore<DemoWorld> { FileStore(directory: directory, name: "demo-world.json") }
 
+    /// Set by debug builds launched with `-storeShots`: the app and the widgets drop demo mode's "示例" marks, so
+    /// App Store screenshots can use the made-up demo products. Release builds never set it.
+    public static var hidesDemoMarks: Bool {
+        get { UserDefaults(suiteName: appGroup)?.bool(forKey: "hidesDemoMarks") ?? false }
+        set { UserDefaults(suiteName: appGroup)?.set(newValue, forKey: "hidesDemoMarks") }
+    }
+
     /// A project's picture. The version is in the name, so an edit that is cancelled never replaces the saved one.
     public static func projectIcon(_ projectId: UUID, version: Int) -> URL {
         directory.appending(path: "icons/\(projectId.uuidString)-\(version).jpg")

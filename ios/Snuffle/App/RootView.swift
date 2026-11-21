@@ -1,7 +1,7 @@
 import SnuffleKit
 import SwiftUI
 
-enum Tab: Hashable {
+enum Tab: String, Hashable {
     case today, money, reviews, projects
 }
 
@@ -10,7 +10,7 @@ enum Tab: Hashable {
 struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
-    @State private var tab = Tab.today
+    @State private var tab = Self.launchTab
     @State private var paywall = Self.launchPaywall
     @State private var barHeight: CGFloat = 0
     /// A connect flow opened by a key file from Files or AirDrop.
@@ -23,6 +23,16 @@ struct RootView: View {
         UserDefaults.standard.string(forKey: "paywall").flatMap(PaywallReason.init(rawValue:))
         #else
         nil
+        #endif
+    }
+
+    /// Debug builds launched with `-tab money` open on that tab, and with `-refreshAfterLaunch` press the refresh
+    /// button two seconds in: `marketing/app-store/capture.sh` uses both to take the App Store screenshots.
+    private static var launchTab: Tab {
+        #if DEBUG
+        UserDefaults.standard.string(forKey: "tab").flatMap(Tab.init(rawValue:)) ?? .today
+        #else
+        .today
         #endif
     }
 
@@ -53,7 +63,16 @@ struct RootView: View {
             if phase == .active { Analytics.appOpened() }
         }
         .onChange(of: tab) { _, value in Analytics.tabViewed(value) }
-        .task { await model.refreshOnOpenIfNeeded() }
+        .task {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-refreshAfterLaunch") {
+                try? await Task.sleep(for: .seconds(2))
+                await model.refreshAll()
+                return
+            }
+            #endif
+            await model.refreshOnOpenIfNeeded()
+        }
     }
 
     /// The bar floats over the pages. A bottom safe-area inset does not reach the scroll views inside each tab's

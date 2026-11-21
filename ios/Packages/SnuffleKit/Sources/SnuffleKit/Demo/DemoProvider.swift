@@ -8,9 +8,10 @@ public actor DemoProvider: DataProvider {
     private let persist: @Sendable (DemoWorld) -> Void
     private let latency: Duration
 
-    public init(world: DemoWorld?, latency: Duration = .milliseconds(350), persist: @escaping @Sendable (DemoWorld) -> Void) {
+    /// `lateInDay`: see `DemoWorld.make`.
+    public init(world: DemoWorld?, latency: Duration = .milliseconds(350), lateInDay: Bool = false, persist: @escaping @Sendable (DemoWorld) -> Void) {
         var random = SystemRandomNumberGenerator()
-        self.world = world ?? DemoWorld.make(now: Date(), random: &random)
+        self.world = world ?? DemoWorld.make(now: Date(), lateInDay: lateInDay, random: &random)
         self.latency = latency
         self.persist = persist
     }
