@@ -32,7 +32,20 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(app.buttons["startConnecting"].waitForExistence(timeout: 5))
         app.buttons["tryDemo"].tap()
         XCTAssertTrue(app.staticTexts["今日"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["leaveDemo"].exists)
+        attach(app, name: "demo-home")
+        // The way out sits beside the title, not at the end of the list.
+        app.buttons["leaveDemo"].tap()
+        XCTAssertTrue(app.buttons["startConnecting"].waitForExistence(timeout: 5))
+    }
+
+    func testSettingsLeadsWithLeavingDemo() {
+        let app = launch()
+        app.buttons["设置"].tap()
+        let leave = app.buttons["settingsLeaveDemo"]
+        XCTAssertTrue(leave.waitForExistence(timeout: 5))
+        attach(app, name: "demo-settings")
+        leave.tap()
+        XCTAssertTrue(app.buttons["startConnecting"].waitForExistence(timeout: 5))
     }
 
     func testRefreshCountsAndShowsCards() {
@@ -205,7 +218,7 @@ final class SnuffleUITests: XCTestCase {
         app.buttons["tab-今日"].tap()
         for _ in 0..<6 { app.swipeUp(velocity: .fast) }
         sleep(1)
-        let last = app.buttons["leaveDemo"]
+        let last = app.buttons.containing(.staticText, identifier: "Quiet Atlas").firstMatch
         XCTAssertTrue(last.isHittable)
         XCTAssertLessThanOrEqual(last.frame.maxY, app.buttons["tab-今日"].frame.minY)
     }

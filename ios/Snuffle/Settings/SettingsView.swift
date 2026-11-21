@@ -10,6 +10,24 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                if model.settings.demoMode {
+                    Section {
+                        Button {
+                            model.update { $0.demoMode = false }
+                            dismiss()
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("退出示例模式").font(.system(size: 17, weight: .bold))
+                                Text(model.workspace.projects.isEmpty ? "现在看的是示例数据，退出后连接你的产品" : "现在看的是示例数据，退出后回到你的项目")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Palette.ink2)
+                            }
+                            .foregroundStyle(Palette.ink)
+                            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+                        }
+                        .accessibilityIdentifier("settingsLeaveDemo")
+                    }
+                }
                 Section {
                     Button {
                         if !model.pro.isPro { paywall = true }
