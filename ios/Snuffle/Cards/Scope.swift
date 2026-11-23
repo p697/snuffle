@@ -2,11 +2,11 @@ import SnuffleKit
 import SwiftUI
 
 extension Project {
-    /// "不含网站访客（未登录）" or "所有来源都算": the project's scope in one line.
-    var scopeSummary: String {
+    /// What the scope does, under the numbers it changes: "活跃、累计、在线和页面浏览不含网站访客（未登录）。"
+    var scopeLine: String {
         let left = Surface.allCases.filter(metrics.surfacesLeftOut.contains)
-        guard !left.isEmpty else { return String(localized: "所有来源都算") }
-        return String(localized: "不含\(left.map(\.title).formatted(.list(type: .and)))")
+        guard !left.isEmpty else { return String(localized: "活跃、累计、在线和页面浏览算所有来源的人。") }
+        return String(localized: "活跃、累计、在线和页面浏览不含\(left.map(\.title).formatted(.list(type: .and)))。")
     }
 }
 
@@ -20,7 +20,7 @@ struct ScopePage: View {
                 BackButton()
                 PageTitle(
                     title: String(localized: "算哪些人"),
-                    subtitle: String(localized: "一个 PostHog 项目里常常既有 App，又有网站和官网访客。选哪些来源的人算进活跃、在线和页面浏览。")
+                    subtitle: String(localized: "一个 PostHog 项目里常常既有 App，又有网站和官网访客。选哪些来源的人算进活跃、累计、在线和页面浏览。")
                 )
                 ScopeOptions(project: $project)
             }
@@ -31,7 +31,7 @@ struct ScopePage: View {
 }
 
 /// The surfaces a project's PostHog events come from, each with its people in the last 30 days and a switch, and
-/// what today's actives and the month's would be with the switches as they are.
+/// what today's actives, the month's and the total would be with the switches as they are.
 struct ScopeOptions: View {
     @Binding var project: Project
     @Environment(AppModel.self) private var model
@@ -40,7 +40,7 @@ struct ScopeOptions: View {
     @State private var preview: [Metric: Double] = [:]
     @State private var measuring = false
 
-    private static let previewMetrics: [Metric] = [.activeToday, .activeMonth]
+    private static let previewMetrics: [Metric] = [.activeToday, .activeMonth, .totalUsers]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -62,7 +62,7 @@ struct ScopeOptions: View {
                 note(String(localized: "没读到各来源的人数，开关照样有效。"))
             }
             previewCard
-            note(String(localized: "活跃、在线、页面浏览和「开始使用」的新增用户按这里选的来源算，一个人在几处出现只算一次。注册事件、收入和自定义事件按事件本身算，不分来源。"))
+            note(String(localized: "活跃、累计、在线、页面浏览和「开始使用」的新增用户按这里选的来源算，一个人在几处出现只算一次。注册事件、收入和自定义事件按事件本身算，不分来源。"))
         }
         .task(id: project.posthog?.projectId) { await loadStats() }
         .task(id: project.metrics.surfacesLeftOut) { await measure() }
@@ -117,7 +117,9 @@ struct ScopeOptions: View {
                             ProgressView().controlSize(.small).frame(height: 32)
                         } else {
                             Text(verbatim: metric.text(preview[metric]))
-                                .font(Typeface.number(28))
+                                .font(Typeface.number(24))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
                                 .foregroundStyle(Palette.ink)
                                 .opacity(measuring ? 0.4 : 1)
                                 .contentTransition(.numericText())
@@ -156,7 +158,7 @@ struct ScopeOptions: View {
         }
     }
 
-    /// Today's actives and the month's with the switches as they are. Flipping several waits for a pause.
+    /// Today's actives, the month's and the total with the switches as they are. Flipping several waits for a pause.
     private func measure() async {
         try? await Task.sleep(for: .milliseconds(450))
         guard !Task.isCancelled else { return }

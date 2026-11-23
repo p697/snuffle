@@ -60,7 +60,14 @@ struct PostHogTests {
         let month = Int(clock.now.timeIntervalSince1970) - 30 * 86_400
         #expect(PostHogQueries.activity(clock: clock, month: false, excluding: []) == "SELECT uniq(person_id) AS week FROM events WHERE timestamp >= fromUnixTimestamp(\(week))")
         #expect(PostHogQueries.activity(clock: clock, month: true, excluding: []).hasSuffix("FROM events WHERE timestamp >= fromUnixTimestamp(\(month))"))
-        #expect(PostHogQueries.totalUsers.hasSuffix("FROM persons WHERE is_identified = 1"))
+        // Total users: the whole history once, then only the year before the days being added.
+        let today = Int(clock.todayStart.timeIntervalSince1970)
+        #expect(PostHogQueries.peopleBefore(clock.todayStart, excluding: []) == "SELECT uniq(person_id) AS people FROM events WHERE timestamp < fromUnixTimestamp(\(today))")
+        let since = clock.todayStart.addingTimeInterval(-2 * 86_400)
+        let fresh = PostHogQueries.newPeople(since: since, clock: clock, excluding: [.visitors])
+        #expect(fresh.hasPrefix("SELECT countIf(first < fromUnixTimestamp(\(today))) AS settled, countIf(first >= fromUnixTimestamp(\(today))) AS today"))
+        #expect(fresh.contains("WHERE timestamp >= fromUnixTimestamp(\(today - 367 * 86_400)) AND \(PostHogQueries.scope(excluding: [.visitors])!) GROUP BY person_id"))
+        #expect(fresh.hasSuffix("WHERE first >= fromUnixTimestamp(\(today - 2 * 86_400))"))
         let stats = PostHogParsing.eventStats([[.string("$set"), .number(9), .number(9)], [.string("user_signed_up"), .number(4), .number(5)]])
         #expect(stats == [EventStat(name: "user_signed_up", people: 4, times: 5)])
         #expect(stats.first?.looksLikeSignup == true)

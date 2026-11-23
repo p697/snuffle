@@ -10,7 +10,8 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
   the cat and the refresh button; `Cards/` the card and totals editors, the metric library, how new users and
   revenue are counted, and whose activity counts (`Scope.swift`: people numbers count only the `Surface`s a project
   includes, told apart by PostHog's `$lib`, `$os` and `$is_identified`; signed-out website visitors are left out
-  unless they are all a project has); one folder per tab.
+  unless they are all a project has; total users reads the whole history once and then adds each day's new people,
+  `UserTally`); one folder per tab.
 - `SnuffleWidgets/` — home and lock screen widgets with an in-widget refresh button.
 - `SnuffleUITests/` — end-to-end tests in demo mode.
 - `ANALYTICS.md` — the PostHog events, their properties and the metrics built on them.

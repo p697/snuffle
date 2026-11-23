@@ -192,7 +192,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         ]
         // Other surfaces than the demo's own (the surfaces page previews each choice).
         let scale = DemoWorld.scale(project.id, excluding: project.metrics.surfacesLeftOut)
-        for metric in [Metric.activeToday, .online, .activeWeek, .activeMonth] {
+        for metric in [Metric.activeToday, .online, .activeWeek, .activeMonth, .totalUsers] {
             values[metric] = values[metric].map { ($0 * scale).rounded() }
         }
         // Counted another way than the demo project does (the counting page previews each choice).

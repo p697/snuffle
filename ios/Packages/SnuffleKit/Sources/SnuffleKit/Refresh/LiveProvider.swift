@@ -58,6 +58,7 @@ public struct LiveProvider: DataProvider {
         case revenueSource(Platform)
         case timeZone(String)
         case surfaces(Set<Surface>)
+        case userTally(UserTally)
         case reviews([Review])
         case failure(SourceFailure)
         /// An hourly metric could not be read; the next refresh tries again, and the card keeps the last value.
@@ -70,14 +71,14 @@ public struct LiveProvider: DataProvider {
         // Hourly numbers read under other counting or scope are read again, not kept for the rest of the hour.
         let current = previous.flatMap { $0.countedAs == project.metrics.inEffect ? $0 : nil }
         let readHourly = current?.needsHourlyRead(wanted, at: clock.now) ?? wanted.contains(where: \.isHourly)
-        let parts = await read(project, wanted: wanted, clock: clock, readHourly: readHourly, reviews: project.hasStore)
+        let parts = await read(project, wanted: wanted, clock: clock, readHourly: readHourly, reviews: project.hasStore, tally: current?.userTally)
         return Self.assemble(parts, project: project, clock: clock, readHourly: readHourly)
     }
 
     public func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double] {
         let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone)
         let wanted = metrics.filter { $0.isAvailable(in: project) }
-        let parts = await read(project, wanted: wanted, clock: clock, readHourly: true, reviews: wanted.contains(.reviewsToAnswer))
+        let parts = await read(project, wanted: wanted, clock: clock, readHourly: true, reviews: wanted.contains(.reviewsToAnswer), tally: nil)
         let result = Self.assemble(parts, project: project, clock: clock, readHourly: true)
         let values = result.snapshot.values.filter { wanted.contains($0.key) }
         if values.isEmpty, let failure = result.snapshot.failures.first { throw failure }
@@ -103,7 +104,7 @@ public struct LiveProvider: DataProvider {
     }
 
     /// Reads every source the wanted metrics need, at once; each fails on its own.
-    private func read(_ project: Project, wanted: Set<Metric>, clock: ProjectClock, readHourly: Bool, reviews: Bool) async -> [Part] {
+    private func read(_ project: Project, wanted: Set<Metric>, clock: ProjectClock, readHourly: Bool, reviews: Bool, tally: UserTally?) async -> [Part] {
         // A project whose surfaces were never chosen looks at its events once, before anything is counted by them.
         var found: Set<Surface>?
         if project.posthog != nil, project.metrics.excludedSurfaces == nil,
@@ -115,7 +116,9 @@ public struct LiveProvider: DataProvider {
             if let link = project.posthog {
                 group.addTask { await self.posthogPart(project, link: link, wanted: wanted, clock: clock, excluded: excluded) }
                 if readHourly, wanted.contains(where: { $0.isHourly && $0.source == .posthog }) {
-                    group.addTask { await self.posthogHourlyPart(link: link, wanted: wanted, clock: clock, excluded: excluded) }
+                    // A tally read under other surfaces than this refresh found counts other people.
+                    let tally = found == nil ? tally : nil
+                    group.addTask { await self.posthogHourlyPart(link: link, wanted: wanted, clock: clock, excluded: excluded, tally: tally) }
                 }
             }
             if let link = project.revenueCat {
@@ -218,8 +221,9 @@ public struct LiveProvider: DataProvider {
         }
     }
 
-    /// People active this week and month and the total: scans of 30 days and of the people table, so hourly only.
-    private func posthogHourlyPart(link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock, excluded: Set<Surface>) async -> [Part] {
+    /// People active this week and month, and total users: scans of up to a year, so hourly only. Total users reads the
+    /// whole history once (no `tally` yet, or one more than a year old) and afterwards only the people new since.
+    private func posthogHourlyPart(link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock, excluded: Set<Surface>, tally: UserTally?) async -> [Part] {
         do {
             return try await withPostHog(link.accountId) { client in
                 let needsActivity = wanted.contains(.activeWeek) || wanted.contains(.activeMonth)
@@ -227,17 +231,31 @@ public struct LiveProvider: DataProvider {
                     guard needsActivity else { return [] }
                     return try await client.query(projectId: link.projectId, PostHogQueries.activity(clock: clock, month: wanted.contains(.activeMonth), excluding: excluded), name: "snuffle_activity")
                 }()
-                async let totalRow: [[JSONValue]] = {
-                    guard wanted.contains(.totalUsers) else { return [] }
-                    return try await client.query(projectId: link.projectId, PostHogQueries.totalUsers, name: "snuffle_total_users")
+                let yearAgo = clock.todayStart.addingTimeInterval(-Double(PostHogQueries.tallyLookbackDays) * 86_400)
+                let tally = tally.flatMap { $0.before >= yearAgo && $0.before <= clock.todayStart ? $0 : nil }
+                let wantsTotal = wanted.contains(.totalUsers)
+                async let baseRow: [[JSONValue]] = {
+                    guard wantsTotal, tally == nil else { return [] }
+                    return try await client.query(projectId: link.projectId, PostHogQueries.peopleBefore(clock.todayStart, excluding: excluded), name: "snuffle_people_before")
+                }()
+                async let newRow: [[JSONValue]] = {
+                    guard wantsTotal else { return [] }
+                    return try await client.query(projectId: link.projectId, PostHogQueries.newPeople(since: tally?.before ?? clock.todayStart, clock: clock, excluding: excluded), name: "snuffle_new_people")
                 }()
                 var values: [Metric: Double] = [:]
+                var parts: [Part] = []
                 if let row = try await activityRow.first {
                     values[.activeWeek] = row.first?.double
                     if row.count > 1 { values[.activeMonth] = row[1].double }
                 }
-                if let row = try await totalRow.first { values[.totalUsers] = row.first?.double }
-                return [.values(values)]
+                let base = try await baseRow.first?.first?.int
+                if let row = try await newRow.first, row.count == 2, let settled = row[0].int, let today = row[1].int,
+                   let before = base ?? tally?.people {
+                    let moved = UserTally(people: before + settled, before: clock.todayStart)
+                    values[.totalUsers] = Double(moved.people + today)
+                    parts.append(.userTally(moved))
+                }
+                return parts + [.values(values)]
             }
         } catch {
             return [.hourlyFailed]
@@ -260,6 +278,7 @@ public struct LiveProvider: DataProvider {
             case .revenueSource(let platform): snapshot.revenueSource = platform
             case .timeZone(let identifier): zone = identifier
             case .surfaces(let excluded): surfaces = excluded
+            case .userTally(let tally): snapshot.userTally = tally
             case .reviews(let list): reviews = (reviews ?? []) + list
             case .hourlyFailed: hourlyFailed = true
             case .failure(let failure):

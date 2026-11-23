@@ -131,7 +131,7 @@ public enum Metric: Hashable, Sendable {
     /// and revenue events are what they name, wherever they were sent from.
     public var isScoped: Bool {
         switch self {
-        case .activeToday, .activeWeek, .activeMonth, .online, .pageviews: true
+        case .activeToday, .activeWeek, .activeMonth, .totalUsers, .online, .pageviews: true
         default: false
         }
     }

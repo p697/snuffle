@@ -19,6 +19,8 @@ public struct ProjectSnapshot: Hashable, Sendable {
     /// The counting and scope its numbers were read under (`MetricSettings.inEffect`). Numbers that follow them
     /// (`Metric.followsCounting`) are never carried to, or shown for, other settings. Nil in caches from before.
     public var countedAs: MetricSettings?
+    /// Total users up to the start of a day, so the total adds the days since instead of rescanning all history.
+    public var userTally: UserTally?
 
     public init(
         projectId: UUID,
@@ -30,7 +32,8 @@ public struct ProjectSnapshot: Hashable, Sendable {
         revenueSource: Platform? = nil,
         hourlyReadAt: Date? = nil,
         failures: [SourceFailure] = [],
-        countedAs: MetricSettings? = nil
+        countedAs: MetricSettings? = nil,
+        userTally: UserTally? = nil
     ) {
         self.projectId = projectId
         self.fetchedAt = fetchedAt
@@ -42,6 +45,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
         self.hourlyReadAt = hourlyReadAt
         self.failures = failures
         self.countedAs = countedAs
+        self.userTally = userTally
     }
 
     public subscript(metric: Metric) -> Double? {
@@ -72,6 +76,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
             merged.values[metric] = value
         }
         if hourlyReadAt == nil && sameCounting { merged.hourlyReadAt = previous.hourlyReadAt }
+        if userTally == nil && sameCounting { merged.userTally = previous.userTally }
         if sameDayFailure {
             merged.newUsersYesterday = newUsersYesterday ?? previous.newUsersYesterday
             if hourlyNewUsers.isEmpty { merged.hourlyNewUsers = previous.hourlyNewUsers }
@@ -91,7 +96,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
 
 extension ProjectSnapshot: Codable {
     enum CodingKeys: String, CodingKey {
-        case projectId, fetchedAt, dayStart, values, newUsersYesterday, hourlyNewUsers, revenueSource, hourlyReadAt, failures, countedAs
+        case projectId, fetchedAt, dayStart, values, newUsersYesterday, hourlyNewUsers, revenueSource, hourlyReadAt, failures, countedAs, userTally
     }
 
     /// Values are stored by metric id. A cache from before metrics had ids reads as empty: the next refresh fills it.
@@ -108,6 +113,7 @@ extension ProjectSnapshot: Codable {
         hourlyReadAt = try container.decodeIfPresent(Date.self, forKey: .hourlyReadAt)
         failures = try container.decodeIfPresent([SourceFailure].self, forKey: .failures) ?? []
         countedAs = try container.decodeIfPresent(MetricSettings.self, forKey: .countedAs)
+        userTally = try container.decodeIfPresent(UserTally.self, forKey: .userTally)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -122,6 +128,19 @@ extension ProjectSnapshot: Codable {
         try container.encodeIfPresent(hourlyReadAt, forKey: .hourlyReadAt)
         try container.encode(failures, forKey: .failures)
         try container.encodeIfPresent(countedAs, forKey: .countedAs)
+        try container.encodeIfPresent(userTally, forKey: .userTally)
+    }
+}
+
+/// Everyone a project's included surfaces had seen before a day began (`before`, a day start in its time zone).
+/// Read once from the whole history, then moved forward a day at a time by the people new that day.
+public struct UserTally: Codable, Hashable, Sendable {
+    public var people: Int
+    public var before: Date
+
+    public init(people: Int, before: Date) {
+        self.people = people
+        self.before = before
     }
 }
 

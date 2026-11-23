@@ -147,22 +147,6 @@ struct CardMetricPicker: View {
                 if project.posthog == nil {
                     MissingSourceRow(titles: String(localized: "新增用户 · 活跃 · 在线 · 事件"), platform: .posthog) { connecting = .posthog }
                 } else {
-                    NavigationLink(value: Route.scope) {
-                        HStack(spacing: 12) {
-                            Image(systemName: "person.2").font(.system(size: 17, weight: .semibold)).foregroundStyle(Palette.ink).frame(width: 24)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("算哪些人").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
-                                Text(verbatim: project.scopeSummary).font(.system(size: 12)).foregroundStyle(Palette.ink2)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            Image(systemName: "chevron.forward").font(.system(size: 13, weight: .bold)).foregroundStyle(Palette.ink2)
-                        }
-                        .frame(minHeight: 56)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityIdentifier("scope")
-                    RowDivider()
                     row(.newUsers, counting: .newUsers)
                     ForEach([Metric.activeToday, .activeWeek, .activeMonth, .totalUsers, .online, .pageviews], id: \.self) { metric in
                         RowDivider()
@@ -189,6 +173,28 @@ struct CardMetricPicker: View {
                     .buttonStyle(.plain)
                     .accessibilityIdentifier("anyEvent")
                 }
+            }
+            if project.posthog != nil {
+                // Under the numbers it changes, like "改口径" under new users.
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(verbatim: project.scopeLine)
+                        .font(.system(size: 12))
+                        .foregroundStyle(Palette.ink2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityIdentifier("scopeLine")
+                    NavigationLink(value: Route.scope) {
+                        Text("改范围")
+                            .font(.system(size: 13, weight: .bold))
+                            .underline()
+                            .foregroundStyle(Palette.ink)
+                            .frame(minHeight: 36)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("scope")
+                }
+                .padding(.horizontal, 6)
             }
         }
     }
@@ -246,16 +252,14 @@ struct CardMetricPicker: View {
             case .add: return true
             }
         }()
-        // PostHog counts only people who signed in; a project without any has no total to show.
-        let nobody = metric == .totalUsers && metric != current && value(metric) == 0
         VStack(alignment: .leading, spacing: 0) {
             MetricRow(
                 title: metric.title,
-                detail: elsewhere ? String(localized: "已在卡片上") : nobody ? String(localized: "这个项目还没有登录过的人，PostHog 数不出累计用户") : metric.explanation(in: project),
+                detail: elsewhere ? String(localized: "已在卡片上") : metric.explanation(in: project),
                 value: available ? metric.text(value(metric)) : nil,
                 loading: loading.contains(metric),
                 selected: metric == current,
-                enabled: available && !elsewhere && !nobody
+                enabled: available && !elsewhere
             ) { choose(metric) }
             if let counting {
                 NavigationLink(value: Route.counting(counting)) {
