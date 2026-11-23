@@ -50,6 +50,11 @@ public actor DemoProvider: DataProvider {
         return world.snapshot(for: project)?.values.filter { metrics.contains($0.key) && $0.key.isAvailable(in: project) } ?? [:]
     }
 
+    public func surfaces(for project: Project) async throws -> [SurfaceStat] {
+        try? await Task.sleep(for: latency)
+        return world.surfaceStats(for: project.id)
+    }
+
     public func events(for project: Project) async throws -> [EventStat] {
         try? await Task.sleep(for: latency)
         return world.eventStats(for: project.id)

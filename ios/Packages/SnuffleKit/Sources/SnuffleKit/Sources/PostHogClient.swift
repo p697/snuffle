@@ -208,25 +208,44 @@ public enum PostHogQueries {
     /// days shown, so its cost follows the project's monthly event volume, not its whole history.
     public static let firstSeenLookbackDays = 30
 
-    /// An event from someone using the product, as opposed to a visitor: anonymous web traffic (posthog-js without
-    /// an identified person) is someone reading the website. App, desktop, game and server SDKs, and anyone signed
-    /// in on the web, count as use. Both properties are set by PostHog's SDKs, so no setup is needed.
-    static let productUse = "(ifNull(properties.$lib, '') != 'web' OR ifNull(toString(properties.$is_identified), '') = 'true')"
+    static let mobileLibraries = ["posthog-ios", "posthog-android", "posthog-react-native", "posthog-flutter"]
 
-    /// When each person within the lookback started using the product, as `first`, for `firstSeen` and
-    /// `firstSeenHistory`. Visitors are left out (their `first` is the epoch) unless the project has nothing but
-    /// visitors, as a website without sign-in does; then everyone counts from their first event. Based on events,
-    /// not the persons table: projects that send anonymous events (no person profiles) still have new people.
-    static func firstEvents(since start: Date) -> String {
+    /// The `Surface` an event came from, as a HogQL string expression. `$lib`, `$os` and `$is_identified` are set
+    /// by PostHog's SDKs; an event without `$lib` was sent to the capture API directly (a server or desktop client).
+    static let surface: String = {
+        let mobile = mobileLibraries.map(literal).joined(separator: ", ")
+        return "multiIf(properties.$lib = 'web', if(ifNull(toString(properties.$is_identified), '') = 'true', 'web', 'visitors'), "
+            + "properties.$lib IN (\(mobile)), multiIf(properties.$os IN ('iOS', 'iPadOS'), 'ios', properties.$os = 'Android', 'android', 'other'), "
+            + "'other')"
+    }()
+
+    /// The condition that keeps a project's included surfaces, or nil when it includes them all (no filter at all).
+    public static func scope(excluding excluded: Set<Surface>) -> String? {
+        guard !excluded.isEmpty else { return nil }
+        let names = excluded.map(\.rawValue).sorted().map(literal).joined(separator: ", ")
+        return "\(surface) NOT IN (\(names))"
+    }
+
+    static func and(_ condition: String?) -> String { condition.map { " AND \($0)" } ?? "" }
+
+    /// People and their surfaces over the last 30 days, to choose what to count and to pick the defaults.
+    public static func surfaceStats(clock: ProjectClock) -> String {
+        "SELECT \(surface) AS surface, uniq(person_id) AS people FROM events "
+            + "WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.now) - 30 * 86_400)) GROUP BY surface ORDER BY people DESC"
+    }
+
+    /// When each person within the lookback started using the product on the included surfaces, as `first`, for
+    /// `firstSeen` and `firstSeenHistory`: someone who read the website last week and opened the app today is new
+    /// today when only the app counts. Based on events, not the persons table: projects that send anonymous events
+    /// (no person profiles) still have new people.
+    static func firstEvents(since start: Date, excluding excluded: Set<Surface>) -> String {
         let lookback = seconds(start) - firstSeenLookbackDays * 86_400
-        let people = "SELECT min(timestamp) AS first_event, minIf(timestamp, \(productUse)) AS first_use, max(\(productUse)) AS uses "
-            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback)) GROUP BY person_id"
-        return "(SELECT if(max(uses) OVER () = 1, first_use, first_event) AS first FROM (\(people)))"
+        return "(SELECT min(timestamp) AS first FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback))\(and(scope(excluding: excluded))) GROUP BY person_id)"
     }
 
     /// People who started using the product today (not seen in the previous 30 days), for projects without a
     /// signup event.
-    public static func firstSeen(clock: ProjectClock) -> String {
+    public static func firstSeen(clock: ProjectClock, excluding excluded: Set<Surface>) -> String {
         let today = seconds(clock.todayStart)
         let yesterday = seconds(clock.yesterdayStart)
         let yesterdayNow = seconds(clock.sameTimeYesterday)
@@ -234,24 +253,26 @@ public enum PostHogQueries {
             "countIf(first >= fromUnixTimestamp(\(today))) AS new_today",
             "countIf(first >= fromUnixTimestamp(\(yesterday)) AND first < fromUnixTimestamp(\(yesterdayNow))) AS new_yesterday"
         ] + hourColumns(column: "first", clock: clock) { "countIf(\($0))" }.enumerated().map { "\($1) AS h\($0)" }
-        return "SELECT \(columns.joined(separator: ", ")) FROM \(firstEvents(since: clock.yesterdayStart)) WHERE first >= fromUnixTimestamp(\(yesterday))"
+        return "SELECT \(columns.joined(separator: ", ")) FROM \(firstEvents(since: clock.yesterdayStart, excluding: excluded)) WHERE first >= fromUnixTimestamp(\(yesterday))"
     }
 
-    /// People active in the last minute, people active today and today's page views, in one scan of today.
-    public static func presence(clock: ProjectClock) -> String {
-        "SELECT uniqIf(distinct_id, timestamp >= now() - INTERVAL 1 MINUTE) AS online, uniq(person_id) AS active, countIf(event = '$pageview') AS pageviews "
-            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.todayStart)))"
+    /// People online (last minute) and active today, and pages and screens seen today, on the included surfaces, in
+    /// one scan of today.
+    public static func presence(clock: ProjectClock, excluding excluded: Set<Surface>) -> String {
+        "SELECT uniqIf(person_id, timestamp >= now() - INTERVAL 1 MINUTE) AS online, uniq(person_id) AS active, countIf(event IN ('$pageview', '$screen')) AS views "
+            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.todayStart)))\(and(scope(excluding: excluded)))"
     }
 
-    /// People active in the last 7 days and, when `month`, the last 30, ending now. One scan of the longest window,
-    /// so it is read hourly (`Metric.isHourly`), not on every refresh.
-    public static func activity(clock: ProjectClock, month: Bool) -> String {
+    /// People active in the last 7 days and, when `month`, the last 30, ending now, on the included surfaces. One
+    /// scan of the longest window, so it is read hourly (`Metric.isHourly`), not on every refresh.
+    public static func activity(clock: ProjectClock, month: Bool, excluding excluded: Set<Surface>) -> String {
         let week = seconds(clock.now) - 7 * 86_400
+        let scope = and(scope(excluding: excluded))
         guard month else {
-            return "SELECT uniq(person_id) AS week FROM events WHERE timestamp >= fromUnixTimestamp(\(week))"
+            return "SELECT uniq(person_id) AS week FROM events WHERE timestamp >= fromUnixTimestamp(\(week))\(scope)"
         }
         return "SELECT uniqIf(person_id, timestamp >= fromUnixTimestamp(\(week))) AS week, uniq(person_id) AS month "
-            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.now) - 30 * 86_400))"
+            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.now) - 30 * 86_400))\(scope)"
     }
 
     /// People PostHog has identified (signed in), ever. Profiles of anonymous people are left out: projects that send
@@ -277,7 +298,9 @@ public enum PostHogQueries {
     /// Per-day new users, revenue and active people for the history chart.
     public static func history(metrics: MetricSettings, clock: ProjectClock, days: Int) -> String {
         let start = seconds(clock.historyStart(days: days))
-        var columns = ["\(day("timestamp", clock: clock)) AS day", "uniq(person_id) AS active"]
+        // Only the active column follows the surfaces: sign-ups and revenue are their events, wherever they came from.
+        let active = scope(excluding: metrics.surfacesLeftOut).map { "uniqIf(person_id, \($0))" } ?? "uniq(person_id)"
+        var columns = ["\(day("timestamp", clock: clock)) AS day", "\(active) AS active"]
         if case .event(let name) = metrics.newUsers {
             columns.append("\(people(did: name)) AS new_users")
         } else {
@@ -292,9 +315,9 @@ public enum PostHogQueries {
     }
 
     /// Per-day first-seen people, used when new users are counted that way.
-    public static func firstSeenHistory(clock: ProjectClock, days: Int) -> String {
+    public static func firstSeenHistory(clock: ProjectClock, days: Int, excluding excluded: Set<Surface>) -> String {
         let start = clock.historyStart(days: days)
-        return "SELECT \(day("first", clock: clock)) AS day, count() AS new_users FROM \(firstEvents(since: start)) "
+        return "SELECT \(day("first", clock: clock)) AS day, count() AS new_users FROM \(firstEvents(since: start, excluding: excluded)) "
             + "WHERE first >= fromUnixTimestamp(\(seconds(start))) GROUP BY day ORDER BY day"
     }
 
@@ -351,6 +374,13 @@ public enum PostHogParsing {
             }
         }
         return counts
+    }
+
+    public static func surfaceStats(_ rows: [[JSONValue]]) -> [SurfaceStat] {
+        rows.compactMap { row in
+            guard row.count >= 2, let name = row[0].string, let surface = Surface(rawValue: name) else { return nil }
+            return SurfaceStat(surface: surface, people: row[1].int ?? 0)
+        }
     }
 
     public static func eventStats(_ rows: [[JSONValue]]) -> [EventStat] {

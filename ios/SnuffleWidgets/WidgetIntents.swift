@@ -17,7 +17,7 @@ enum WidgetMetric: String, AppEnum {
         .activeMonth: "月活跃",
         .totalUsers: "累计用户",
         .online: "此刻在线",
-        .pageviews: "浏览量",
+        .pageviews: "页面浏览",
         .revenue: "收入",
         .orders: "订单",
         .mrr: "MRR",

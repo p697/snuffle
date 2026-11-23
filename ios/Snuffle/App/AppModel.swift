@@ -210,6 +210,7 @@ final class AppModel {
             if elapsed < .milliseconds(650) { try? await Task.sleep(for: .milliseconds(650) - elapsed) }
 
             adoptTimeZone(result.posthogTimeZone, for: project.id)
+            adoptSurfaces(result.excludedSurfaces, for: project.id)
             let previous = cache.snapshots[project.id]
             let snapshot = result.snapshot.fillingGaps(from: previous)
             let layout = self.layout(project)
@@ -351,9 +352,18 @@ final class AppModel {
         SharedContainer.workspace.save(workspace)
     }
 
+    /// Keeps the surfaces a refresh chose for a project whose person never picked, so it looks only once.
+    private func adoptSurfaces(_ excluded: Set<Surface>?, for projectId: UUID) {
+        guard let excluded, let index = workspace.projects.firstIndex(where: { $0.id == projectId }),
+              workspace.projects[index].metrics.excludedSurfaces == nil else { return }
+        workspace.projects[index].metrics.excludedSurfaces = excluded
+        SharedContainer.workspace.save(workspace)
+    }
+
     func save(project: Project) {
         let index = workspace.projects.firstIndex { $0.id == project.id }
         if let index {
+            forgetCounting(of: workspace.projects[index], now: project)
             workspace.projects[index] = project
         } else {
             workspace.projects.append(project)
@@ -363,6 +373,16 @@ final class AppModel {
         Analytics.projectSaved(project, isNew: index == nil, projectCount: workspace.projects.count)
         SharedContainer.removeProjectIcons(project.id, keeping: project.iconVersion)
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// Numbers read under a project's old counting or scope mean something else now: forget them, so the refresh
+    /// that follows reads them again, the hourly ones too, instead of keeping the old values.
+    private func forgetCounting(of old: Project, now new: Project) {
+        guard old.metrics != new.metrics, var snapshot = cache.snapshots[new.id] else { return }
+        for metric in snapshot.values.keys where metric.followsCounting { snapshot.values[metric] = nil }
+        snapshot.hourlyReadAt = nil
+        cache.snapshots[new.id] = snapshot
+        saveCache()
     }
 
     /// Saves a card layout for `project`, or for every project when `everywhere` (each project's own events stay

@@ -11,7 +11,7 @@ public enum Metric: Hashable, Sendable {
     case totalUsers
     /// People with an event in the last minute.
     case online
-    /// `$pageview` events today.
+    /// Pages and screens seen today: `$pageview` on the web, `$screen` in apps.
     case pageviews
     /// One PostHog event today: the people who sent it, or how many times it was sent.
     case event(String, people: Bool)
@@ -127,6 +127,20 @@ public enum Metric: Hashable, Sendable {
 
     public var isMoney: Bool { self == .revenue || self == .mrr || self == .revenueLast28Days }
 
+    /// Counted only on the surfaces the project includes (`MetricSettings.excludedSurfaces`). Event metrics, sign-up
+    /// and revenue events are what they name, wherever they were sent from.
+    public var isScoped: Bool {
+        switch self {
+        case .activeToday, .activeWeek, .activeMonth, .online, .pageviews: true
+        default: false
+        }
+    }
+
+    /// Changes meaning when the project's counting or scope (`MetricSettings`) changes.
+    public var followsCounting: Bool {
+        isScoped || self == .newUsers || self == .revenue || self == .orders
+    }
+
     /// The same everywhere, so it can be added up across projects (the totals strip and the widgets). An event is
     /// one project's own.
     public var isShared: Bool {
@@ -159,7 +173,7 @@ public enum Metric: Hashable, Sendable {
         case .activeMonth: String(localized: "月活跃", bundle: .module)
         case .totalUsers: String(localized: "累计用户", bundle: .module)
         case .online: String(localized: "此刻在线", bundle: .module)
-        case .pageviews: String(localized: "浏览量", bundle: .module)
+        case .pageviews: String(localized: "页面浏览", bundle: .module)
         case .event(let name, let people):
             if self == .installs { String(localized: "安装", bundle: .module) }
             else if people { String(localized: "\(name) 人数", bundle: .module) }
