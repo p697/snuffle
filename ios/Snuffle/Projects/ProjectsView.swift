@@ -48,7 +48,7 @@ struct ProjectsView: View {
             Spacer()
             if !model.settings.demoMode {
                 Button {
-                    if model.pro.isPro || model.projects.count < AppModel.freeProjectLimit {
+                    if model.canAddProject {
                         adding = true
                         Analytics.addProjectOpened(.projects)
                     } else {
