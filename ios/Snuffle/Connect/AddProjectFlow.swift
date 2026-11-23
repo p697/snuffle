@@ -78,7 +78,7 @@ struct AddProjectFlow: View {
     }
 
     private func finish() {
-        model.save(project: session.project)
+        model.save(project: session.finished)
         dismiss()
         Task { await model.refreshAll(trigger: .connect) }
     }
@@ -199,7 +199,7 @@ private struct ConnectedPage: View {
                     Spacer()
                 }
                 PageTitle(title: String(localized: "连上了"), subtitle: session.project.name.isEmpty ? nil : String(localized: "这是 \(session.project.name) 今天到现在的数。"))
-                ProjectCard(project: session.project, preview: preview, previewLoading: loading)
+                ProjectCard(project: session.finished, preview: preview, previewLoading: loading)
                 SectionLabel(session.project.platforms.count == Platform.allCases.count ? String(localized: "数据源") : String(localized: "再连几个，数更全"))
                     .padding(.top, 6)
                 FlowLayout(spacing: 8) {
@@ -273,7 +273,8 @@ private struct ConnectedPage: View {
 
     private func loadPreview() async {
         loading = true
-        let result = await model.provider.refresh(session.project)
+        let project = session.finished
+        let result = await model.provider.refresh(project, metrics: Set(project.card.metrics), previous: nil)
         preview = result.snapshot
         loading = false
     }

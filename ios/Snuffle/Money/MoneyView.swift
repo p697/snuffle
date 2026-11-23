@@ -36,12 +36,11 @@ struct MoneyView: View {
     }
 
     private var hero: some View {
-        let totals = model.totals
-        let mark = model.marksFading ? nil : model.totalsMark
+        let rise = model.marksFading ? nil : model.totalsMark?[.revenue]
         return VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Odometer(text: totals.hasRevenue ? Format.money(totals.revenue) : "–", size: 64)
-                DeltaChip(text: mark.flatMap { $0.revenue > 0 ? Format.delta(money: $0.revenue) : nil }, visible: mark != nil, size: 15)
+                Odometer(text: Metric.revenue.text(model.total(.revenue)), size: 64)
+                DeltaChip(text: rise.map(Metric.revenue.delta), visible: rise != nil, size: 15)
             }
             Text(revenueProjects.isEmpty ? String(localized: "还没有项目连接收入来源，可以在项目设置里选择 PostHog 付费事件或 RevenueCat。") : String(localized: "\(salesCount) 笔订单") + " · " + String(localized: "\(revenueProjects.count) 个项目有收入来源"))
                 .font(.system(size: 13))
@@ -53,7 +52,7 @@ struct MoneyView: View {
     }
 
     private var salesCount: Int {
-        revenueProjects.compactMap { model.snapshot($0.id)?.sales }.reduce(0, +)
+        revenueProjects.compactMap { model.snapshot($0.id)?.orders }.reduce(0, +)
     }
 
     private var split: some View {

@@ -14,6 +14,8 @@ final class ConnectSession {
     var revenueCatProjects: [RevenueCatProject] = []
     var appStoreApps: [AppStoreApp] = []
     var googleApps: [GooglePlayApp] = []
+    /// Whether the PostHog project sends the install event, so a new card shows installs only when there are some.
+    var sendsInstalls = true
 
     init(project: Project, isNewProject: Bool) {
         self.project = project
@@ -23,6 +25,15 @@ final class ConnectSession {
     /// Records one attempt to sign in to or verify a platform account.
     func track(_ platform: Platform, _ method: Analytics.ConnectMethod, _ outcome: Analytics.ConnectOutcome) {
         Analytics.sourceConnectResolved(platform, method: method, newProject: isNewProject, outcome: outcome)
+    }
+
+    /// The project as it will be saved. A new project's card follows the sources connected so far; an existing one
+    /// keeps the card the person set up.
+    var finished: Project {
+        guard isNewProject else { return project }
+        var finished = project
+        finished.card = CardLayout.standard(for: finished, sendsInstalls: sendsInstalls)
+        return finished
     }
 
     /// A copy of the project reading only `platform`, to show what that one source returns right after connecting.

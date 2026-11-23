@@ -227,7 +227,8 @@ struct StoreDonePage: View {
     private func load() async {
         loading = true
         defer { loading = false }
-        result = await model.provider.refresh(session.probe(platform))
+        let probe = session.probe(platform)
+        result = await model.provider.refresh(probe, metrics: Set(CardLayout.standard(for: probe).metrics), previous: nil)
     }
 }
 

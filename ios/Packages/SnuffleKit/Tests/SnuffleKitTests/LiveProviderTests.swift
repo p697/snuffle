@@ -52,7 +52,7 @@ struct LiveProviderTests {
             tint: .coral,
             posthog: PostHogLink(accountId: posthogAccount, projectId: 42, projectName: "Ferry", timeZone: "UTC"),
             revenueCat: RevenueCatLink(accountId: revenueCatAccount, projectId: "proj1", projectName: "Ferry"),
-            metrics: MetricSettings(newUsers: .event("user_signed_up"), revenue: .revenueCat, extra: .none)
+            metrics: MetricSettings(newUsers: .event("user_signed_up"), revenue: .revenueCat)
         )
     }
 
@@ -123,8 +123,9 @@ struct LiveProviderTests {
             "us.posthog.com/api/projects/42/query": (200, #"{"results":[[17,5,1,2]]}"#),
             "api.revenuecat.com/v2/projects/proj1/metrics/revenue": (200, #"{"object":"revenue_metric","value":3.28}"#)
         ])
-        let result = await provider(store: store).refresh(project)
+        let result = await provider(store: store).refresh(project, metrics: [.newUsers, .revenue], previous: nil)
         #expect(result.snapshot.newUsers == 17)
+        #expect(result.snapshot.hourlyReadAt == nil, "nothing hourly was asked for")
         #expect(result.snapshot.newUsersYesterday == 5)
         #expect(result.snapshot.hourlyNewUsers == [1, 2])
         #expect(result.snapshot.revenue == 3.28)
@@ -141,7 +142,7 @@ struct LiveProviderTests {
             "us.posthog.com/api/projects/42/query": (200, #"{"results":[[18,5,1,3]]}"#),
             "api.revenuecat.com": (403, #"{"type":"authorization_error","message":"Missing permission charts_metrics:overview:read"}"#)
         ])
-        let result = await provider(store: store).refresh(project)
+        let result = await provider(store: store).refresh(project, metrics: [.newUsers, .revenue], previous: nil)
         #expect(result.snapshot.newUsers == 18)
         #expect(result.snapshot.revenue == nil)
         #expect(result.snapshot.failures == [SourceFailure(platform: .revenueCat, message: SourceError.forbidden(.revenueCat, "Missing permission charts_metrics:overview:read").localizedDescription, kind: .forbidden)])
@@ -149,7 +150,7 @@ struct LiveProviderTests {
 
     @Test func missingCredentialIsReportedPerSource() async {
         StubProtocol.reset([:])
-        let result = await provider(store: MemoryCredentialStore()).refresh(project)
+        let result = await provider(store: MemoryCredentialStore()).refresh(project, metrics: [.newUsers, .revenue], previous: nil)
         #expect(Set(result.snapshot.failures.map(\.platform)) == [.posthog, .revenueCat])
         #expect(result.snapshot.failures.first { $0.platform == .posthog }?.message == SourceError.missingCredential(.posthog).localizedDescription)
     }

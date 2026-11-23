@@ -11,21 +11,30 @@ struct DemoTests {
     }
 
     let afternoon = ISO8601.parse("2026-11-20T15:00:00Z")!
+    let lumen = DemoWorld.projects[0]
+    let ferry = DemoWorld.projects[1]
+    let atlas = DemoWorld.projects[2]
 
     @Test func newDayStartsProportionalToTheHour() {
         var random = SplitMix64(seed: 1)
         let world = DemoWorld.make(now: afternoon, calendar: calendar, random: &random)
-        let lumen = world.snapshot(for: DemoWorld.lumenId)!
+        let lumen = world.snapshot(for: self.lumen)!
         // 15:00 is 62.5% of the day: about 4120 × 1.18 × 0.625 new users.
         #expect((2900...3200).contains(lumen.newUsers!))
         #expect(lumen.hourlyNewUsers.count == 16)
         #expect(lumen.hourlyNewUsers.reduce(0, +) == lumen.newUsers)
         #expect(lumen.revenueSource == .posthog)
         #expect(lumen.reviewsToAnswer == 5)
-        let ferry = world.snapshot(for: DemoWorld.ferryId)!
+        let ferry = world.snapshot(for: self.ferry)!
         #expect(ferry.revenue == 3.28)
-        #expect(ferry.sales == nil)
-        #expect(world.snapshot(for: DemoWorld.atlasId)!.extra?.label == String(localized: "次付费墙浏览", bundle: .module))
+        #expect(ferry.orders == nil)
+        #expect(ferry[.mrr] == 87)
+        // Every number on the demo cards has a value.
+        for project in DemoWorld.projects {
+            let snapshot = world.snapshot(for: project)!
+            #expect(project.card.metrics.allSatisfy { snapshot[$0] != nil }, "\(project.name)")
+        }
+        #expect(world.eventStats(for: DemoWorld.lumenId).first?.name == "$pageview")
     }
 
     @Test func lateInDayFillsTheDayButKeepsReviewsInThePast() {
@@ -33,19 +42,19 @@ struct DemoTests {
         let night = ISO8601.parse("2026-11-20T01:30:00Z")!
         let world = DemoWorld.make(now: night, calendar: calendar, lateInDay: true, random: &random)
         #expect(world.simulatedNow == ISO8601.parse("2026-11-20T21:30:00Z")!)
-        #expect(world.snapshot(for: DemoWorld.lumenId)!.hourlyNewUsers.count == 22)
+        #expect(world.snapshot(for: lumen)!.hourlyNewUsers.count == 22)
         #expect(world.reviews.allSatisfy { $0.createdAt < night })
     }
 
     @Test func advancingAddsUsersAndNeverGoesBackInTime() {
         var random = SplitMix64(seed: 2)
         var world = DemoWorld.make(now: afternoon, calendar: calendar, random: &random)
-        let before = world.snapshot(for: DemoWorld.lumenId)!
+        let before = world.snapshot(for: lumen)!
         world.advance(to: afternoon, calendar: calendar, random: &random)
-        let after = world.snapshot(for: DemoWorld.lumenId)!
+        let after = world.snapshot(for: lumen)!
         #expect(after.newUsers! > before.newUsers!)
         #expect(after.fetchedAt > before.fetchedAt)
-        #expect(SnapshotChange(from: before, to: after).isUp)
+        #expect(SnapshotChange(from: before, to: after, metrics: [.newUsers]).isUp)
     }
 
     @Test func scenariosShapeTheNextRefresh() {
@@ -53,20 +62,20 @@ struct DemoTests {
         var world = DemoWorld.make(now: afternoon, calendar: calendar, random: &random)
 
         world.scenario = .quiet
-        let quietBefore = world.snapshot(for: DemoWorld.lumenId)!
+        let quietBefore = world.snapshot(for: lumen)!
         world.advance(to: afternoon, calendar: calendar, random: &random)
-        #expect(SnapshotChange(from: quietBefore, to: world.snapshot(for: DemoWorld.lumenId)!) == .none)
+        #expect(SnapshotChange(from: quietBefore, to: world.snapshot(for: lumen)!, metrics: lumen.card.metrics) == .none)
 
         world.scenario = .sale
-        let saleBefore = world.snapshot(for: DemoWorld.lumenId)!
+        let saleBefore = world.snapshot(for: lumen)!
         world.advance(to: afternoon, calendar: calendar, random: &random)
-        let saleAfter = world.snapshot(for: DemoWorld.lumenId)!
-        #expect(saleAfter.sales == saleBefore.sales! + 1)
-        #expect(SnapshotChange(from: saleBefore, to: saleAfter).hasSale)
+        let saleAfter = world.snapshot(for: lumen)!
+        #expect(saleAfter.orders == saleBefore.orders! + 1)
+        #expect(SnapshotChange(from: saleBefore, to: saleAfter, metrics: lumen.card.metrics).hasSale)
 
         world.scenario = .failure
-        #expect(world.snapshot(for: DemoWorld.ferryId)!.failures.map(\.platform) == [.revenueCat])
-        #expect(world.snapshot(for: DemoWorld.lumenId)!.failures.isEmpty)
+        #expect(world.snapshot(for: ferry)!.failures.map(\.platform) == [.revenueCat])
+        #expect(world.snapshot(for: lumen)!.failures.isEmpty)
     }
 
     @Test func midnightStartsAFreshDayAndKeepsTheScenario() {
@@ -86,7 +95,7 @@ struct DemoTests {
         world.markReplied(review.id, text: "Thanks!", at: afternoon)
         let updated = world.reviews.first { $0.id == review.id }!
         #expect(updated.reply?.pending == true)
-        #expect(world.snapshot(for: review.projectId)!.reviewsToAnswer == world.reviews.filter { $0.projectId == review.projectId && $0.needsReply }.count)
+        #expect(world.snapshot(for: DemoWorld.projects.first { $0.id == review.projectId }!)!.reviewsToAnswer == world.reviews.filter { $0.projectId == review.projectId && $0.needsReply }.count)
     }
 
     @Test func historyIsStableAndEndsWithToday() {
@@ -96,7 +105,7 @@ struct DemoTests {
         let second = world.history(for: DemoWorld.lumenId, days: 30, calendar: calendar)
         #expect(first == second)
         #expect(first.count == 30)
-        #expect(first.last?.newUsers == world.snapshot(for: DemoWorld.lumenId)!.newUsers)
+        #expect(first.last?.newUsers == world.snapshot(for: lumen)!.newUsers)
         #expect(world.history(for: DemoWorld.atlasId, days: 7, calendar: calendar).allSatisfy { $0.revenue == nil })
     }
 
@@ -116,7 +125,7 @@ struct DemoTests {
         await provider.advance()
         #expect(saved.world?.scenario == .sale)
         let lumen = DemoWorld.projects[0]
-        let result = await provider.refresh(lumen)
+        let result = await provider.refresh(lumen, metrics: Set(lumen.card.metrics), previous: nil)
         #expect(result.reviews?.isEmpty == false)
         let review = try #require(result.reviews?.first { $0.needsReply })
         try await provider.reply(to: review, text: "Thank you", in: lumen)

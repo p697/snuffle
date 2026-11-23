@@ -26,7 +26,7 @@ public actor DemoProvider: DataProvider {
     /// Today's numbers without any wait, so demo mode opens with full cards instead of dashes.
     public func seed() -> [RefreshResult] {
         DemoWorld.projects.compactMap { project in
-            world.snapshot(for: project.id).map { RefreshResult(snapshot: $0, reviews: project.hasStore ? world.reviews.filter { $0.projectId == project.id } : nil) }
+            world.snapshot(for: project).map { RefreshResult(snapshot: $0, reviews: project.hasStore ? world.reviews.filter { $0.projectId == project.id } : nil) }
         }
     }
 
@@ -36,13 +36,23 @@ public actor DemoProvider: DataProvider {
         persist(world)
     }
 
-    public func refresh(_ project: Project) async -> RefreshResult {
+    public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?) async -> RefreshResult {
         try? await Task.sleep(for: latency + .milliseconds(Int.random(in: 0...250)))
-        guard let snapshot = world.snapshot(for: project.id) else {
+        guard let snapshot = world.snapshot(for: project) else {
             return RefreshResult(snapshot: ProjectSnapshot(projectId: project.id, fetchedAt: Date(), dayStart: world.dayStart), reviews: nil)
         }
         let reviews = project.hasStore ? world.reviews.filter { $0.projectId == project.id } : nil
         return RefreshResult(snapshot: snapshot, reviews: reviews)
+    }
+
+    public func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double] {
+        try? await Task.sleep(for: latency)
+        return world.snapshot(for: project)?.values.filter { metrics.contains($0.key) && $0.key.isAvailable(in: project) } ?? [:]
+    }
+
+    public func events(for project: Project) async throws -> [EventStat] {
+        try? await Task.sleep(for: latency)
+        return world.eventStats(for: project.id)
     }
 
     public func orders(for project: Project) async throws -> [Order] {

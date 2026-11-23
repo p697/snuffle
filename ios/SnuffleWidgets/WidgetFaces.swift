@@ -2,7 +2,7 @@ import SnuffleKit
 import SwiftUI
 import WidgetKit
 
-/// What a widget draws: the same cache the app writes after every refresh.
+/// What a widget draws: the same cache the app writes after every refresh, and the numbers its configuration picked.
 nonisolated struct TodayEntry: TimelineEntry {
     struct Row: Identifiable {
         var id: UUID
@@ -11,8 +11,7 @@ nonisolated struct TodayEntry: TimelineEntry {
         var tint: ProjectTint
         /// The project's picture, when the person chose one in the app.
         var icon: UIImage? = nil
-        var newUsers: Int?
-        var revenue: Double?
+        var values: [Metric: Double]
         var failed: Bool
     }
 
@@ -22,32 +21,48 @@ nonisolated struct TodayEntry: TimelineEntry {
     var unlocked: Bool
     var demo: Bool
     var accent: AppSettings.Accent
+    var primary: Metric = .newUsers
+    var secondary: Metric? = .revenue
+    /// The one project picked in the configuration; nil adds up every project.
+    var projectName: String?
 
-    var totalUsers: Int { rows.compactMap(\.newUsers).reduce(0, +) }
-    var totalRevenue: Double? {
-        let values = rows.compactMap(\.revenue)
+    /// `metric` added up over the rows that have it; nil when none does.
+    func total(_ metric: Metric) -> Double? {
+        let values = rows.compactMap { $0.values[metric] }
         return values.isEmpty ? nil : values.reduce(0, +)
     }
 
-    static func load(now: Date = .now) -> TodayEntry {
+    /// "新增用户 · 全部项目" or "MRR · Clawket", with "示例" in demo mode.
+    var heading: String {
+        [demo ? String(localized: "示例") : nil, primary.title, projectName].compactMap { $0 }.joined(separator: " · ")
+    }
+
+    static func load(now: Date = .now, primary: Metric = .newUsers, secondary: Metric? = .revenue, project: UUID? = nil) -> TodayEntry {
         let settings = SharedContainer.settings.load() ?? AppSettings()
         let cache = (settings.demoMode ? SharedContainer.demoCache : SharedContainer.liveCache).load() ?? RefreshCache()
-        let projects = settings.demoMode ? DemoWorld.projects : (SharedContainer.workspace.load()?.projects ?? [])
-        let rows = projects.filter(\.includeInRefresh).map { project in
+        let all = settings.demoMode ? DemoWorld.projects : (SharedContainer.workspace.load()?.projects ?? [])
+        let chosen = project.flatMap { id in all.first { $0.id == id } }
+        let projects = chosen.map { [$0] } ?? all.filter(\.includeInRefresh)
+        let rows = projects.map { project in
             let snapshot = cache.snapshots[project.id]
             let icon = project.iconVersion.flatMap { UIImage(contentsOfFile: SharedContainer.projectIcon(project.id, version: $0).path()) }
-            return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, icon: icon, newUsers: snapshot?.newUsers, revenue: snapshot?.revenue, failed: !(snapshot?.failures.isEmpty ?? true))
+            let values = (snapshot?.values ?? [:]).filter { $0.key.isAvailable(in: project) }
+            return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, icon: icon, values: values, failed: !(snapshot?.failures.isEmpty ?? true))
         }
         let pro = UserDefaults(suiteName: SharedContainer.appGroup)?.bool(forKey: "isPro") ?? false
-        return TodayEntry(date: now, rows: rows, lastRefresh: cache.lastRefresh, unlocked: pro || settings.demoMode, demo: settings.demoMode && !SharedContainer.hidesDemoMarks, accent: settings.accent)
+        return TodayEntry(
+            date: now, rows: rows, lastRefresh: cache.lastRefresh, unlocked: pro || settings.demoMode,
+            demo: settings.demoMode && !SharedContainer.hidesDemoMarks, accent: settings.accent,
+            primary: primary, secondary: secondary, projectName: chosen?.name
+        )
     }
 
     static let placeholder = TodayEntry(
         date: .now,
         rows: [
-            Row(id: UUID(), name: "Lumen Notes", monogram: "L", tint: .ink, newUsers: 3_406, revenue: 940, failed: false),
-            Row(id: UUID(), name: "Pocket Ferry", monogram: "P", tint: .coral, newUsers: 17, revenue: 3.28, failed: false),
-            Row(id: UUID(), name: "Quiet Atlas", monogram: "Q", tint: .cocoa, newUsers: 45, revenue: nil, failed: false)
+            Row(id: UUID(), name: "Lumen Notes", monogram: "L", tint: .ink, values: [.newUsers: 3_406, .revenue: 940], failed: false),
+            Row(id: UUID(), name: "Pocket Ferry", monogram: "P", tint: .coral, values: [.newUsers: 17, .revenue: 3.28], failed: false),
+            Row(id: UUID(), name: "Quiet Atlas", monogram: "Q", tint: .cocoa, values: [.newUsers: 45], failed: false)
         ],
         lastRefresh: .now.addingTimeInterval(-900),
         unlocked: true,
@@ -104,24 +119,28 @@ struct WidgetRefreshCircle: View {
     }
 }
 
-/// systemSmall: today's total, revenue, and the refresh button.
+/// systemSmall: the big number, the line under it, and the refresh button.
 struct TodaySmallFace<Refresh: View>: View {
     var entry: TodayEntry
     @ViewBuilder var refresh: Refresh
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(entry.demo ? "今日新增 · 示例" : "今日新增")
+            Text(entry.heading)
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(WidgetPalette.ink2)
-            Text(Format.number(entry.totalUsers))
+                .lineLimit(1)
+            Text(entry.primary.format(entry.total(entry.primary) ?? 0))
                 .font(.system(size: 44, weight: .heavy).width(.compressed))
                 .foregroundStyle(WidgetPalette.ink)
                 .minimumScaleFactor(0.5)
                 .lineLimit(1)
                 .contentTransition(.numericText())
-            if let revenue = entry.totalRevenue {
-                Text("收入 \(Format.money(revenue))").font(.system(size: 13, weight: .semibold)).foregroundStyle(WidgetPalette.ink)
+            if let secondary = entry.secondary, let value = entry.total(secondary) {
+                Text(verbatim: "\(secondary.title) \(secondary.format(value))")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(WidgetPalette.ink)
+                    .lineLimit(1)
             }
             Spacer(minLength: 0)
             HStack(alignment: .bottom) {
@@ -133,7 +152,7 @@ struct TodaySmallFace<Refresh: View>: View {
     }
 }
 
-/// systemMedium: up to three projects and the refresh button.
+/// systemMedium: up to three projects with the big number each (and the line's number beside it), and the button.
 struct TodayMediumFace<Refresh: View>: View {
     var entry: TodayEntry
     @ViewBuilder var refresh: Refresh
@@ -141,9 +160,10 @@ struct TodayMediumFace<Refresh: View>: View {
     var body: some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 8) {
-                Text((entry.demo ? String(localized: "示例") + " · " : "") + String(localized: "今日新增 · \(WidgetText.ago(entry.lastRefresh, now: entry.date))"))
+                Text(entry.heading + " · " + WidgetText.ago(entry.lastRefresh, now: entry.date))
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(WidgetPalette.ink2)
+                    .lineLimit(1)
                 ForEach(entry.rows.prefix(3)) { row in
                     HStack(spacing: 8) {
                         if let icon = row.icon {
@@ -164,9 +184,13 @@ struct TodayMediumFace<Refresh: View>: View {
                         if row.failed {
                             Image(systemName: "exclamationmark.circle.fill").font(.system(size: 12)).foregroundStyle(WidgetPalette.bad)
                         }
-                        Text(row.newUsers.map(Format.number) ?? "–")
+                        if let secondary = entry.secondary, let value = row.values[secondary] {
+                            Text(secondary.format(value)).font(.system(size: 12, weight: .semibold)).foregroundStyle(WidgetPalette.ink2).lineLimit(1)
+                        }
+                        Text(row.values[entry.primary].map(entry.primary.format) ?? "–")
                             .font(.system(size: 24, weight: .heavy).width(.compressed))
                             .foregroundStyle(WidgetPalette.ink)
+                            .lineLimit(1)
                             .contentTransition(.numericText())
                     }
                 }
@@ -187,9 +211,11 @@ struct LockRectangularFace: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text("今日 · \(WidgetText.ago(entry.lastRefresh, now: entry.date))").font(.system(size: 12, weight: .semibold))
-            Text("+\(Format.number(entry.totalUsers)) 用户").font(.system(size: 20, weight: .heavy).width(.compressed))
-            if let revenue = entry.totalRevenue { Text("收入 \(Format.money(revenue))").font(.system(size: 13)) }
+            Text(verbatim: "\(entry.primary.title) · \(WidgetText.ago(entry.lastRefresh, now: entry.date))").font(.system(size: 12, weight: .semibold)).lineLimit(1)
+            Text(entry.primary.format(entry.total(entry.primary) ?? 0)).font(.system(size: 20, weight: .heavy).width(.compressed))
+            if let secondary = entry.secondary, let value = entry.total(secondary) {
+                Text(verbatim: "\(secondary.title) \(secondary.format(value))").font(.system(size: 13)).lineLimit(1)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -200,6 +226,8 @@ struct LockInlineFace: View {
     var entry: TodayEntry
 
     var body: some View {
-        Text(String(localized: "新增 \(Format.number(entry.totalUsers))") + (entry.totalRevenue.map { " · " + Format.money($0) } ?? ""))
+        let first = "\(entry.primary.title) \(entry.primary.format(entry.total(entry.primary) ?? 0))"
+        let second = entry.secondary.flatMap { metric in entry.total(metric).map { " · " + metric.format($0) } } ?? ""
+        Text(first + second)
     }
 }

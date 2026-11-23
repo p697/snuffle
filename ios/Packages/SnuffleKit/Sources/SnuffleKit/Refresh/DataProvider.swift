@@ -17,7 +17,13 @@ public struct RefreshResult: Sendable {
 
 /// The app talks to this; demo mode and live accounts are two implementations.
 public protocol DataProvider: Sendable {
-    func refresh(_ project: Project) async -> RefreshResult
+    /// Reads `project` for a refresh: today's numbers every time, `metrics` that are hourly only when `previous` has
+    /// them older than an hour, and its reviews.
+    func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?) async -> RefreshResult
+    /// Reads `metrics` now, hourly ones included, to show what a choice would show before it is made.
+    func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double]
+    /// The project's events of the last 7 days, for choosing one to count.
+    func events(for project: Project) async throws -> [EventStat]
     func orders(for project: Project) async throws -> [Order]
     func overview(for project: Project) async throws -> SubscriptionOverview?
     func history(for project: Project, days: Int) async throws -> [DailyPoint]

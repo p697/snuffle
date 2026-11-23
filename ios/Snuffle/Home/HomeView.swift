@@ -5,6 +5,8 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @State private var showSettings = false
+    @State private var editingCard: Project?
+    @State private var editingTotals = false
 
     var body: some View {
         NavigationStack {
@@ -12,11 +14,20 @@ struct HomeView: View {
                 VStack(spacing: 12) {
                     header
                     TotalsStrip()
+                        .contextMenu {
+                            Button("调整合计", systemImage: "slider.horizontal.3") { editingTotals = true }
+                        }
                     ForEach(model.projects) { project in
                         NavigationLink(value: project.id) {
                             ProjectCard(project: project)
                         }
                         .buttonStyle(.plain)
+                        .contextMenu {
+                            // Demo projects are fixed; the person's own can be changed.
+                            if !model.settings.demoMode {
+                                Button("调整卡片", systemImage: "slider.horizontal.3") { editingCard = project }
+                            }
+                        }
                     }
                     if model.projects.isEmpty {
                         EmptyProjects()
@@ -34,6 +45,8 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
+            .sheet(item: $editingCard) { project in CardEditor(project: project) }
+            .sheet(isPresented: $editingTotals) { TotalsEditor() }
             .toolbar(.hidden, for: .navigationBar)
         }
     }
@@ -149,46 +162,52 @@ private struct LeaveDemoButton: View {
     }
 }
 
-/// The three totals across every project. A delta pops in beside its label, so the strip never changes height.
+/// Three totals across every project, chosen by the person. A delta pops in beside its label, so the strip never
+/// changes height.
 struct TotalsStrip: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.accent) private var accent
 
     var body: some View {
-        let totals = model.totals
         let mark = model.marksFading ? nil : model.totalsMark
         HStack(alignment: .top, spacing: 12) {
-            tile(String(localized: "strip.newUsers", defaultValue: "新增用户", comment: "Totals strip label above a number, a third of the screen wide: keep it very short."), value: totals.hasUsers ? Format.number(totals.newUsers) : "–", delta: mark.flatMap { $0.newUsers > 0 ? Format.delta(users: $0.newUsers) : nil })
-            tile(String(localized: "strip.revenue", defaultValue: "收入", comment: "Totals strip label above a number, a third of the screen wide: keep it very short."), value: totals.hasRevenue ? Format.money(totals.revenue.rounded()) : "–", delta: mark.flatMap { $0.revenue > 0 ? Format.delta(money: $0.revenue) : nil })
-            tile(String(localized: "strip.reviewsToAnswer", defaultValue: "待回复评论", comment: "Totals strip label above the number of reviews to answer, a third of the screen wide: keep it very short."), value: totals.hasReviews ? Format.number(totals.reviewsToAnswer) : "–", delta: mark.flatMap { $0.reviews > 0 ? Format.delta(users: $0.reviews) : nil }, unit: totals.hasReviews ? String(localized: "条", comment: "Measure word after the number of reviews to answer. [may be empty] in languages without one.") : nil)
+            ForEach(Array(model.settings.totals.enumerated()), id: \.offset) { _, metric in
+                TotalTile(metric: metric, value: model.total(metric), rise: mark?[metric])
+            }
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
         .background(Palette.strip, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .combine)
+        .accessibilityHint("长按可以换成别的数")
+        .accessibilityIdentifier("totalsStrip")
     }
+}
 
-    private func tile(_ label: String, value: String, delta: String?, unit: String? = nil) -> some View {
+/// One total: its label (with the rise beside it), then the number.
+struct TotalTile: View {
+    var metric: Metric
+    var value: Double?
+    var rise: Double?
+
+    var body: some View {
+        // Money is whole dollars here: the strip is a glance, the 收入 tab has the cents.
+        let text = metric.text(metric.isMoney ? value?.rounded() : value)
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 6) {
-                Text(label)
+                Text(metric.title)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Palette.stripMuted)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 // A wide delta (rare) squeezes the label rather than spilling into the next tile.
-                DeltaChip(text: delta, visible: delta != nil, size: 12)
+                DeltaChip(text: rise.map(metric.delta), visible: rise != nil, size: 12)
                     .lineLimit(1)
                     .fixedSize()
                     .layoutPriority(1)
             }
             .frame(height: 20, alignment: .leading)
-            HStack(alignment: .lastTextBaseline, spacing: 3) {
-                Odometer(text: value, size: 30, color: Palette.stripText)
-                if let unit, !unit.isEmpty {
-                    Text(unit).font(.system(size: 12)).foregroundStyle(Palette.stripMuted)
-                }
-            }
+            Odometer(text: text, size: NumberSize.fit(text, base: 30), color: Palette.stripText)
+                .frame(height: 30, alignment: .bottomLeading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

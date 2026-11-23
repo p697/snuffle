@@ -13,6 +13,7 @@ struct ProjectDetailView: View {
     @State private var loading = false
     @State private var historyError: String?
     @State private var editing = false
+    @State private var editingCard = false
 
     enum Range: CaseIterable, Identifiable {
         case today, week, month
@@ -55,10 +56,13 @@ struct ProjectDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if !model.settings.demoMode {
+                Button("调整卡片", systemImage: "slider.horizontal.3") { editingCard = true }
+                    .accessibilityIdentifier("editCard")
                 Button("编辑") { editing = true }
             }
         }
         .sheet(isPresented: $editing) { ProjectEditor(project: project) }
+        .sheet(isPresented: $editingCard) { CardEditor(project: model.projects.first { $0.id == project.id } ?? project) }
         // Deleted from the editor: leave the page instead of showing an empty one.
         .onChange(of: model.workspace.projects.contains { $0.id == project.id }) { _, exists in
             if !exists { dismiss() }
@@ -106,31 +110,20 @@ struct ProjectDetailView: View {
             .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                if project.metrics.revenue != .none {
-                    tile(String(localized: "收入"), snapshot?.revenue.map(Format.money) ?? "–", note: revenueNote)
+                ForEach(tiles, id: \.self) { metric in
+                    tile(metric.title, metric.text(snapshot?[metric]), note: metric.explanation(in: project))
                 }
-                tile(String(localized: "今天活跃"), snapshot?.active.map(Format.number) ?? "–", note: String(localized: "PostHog 里今天有动作的人"))
-                if let extra = snapshot?.extra {
-                    // A custom label like "次付费墙浏览" reads "付费墙浏览" as a title.
-                    let title = project.metrics.extra == .installs ? String(localized: "安装") : extra.label.replacingOccurrences(of: "次", with: "")
-                    tile(title, Format.number(extra.value), note: String(localized: "今天"))
-                }
-                if project.hasStore {
-                    tile(String(localized: "待回复评论"), snapshot?.reviewsToAnswer.map(Format.number) ?? "–", note: storeNote)
-                }
-                tile(String(localized: "此刻在线"), snapshot?.online.map(Format.number) ?? "–", note: String(localized: "最近一分钟"))
             }
         }
     }
 
-    private var revenueNote: String {
-        if project.metrics.revenue == .revenueCat { return String(localized: "RevenueCat 当日总额（UTC）") }
-        let source = String(localized: "PostHog 付费事件")
-        return snapshot?.sales.map { String(localized: "\($0) 笔", comment: "Number of sales today, after the revenue amount.") + " · " + source } ?? source
-    }
-
-    private var storeNote: String {
-        [project.appStore != nil ? "App Store" : nil, project.googlePlay != nil ? "Google Play" : nil].compactMap { $0 }.joined(separator: " + ")
+    /// Every number this project has, the card's first, then the rest of the library; the hero above is new users.
+    private var tiles: [Metric] {
+        let library = Metric.fixed.filter { $0 != .newUsers && $0.isAvailable(in: project) }
+        let read = library.filter { snapshot?[$0] != nil }
+        let card = project.card.metrics.filter { $0 != .newUsers && $0.isAvailable(in: project) }
+        var seen = Set<Metric>()
+        return (card + read).filter { seen.insert($0).inserted }
     }
 
     private func tile(_ label: String, _ value: String, note: String) -> some View {

@@ -41,13 +41,21 @@ struct LiveSmokeTests {
             name: "live",
             tint: .ink,
             posthog: PostHogLink(accountId: account, projectId: projectId, projectName: "live", timeZone: timeZone),
-            metrics: MetricSettings(newUsers: .event(env["SNUFFLE_LIVE_POSTHOG_SIGNUP"] ?? "user_signed_up"), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), extra: .installs)
+            metrics: MetricSettings(newUsers: .event(env["SNUFFLE_LIVE_POSTHOG_SIGNUP"] ?? "user_signed_up"), revenue: .posthogEvent(event: "purchase", valueProperty: "value"))
         )
         let provider = LiveProvider(tokens: tokens)
-        let result = await provider.refresh(project)
+        let everything = Set(Metric.fixed + [.installs])
+        let result = await provider.refresh(project, metrics: everything, previous: nil)
         let snapshot = result.snapshot
-        print("[live]   new \(snapshot.newUsers ?? -1) (yesterday \(snapshot.newUsersYesterday ?? -1)), online \(snapshot.online ?? -1), active \(snapshot.active ?? -1), revenue \(snapshot.revenue ?? -1) / \(snapshot.sales ?? -1), extra \(snapshot.extra?.value ?? -1), hours \(snapshot.hourlyNewUsers.count), failures \(snapshot.failures.map(\.message))")
+        for metric in Metric.fixed + [.installs] where metric.isAvailable(in: project) {
+            print("[live]   \(metric.id): \(snapshot[metric].map(metric.format) ?? "–")")
+        }
+        print("[live]   yesterday by now \(snapshot.newUsersYesterday ?? -1), hours \(snapshot.hourlyNewUsers.count), failures \(snapshot.failures.map(\.message))")
         #expect(snapshot.failures.isEmpty)
+        #expect(snapshot.hourlyReadAt != nil)
+        #expect(snapshot[.activeMonth] ?? 0 >= snapshot[.activeWeek] ?? 0)
+        let events = try await provider.events(for: project)
+        print("[live]   events (7 days): \(events.prefix(5).map { "\($0.name) \($0.people)" })")
         #expect(snapshot.hourlyNewUsers.reduce(0, +) == snapshot.newUsers)
         let orders = try await provider.orders(for: project)
         print("[live]   orders today: \(orders.count), named: \(orders.filter { $0.product != nil }.count)")

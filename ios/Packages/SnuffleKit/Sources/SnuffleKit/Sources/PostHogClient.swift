@@ -142,7 +142,7 @@ public enum PostHogQueries {
         let today = seconds(clock.todayStart)
         return (0..<min(25, clock.hoursSoFar)).map { hour in
             let from = today + hour * 3600
-            return "\(count("\(column) >= fromUnixTimestamp(\(from)) AND \(column) < fromUnixTimestamp(\(from + 3600))")) AS h\(hour)"
+            return count("\(column) >= fromUnixTimestamp(\(from)) AND \(column) < fromUnixTimestamp(\(from + 3600))")
         }
     }
 
@@ -157,42 +157,45 @@ public enum PostHogQueries {
         "toString(toDate(toTimeZone(\(column), \(literal(clock.timeZone.identifier)))))"
     }
 
-    /// Event-based counts for the card: new users (today and yesterday by now), revenue, orders, the extra count and hourly new users.
-    public static func eventCounts(metrics: MetricSettings, clock: ProjectClock) -> String? {
+    /// What one column of `counts` holds.
+    public enum CountsColumn: Hashable, Sendable {
+        case newToday, newYesterday, revenue, orders, hour
+        case metric(Metric)
+    }
+
+    /// Event-based counts in one scan from the start of yesterday: new users (today and yesterday by now) and their
+    /// hours when an event counts them, revenue and orders when an event carries revenue, and each event metric in
+    /// `events`. The columns say what each position holds.
+    public static func counts(settings: MetricSettings, events: [Metric], clock: ProjectClock) -> (sql: String, columns: [CountsColumn])? {
         let today = seconds(clock.todayStart)
         let yesterday = seconds(clock.yesterdayStart)
         let yesterdayNow = seconds(clock.sameTimeYesterday)
-        var columns: [String] = []
-        var events: [String] = []
+        var columns: [(CountsColumn, String)] = []
+        var names: Set<String> = []
 
-        if case .event(let name) = metrics.newUsers {
-            events.append(name)
-            columns.append("\(people(did: name, "timestamp >= fromUnixTimestamp(\(today))")) AS new_today")
-            columns.append("\(people(did: name, "timestamp >= fromUnixTimestamp(\(yesterday)) AND timestamp < fromUnixTimestamp(\(yesterdayNow))")) AS new_yesterday")
+        if case .event(let name) = settings.newUsers {
+            names.insert(name)
+            columns.append((.newToday, people(did: name, "timestamp >= fromUnixTimestamp(\(today))")))
+            columns.append((.newYesterday, people(did: name, "timestamp >= fromUnixTimestamp(\(yesterday)) AND timestamp < fromUnixTimestamp(\(yesterdayNow))")))
         }
-        if case .posthogEvent(let name, let valueProperty) = metrics.revenue {
-            events.append(name)
-            columns.append("sumIf(toFloat(\(property(valueProperty))), event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today))) AS revenue")
-            columns.append("countIf(event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today))) AS sales")
+        if case .posthogEvent(let name, let valueProperty) = settings.revenue {
+            names.insert(name)
+            columns.append((.revenue, "sumIf(toFloat(\(property(valueProperty))), event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today)))"))
+            columns.append((.orders, "countIf(event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today)))"))
         }
-        switch metrics.extra {
-        case .installs:
-            let install = literal(MetricSettings.installEvent)
-            events.append(MetricSettings.installEvent)
-            columns.append("countIf(event = \(install) AND timestamp >= fromUnixTimestamp(\(today))) AS extra")
-        case .event(let name, _):
-            events.append(name)
-            columns.append("countIf(event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today))) AS extra")
-        case .none:
-            break
+        for metric in events {
+            guard case .event(let name, let byPeople) = metric else { continue }
+            names.insert(name)
+            let condition = "timestamp >= fromUnixTimestamp(\(today))"
+            columns.append((.metric(metric), byPeople ? people(did: name, condition) : "countIf(event = \(literal(name)) AND \(condition))"))
         }
-        // Hour columns go last so the fixed columns above keep stable positions.
-        if case .event(let name) = metrics.newUsers {
-            columns += hourColumns(column: "timestamp", clock: clock) { people(did: name, $0) }
+        if case .event(let name) = settings.newUsers {
+            columns += hourColumns(column: "timestamp", clock: clock) { people(did: name, $0) }.map { (.hour, $0) }
         }
         guard !columns.isEmpty else { return nil }
-        let eventList = Array(Set(events)).sorted().map(literal).joined(separator: ", ")
-        return "SELECT \(columns.joined(separator: ", ")) FROM events WHERE timestamp >= fromUnixTimestamp(\(yesterday)) AND event IN (\(eventList))"
+        let eventList = names.sorted().map(literal).joined(separator: ", ")
+        let select = columns.enumerated().map { "\($1.1) AS c\($0)" }.joined(separator: ", ")
+        return ("SELECT \(select) FROM events WHERE timestamp >= fromUnixTimestamp(\(yesterday)) AND event IN (\(eventList))", columns.map(\.0))
     }
 
     /// Which of these events the project sent since `since`, to choose defaults when a project is added.
@@ -230,14 +233,35 @@ public enum PostHogQueries {
         let columns = [
             "countIf(first >= fromUnixTimestamp(\(today))) AS new_today",
             "countIf(first >= fromUnixTimestamp(\(yesterday)) AND first < fromUnixTimestamp(\(yesterdayNow))) AS new_yesterday"
-        ] + hourColumns(column: "first", clock: clock) { "countIf(\($0))" }
+        ] + hourColumns(column: "first", clock: clock) { "countIf(\($0))" }.enumerated().map { "\($1) AS h\($0)" }
         return "SELECT \(columns.joined(separator: ", ")) FROM \(firstEvents(since: clock.yesterdayStart)) WHERE first >= fromUnixTimestamp(\(yesterday))"
     }
 
-    /// People active in the last minute and people active today.
+    /// People active in the last minute, people active today and today's page views, in one scan of today.
     public static func presence(clock: ProjectClock) -> String {
-        "SELECT uniqIf(distinct_id, timestamp >= now() - INTERVAL 1 MINUTE) AS online, uniq(person_id) AS active "
+        "SELECT uniqIf(distinct_id, timestamp >= now() - INTERVAL 1 MINUTE) AS online, uniq(person_id) AS active, countIf(event = '$pageview') AS pageviews "
             + "FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.todayStart)))"
+    }
+
+    /// People active in the last 7 days and, when `month`, the last 30, ending now. One scan of the longest window,
+    /// so it is read hourly (`Metric.isHourly`), not on every refresh.
+    public static func activity(clock: ProjectClock, month: Bool) -> String {
+        let week = seconds(clock.now) - 7 * 86_400
+        guard month else {
+            return "SELECT uniq(person_id) AS week FROM events WHERE timestamp >= fromUnixTimestamp(\(week))"
+        }
+        return "SELECT uniqIf(person_id, timestamp >= fromUnixTimestamp(\(week))) AS week, uniq(person_id) AS month "
+            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.now) - 30 * 86_400))"
+    }
+
+    /// People PostHog has identified (signed in), ever. Profiles of anonymous people are left out: projects that send
+    /// anonymous events often have none, so their count would mean nothing.
+    public static let totalUsers = "SELECT count() AS identified FROM persons WHERE is_identified = 1"
+
+    /// Events of the last 7 days with how many people sent each and how often, most people first.
+    public static func eventStats(since: Date, limit: Int = 200) -> String {
+        "SELECT event, uniq(person_id) AS people, count() AS times FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(since))) "
+            + "GROUP BY event ORDER BY people DESC LIMIT \(limit)"
     }
 
     /// Today's orders, newest first. Product names come from whichever common property the event carries.
@@ -308,37 +332,32 @@ public enum PostHogParsing {
     }
 
     public struct Counts: Equatable, Sendable {
-        public var newToday: Int?
+        public var values: [Metric: Double] = [:]
         public var newYesterday: Int?
-        public var hourly: [Int]
-        public var revenue: Double?
-        public var sales: Int?
-        public var extra: Int?
+        public var hourly: [Int] = []
     }
 
-    /// Reads the `eventCounts` row; column positions follow the query builder's order, hour columns last.
-    public static func counts(_ row: [JSONValue], metrics: MetricSettings) -> Counts {
-        var index = 0
-        func next() -> JSONValue? {
-            defer { index += 1 }
-            return index < row.count ? row[index] : nil
-        }
-        var counts = Counts(newToday: nil, newYesterday: nil, hourly: [], revenue: nil, sales: nil, extra: nil)
-        if case .event = metrics.newUsers {
-            counts.newToday = next()?.int
-            counts.newYesterday = next()?.int
-        }
-        if case .posthogEvent = metrics.revenue {
-            counts.revenue = next()?.double ?? 0
-            counts.sales = next()?.int ?? 0
-        }
-        if metrics.extra != .none {
-            counts.extra = next()?.int
-        }
-        if case .event = metrics.newUsers {
-            counts.hourly = row.dropFirst(index).map { $0.int ?? 0 }
+    /// Reads a `counts` row by its columns: new users, revenue and orders land under their metrics.
+    public static func counts(_ row: [JSONValue], columns: [PostHogQueries.CountsColumn]) -> Counts {
+        var counts = Counts()
+        for (column, value) in zip(columns, row) {
+            switch column {
+            case .newToday: counts.values[.newUsers] = value.double
+            case .newYesterday: counts.newYesterday = value.int
+            case .revenue: counts.values[.revenue] = value.double ?? 0
+            case .orders: counts.values[.orders] = value.double ?? 0
+            case .hour: counts.hourly.append(value.int ?? 0)
+            case .metric(let metric): counts.values[metric] = value.double ?? 0
+            }
         }
         return counts
+    }
+
+    public static func eventStats(_ rows: [[JSONValue]]) -> [EventStat] {
+        rows.compactMap { row in
+            guard row.count >= 3, let name = row[0].string, !EventStat.hidden.contains(name) else { return nil }
+            return EventStat(name: name, people: row[1].int ?? 0, times: row[2].int ?? 0)
+        }
     }
 
     /// The `firstSeen` row: new today, new yesterday by now, then one column per hour.

@@ -14,7 +14,6 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         public var growth: Double
         public var salesPerMinute: Double
         public var activePerDay: Double
-        public var extraPerDay: Double
         public var onlineAround: Int
         /// Typical order size, so the history's daily revenue matches the project's scale.
         public var averageOrder: Double
@@ -28,7 +27,8 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         public var hourly: [Int]
         public var revenue: Double
         public var sales: Int
-        public var extra: Int
+        /// Times each of the project's demo events (`DemoWorld.events`) was sent today.
+        public var events: [String: Int]
         public var active: Int
         public var online: Int
         public var orders: [Order]
@@ -53,27 +53,37 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             posthog: PostHogLink(accountId: demoAccount, projectId: 1, projectName: "Lumen Notes", timeZone: TimeZone.current.identifier),
             appStore: AppStoreLink(accountId: demoAccount, appId: "1", appName: "Lumen Notes", bundleId: "com.example.lumen"),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.lumen"),
-            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), extra: .installs)
+            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .posthogEvent(event: "purchase", valueProperty: "value")),
+            card: CardLayout(big: [.newUsers], small: [.revenue, .installs, .reviewsToAnswer])
         ),
         Project(
             id: ferryId, name: "Pocket Ferry", tint: .coral,
             posthog: PostHogLink(accountId: demoAccount, projectId: 2, projectName: "Pocket Ferry", timeZone: TimeZone.current.identifier),
             revenueCat: RevenueCatLink(accountId: demoAccount, projectId: "demo", projectName: "Pocket Ferry"),
             appStore: AppStoreLink(accountId: demoAccount, appId: "2", appName: "Pocket Ferry", bundleId: "com.example.ferry"),
-            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .revenueCat, extra: .none)
+            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .revenueCat),
+            card: CardLayout(big: [.mrr, .newUsers], small: [.activeSubscriptions, .activeTrials, .reviewsToAnswer])
         ),
         Project(
             id: atlasId, name: "Quiet Atlas", tint: .cocoa,
             posthog: PostHogLink(accountId: demoAccount, projectId: 3, projectName: "Quiet Atlas", timeZone: TimeZone.current.identifier),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.atlas"),
-            metrics: MetricSettings(newUsers: .firstSeen, revenue: .none, extra: .event(name: "paywall_viewed", label: String(localized: "次付费墙浏览", bundle: .module)))
+            metrics: MetricSettings(newUsers: .firstSeen, revenue: .none),
+            card: CardLayout(big: [.newUsers], small: [.activeToday, .event("paywall_viewed", people: false), .reviewsToAnswer])
         )
     ]
 
+    /// Each demo project's events with how often they are sent a day and the share of senders among them.
+    static let events: [UUID: [(name: String, perDay: Double, peopleShare: Double)]] = [
+        lumenId: [("$pageview", 61_000, 0.31), ("note_created", 18_400, 0.42), ("Application Opened", 9_800, 0.71), (MetricSettings.signupEvent, 4_900, 1), (MetricSettings.installEvent, 820, 1), ("purchase", 20, 1)],
+        ferryId: [("$screen", 380, 0.2), ("ticket_viewed", 140, 0.5), (MetricSettings.signupEvent, 22, 1), ("Application Opened", 90, 0.6)],
+        atlasId: [("$pageview", 1_900, 0.24), ("map_opened", 520, 0.4), ("paywall_viewed", 38, 0.8), ("route_saved", 31, 0.7)]
+    ]
+
     static let paces: [UUID: Pace] = [
-        lumenId: Pace(yesterdayTotal: 4120, growth: 1.18, salesPerMinute: 0.014, activePerDay: 33_500, extraPerDay: 820, onlineAround: 58, averageOrder: 62),
-        ferryId: Pace(yesterdayTotal: 9, growth: 2.4, salesPerMinute: 0.0012, activePerDay: 46, extraPerDay: 0, onlineAround: 1, averageOrder: 2.99),
-        atlasId: Pace(yesterdayTotal: 70, growth: 0.92, salesPerMinute: 0, activePerDay: 210, extraPerDay: 38, onlineAround: 3, averageOrder: 0)
+        lumenId: Pace(yesterdayTotal: 4120, growth: 1.18, salesPerMinute: 0.014, activePerDay: 33_500, onlineAround: 58, averageOrder: 62),
+        ferryId: Pace(yesterdayTotal: 9, growth: 2.4, salesPerMinute: 0.0012, activePerDay: 46, onlineAround: 1, averageOrder: 2.99),
+        atlasId: Pace(yesterdayTotal: 70, growth: 0.92, salesPerMinute: 0, activePerDay: 210, onlineAround: 3, averageOrder: 0)
     ]
 
     /// A fresh demo day at `now`, with numbers proportional to how much of the day has passed. `lateInDay` (App Store
@@ -99,7 +109,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
                 hourly: spread(today, hours: hours, random: &random),
                 revenue: project.id == ferryId ? 3.28 : orders.reduce(0) { $0 + $1.amount },
                 sales: project.id == ferryId ? 1 : sales,
-                extra: Int(pace.extraPerDay * fraction),
+                events: Dictionary(uniqueKeysWithValues: (events[project.id] ?? []).map { ($0.name, Int($0.perDay * fraction)) }),
                 active: Int(pace.activePerDay * min(1, fraction * 1.6)),
                 online: pace.onlineAround,
                 orders: orders
@@ -129,7 +139,9 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             if book.hourly.count < hours { book.hourly += Array(repeating: 0, count: hours - book.hourly.count) }
             book.hourly[book.hourly.count - 1] += added
             if scenario != .quiet {
-                book.extra += DemoWorld.poisson(book.pace.extraPerDay / 1440 * minutes, random: &random)
+                for event in DemoWorld.events[book.projectId] ?? [] {
+                    book.events[event.name, default: 0] += DemoWorld.poisson(event.perDay / 1440 * minutes, random: &random)
+                }
                 book.active += DemoWorld.poisson(book.pace.activePerDay / 1440 * minutes * 0.6, random: &random)
             }
             book.online = max(0, book.pace.onlineAround + Int.random(in: -6...6, using: &random) * (book.pace.onlineAround > 10 ? 1 : 0))
@@ -148,42 +160,76 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         }
     }
 
-    public func snapshot(for projectId: UUID) -> ProjectSnapshot? {
-        guard let book = books.first(where: { $0.projectId == projectId }),
-              let project = DemoWorld.projects.first(where: { $0.id == projectId }) else { return nil }
+    /// Today's numbers for a demo project, counted the way `project` says (it may be a copy with other counting).
+    public func snapshot(for project: Project) -> ProjectSnapshot? {
+        guard let book = books.first(where: { $0.projectId == project.id }) else { return nil }
+        let pace = book.pace
+        let fraction = max(0.08, simulatedNow.timeIntervalSince(dayStart) / 86_400)
+        var values: [Metric: Double] = [
+            .newUsers: Double(book.newUsers),
+            .activeToday: Double(book.active),
+            .online: Double(book.online),
+            // Long windows grow slowly through the day; enough to look alive without moving on every refresh.
+            .activeWeek: (pace.activePerDay * 3.4 + Double(book.active) * 0.4).rounded(),
+            .activeMonth: (pace.activePerDay * 8.1 + Double(book.active) * 0.6).rounded(),
+            .totalUsers: (pace.yesterdayTotal * 260 + Double(book.newUsers)).rounded()
+        ]
+        // Counted another way than the demo project does (the counting page previews each choice).
+        if project.metrics.newUsers != DemoWorld.projects.first(where: { $0.id == project.id })?.metrics.newUsers {
+            switch project.metrics.newUsers {
+            case .firstSeen: values[.newUsers] = (Double(book.newUsers) * 2.4).rounded()
+            case .event(let name):
+                let share = DemoWorld.events[project.id]?.first { $0.name == name }?.peopleShare ?? 1
+                values[.newUsers] = name == MetricSettings.signupEvent ? (Double(book.newUsers) * 0.45).rounded() : (Double(book.events[name] ?? 0) * share).rounded()
+            }
+        }
+        for event in DemoWorld.events[project.id] ?? [] {
+            let times = Double(book.events[event.name] ?? Int(event.perDay * fraction))
+            values[.event(event.name, people: false)] = times
+            values[.event(event.name, people: true)] = (times * event.peopleShare).rounded()
+            if event.name == "$pageview" || event.name == "$screen" { values[.pageviews] = times }
+        }
         var snapshot = ProjectSnapshot(
-            projectId: projectId,
+            projectId: project.id,
             fetchedAt: simulatedNow,
             dayStart: dayStart,
-            newUsers: book.newUsers,
+            values: values,
             newUsersYesterday: book.newUsersYesterday,
             hourlyNewUsers: book.hourly,
-            online: book.online,
-            active: book.active
+            hourlyReadAt: simulatedNow
         )
         switch project.metrics.revenue {
         case .posthogEvent:
-            snapshot.revenue = book.revenue
-            snapshot.sales = book.sales
+            snapshot[.revenue] = book.revenue
+            snapshot[.orders] = Double(book.sales)
             snapshot.revenueSource = .posthog
         case .revenueCat:
-            snapshot.revenue = book.revenue
+            snapshot[.revenue] = book.revenue
             snapshot.revenueSource = .revenueCat
         case .none:
             break
         }
-        switch project.metrics.extra {
-        case .installs: snapshot.extra = ExtraCount(value: book.extra, label: ExtraCount.installsLabel)
-        case .event(_, let label): snapshot.extra = ExtraCount(value: book.extra, label: label)
-        case .none: break
+        if project.revenueCat != nil {
+            snapshot[.mrr] = 87
+            snapshot[.activeSubscriptions] = 47
+            snapshot[.activeTrials] = 3
+            snapshot[.revenueLast28Days] = 96.4
         }
         if project.hasStore {
-            snapshot.reviewsToAnswer = reviews.filter { $0.projectId == projectId && $0.needsReply }.count
+            snapshot[.reviewsToAnswer] = Double(reviews.filter { $0.projectId == project.id && $0.needsReply }.count)
         }
-        if scenario == .failure, projectId == DemoWorld.ferryId {
+        if scenario == .failure, project.id == DemoWorld.ferryId {
             snapshot.failures = [SourceFailure(platform: .revenueCat, message: SourceError.http(.revenueCat, 503, String(localized: "服务暂时不可用", bundle: .module)).localizedDescription, kind: .serverError)]
         }
         return snapshot
+    }
+
+    /// The demo project's events, as the event picker lists them.
+    public func eventStats(for projectId: UUID) -> [EventStat] {
+        (DemoWorld.events[projectId] ?? []).map { event in
+            let times = Int(event.perDay * 7 * 0.93)
+            return EventStat(name: event.name, people: Int(Double(times) * event.peopleShare), times: times)
+        }.sorted { $0.people > $1.people }
     }
 
     public mutating func markReplied(_ reviewId: String, text: String, at date: Date) {

@@ -14,13 +14,6 @@ enum CardStage: Equatable {
     case landed
 }
 
-extension ProjectSnapshot {
-    /// The card's big number: new users when PostHog is connected, otherwise reviews waiting for a reply.
-    func headline(for project: Project) -> Int? {
-        project.posthog != nil ? newUsers : reviewsToAnswer
-    }
-}
-
 /// The cat behind the refresh button.
 struct CatState: Equatable {
     enum Reaction: Equatable { case glee, cheer, blink, flat }
@@ -144,16 +137,18 @@ final class AppModel {
         return cache.reviews.filter { ids.contains($0.key) }.flatMap(\.value).sorted { $0.createdAt > $1.createdAt }
     }
 
-    var totals: (newUsers: Int, revenue: Double, reviewsToAnswer: Int, hasUsers: Bool, hasRevenue: Bool, hasReviews: Bool) {
-        let snapshots = projects.compactMap { cache.snapshots[$0.id] }
-        return (
-            snapshots.compactMap(\.newUsers).reduce(0, +),
-            snapshots.compactMap(\.revenue).reduce(0, +),
-            snapshots.compactMap(\.reviewsToAnswer).reduce(0, +),
-            snapshots.contains { $0.newUsers != nil },
-            snapshots.contains { $0.revenue != nil },
-            snapshots.contains { $0.reviewsToAnswer != nil }
-        )
+    /// `metric` added up across projects; nil when no project has it.
+    func total(_ metric: Metric) -> Double? {
+        let values = projects.compactMap { project in metric.isAvailable(in: project) ? cache.snapshots[project.id]?[metric] : nil }
+        return values.isEmpty ? nil : values.reduce(0, +)
+    }
+
+    /// What a project's card shows, leaving out numbers from sources it does not have.
+    func layout(_ project: Project) -> CardLayout { project.card.visible(in: project) }
+
+    /// The numbers a refresh reads for `project`: its card, the totals strip and the placed widgets.
+    func metricsInUse(_ project: Project) -> Set<Metric> {
+        MetricsInUse.forProject(project, totals: settings.totals, widgets: SharedContainer.widgetMetrics())
     }
 
     var lastRefresh: Date? { cache.lastRefresh }
@@ -197,7 +192,11 @@ final class AppModel {
         if let demo { await demo.advance() }
         // Every project is fetched at once; only the reveal is sequential.
         let provider = self.provider
-        let fetches = projects.map { project in (project, Task { await provider.refresh(project) }) }
+        let fetches = projects.map { project in
+            let metrics = metricsInUse(project)
+            let previous = cache.snapshots[project.id]
+            return (project, Task { await provider.refresh(project, metrics: metrics, previous: previous) })
+        }
         try? await Task.sleep(for: .milliseconds(380))
 
         var total = SnapshotChange.none
@@ -213,21 +212,21 @@ final class AppModel {
             adoptTimeZone(result.posthogTimeZone, for: project.id)
             let previous = cache.snapshots[project.id]
             let snapshot = result.snapshot.fillingGaps(from: previous)
-            let change = SnapshotChange(from: previous, to: snapshot)
+            let layout = self.layout(project)
+            // A sale is always celebrated and shown on the 收入 tab, wherever revenue is placed (or not).
+            let change = SnapshotChange(from: previous, to: snapshot, metrics: layout.metrics + settings.totals + [.revenue, .orders])
             cache.snapshots[project.id] = snapshot
             if let reviews = result.reviews { cache.reviews[project.id] = reviews }
             stages[project.id] = .landed
 
-            let digits = Format.number(snapshot.headline(for: project) ?? 0).filter(\.isNumber).count
+            let headline = layout.big[0]
+            let digits = headline.format(snapshot[headline] ?? 0).filter(\.isNumber).count
             playTicks(columns: digits)
             try? await Task.sleep(for: Self.landDuration(columns: digits) + .milliseconds(60))
 
             if change.isNews {
                 marks[project.id] = change
-                total.newUsers += change.newUsers
-                total.revenue += change.revenue
-                total.sales += change.sales
-                total.reviews += change.reviews
+                total.add(change)
                 totalsMark = total
                 // New reviews get a mark but no celebration: they are not always good news.
                 if change.isUp { react(.glee) }
@@ -327,7 +326,7 @@ final class AppModel {
         if var list = cache.reviews[project.id], let index = list.firstIndex(where: { $0.id == review.id }) {
             list[index].reply = ReviewReply(text: text, date: Date(), pending: review.platform == .appStore)
             cache.reviews[project.id] = list
-            cache.snapshots[project.id]?.reviewsToAnswer = list.filter(\.needsReply).count
+            cache.snapshots[project.id]?[.reviewsToAnswer] = Double(list.filter(\.needsReply).count)
             saveCache()
         }
     }
@@ -364,6 +363,51 @@ final class AppModel {
         Analytics.projectSaved(project, isNew: index == nil, projectCount: workspace.projects.count)
         SharedContainer.removeProjectIcons(project.id, keeping: project.iconVersion)
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// Saves a card layout for `project`, or for every project when `everywhere` (each project's own events stay
+    /// on its own card), then reads any number that is now shown but was never read, and `project` again when its
+    /// sources or counting changed (`countingChanged`).
+    func saveCard(_ layout: CardLayout, for project: Project, everywhere: Bool, countingChanged: Bool = false, measured: [Metric: Double] = [:]) {
+        var changed: [Project] = []
+        for index in workspace.projects.indices {
+            var target = workspace.projects[index]
+            if target.id == project.id {
+                target = project
+                target.card = layout
+            } else if everywhere {
+                let own = target.card.metrics.filter { !$0.isShared }
+                target.card = CardLayout(big: layout.big.filter(\.isShared), small: layout.small.filter(\.isShared) + own)
+            } else {
+                continue
+            }
+            workspace.projects[index] = target
+            changed.append(target)
+        }
+        SharedContainer.workspace.save(workspace)
+        // What the library just read is today's number too: keep it rather than reading it again.
+        if !countingChanged, !measured.isEmpty, var snapshot = cache.snapshots[project.id] {
+            snapshot.values.merge(measured) { $1 }
+            cache.snapshots[project.id] = snapshot
+            saveCache()
+        }
+        Analytics.cardLayoutSaved(layout, everywhere: everywhere)
+        WidgetCenter.shared.reloadAllTimelines()
+        let unread = changed.filter { target in
+            if countingChanged && target.id == project.id { return true }
+            let snapshot = cache.snapshots[target.id]
+            return self.layout(target).metrics.contains { snapshot?[$0] == nil }
+        }
+        if !unread.isEmpty { Task { await refresh(unread, trigger: .project) } }
+    }
+
+    func saveTotals(_ metrics: [Metric]) {
+        update { $0.totals = metrics }
+        Analytics.totalsLayoutSaved(metrics)
+        let unread = refreshable.filter { project in
+            metrics.contains { $0.isAvailable(in: project) && cache.snapshots[project.id]?[$0] == nil }
+        }
+        if !unread.isEmpty { Task { await refresh(unread, trigger: .project) } }
     }
 
     func delete(project: Project) {
@@ -404,10 +448,7 @@ final class AppModel {
         for index in workspace.projects.indices {
             var project = workspace.projects[index]
             if project.posthog?.accountId == account.id { project.posthog = nil }
-            if project.revenueCat?.accountId == account.id {
-                project.revenueCat = nil
-                if project.metrics.revenue == .revenueCat { project.metrics.revenue = .none }
-            }
+            if project.revenueCat?.accountId == account.id { project.unlink(.revenueCat) }
             if project.appStore?.accountId == account.id { project.appStore = nil }
             if project.googlePlay?.accountId == account.id { project.googlePlay = nil }
             workspace.projects[index] = project
@@ -452,9 +493,10 @@ final class AppModel {
         Task { await seedDemoIfEmpty(provider) }
     }
 
-    /// Fills an empty demo cache with today's sample numbers so the first screen is never a row of dashes.
+    /// Fills an empty demo cache (or one saved before metrics had ids) with today's sample numbers, so the first
+    /// screen is never a row of dashes.
     private func seedDemoIfEmpty(_ provider: DemoProvider) async {
-        guard settings.demoMode, cache.snapshots.isEmpty else { return }
+        guard settings.demoMode, cache.snapshots.isEmpty || cache.snapshots.values.contains(where: \.values.isEmpty) else { return }
         for result in await provider.seed() {
             cache.snapshots[result.snapshot.projectId] = result.snapshot
             if let reviews = result.reviews { cache.reviews[result.snapshot.projectId] = reviews }

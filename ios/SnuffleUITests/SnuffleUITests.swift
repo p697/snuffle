@@ -260,6 +260,45 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "editor-metrics")
     }
 
+    /// A card and the totals strip take other numbers from the library, outside demo mode (its projects are fixed).
+    func testCardAndTotalsEditors() {
+        let app = makeApp(["-resetState", "-sampleWorkspace"])
+        app.launch()
+        let card = app.buttons["card-Quiet Atlas"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.press(forDuration: 1.2)
+        app.buttons["调整卡片"].tap()
+        XCTAssertTrue(app.buttons["saveCard"].waitForExistence(timeout: 5))
+        // Two big numbers: the first pill moves up, which frees a pill slot.
+        app.buttons["两个大数"].tap()
+        app.buttons["加一个小数"].tap()
+        XCTAssertTrue(app.staticTexts["加一个小数"].waitForExistence(timeout: 5))
+        attach(app, name: "metric-library")
+        let weekly = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '周活跃'")).firstMatch
+        XCTAssertTrue(weekly.waitForExistence(timeout: 5))
+        weekly.tap()
+        attach(app, name: "card-editor")
+        app.buttons["saveCard"].tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        XCTAssertTrue(card.label.contains("今日活跃") && card.label.contains("周活跃"), card.label)
+
+        let strip = app.descendants(matching: .any)["totalsStrip"]
+        strip.press(forDuration: 1.2)
+        app.buttons["调整合计"].tap()
+        // The middle tile, revenue by default.
+        let revenue = app.buttons["totalTile-1"]
+        XCTAssertTrue(revenue.waitForExistence(timeout: 5))
+        revenue.tap()
+        let active = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '今日活跃'")).firstMatch
+        XCTAssertTrue(active.waitForExistence(timeout: 5))
+        active.tap()
+        attach(app, name: "totals-editor")
+        app.buttons["完成"].tap()
+        XCTAssertTrue(strip.waitForExistence(timeout: 5))
+        XCTAssertTrue(strip.label.contains("今日活跃") && !strip.label.contains("收入"), strip.label)
+        attach(app, name: "home-customized")
+    }
+
     /// Every tab scrolls its last row clear of the tab bar and the refresh button.
     func testEveryTabScrollsClearOfTheTabBar() {
         let app = launch()

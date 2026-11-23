@@ -13,22 +13,24 @@ struct SnuffleWidgetBundle: WidgetBundle {
 
 // MARK: Data (TodayEntry and the widget faces live in WidgetFaces.swift)
 
-struct TodayProvider: TimelineProvider {
+struct TodayProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> TodayEntry { .placeholder }
 
-    func getSnapshot(in context: Context, completion: @escaping (TodayEntry) -> Void) {
-        completion(context.isPreview ? .placeholder : .load())
+    func snapshot(for configuration: TodayWidgetIntent, in context: Context) async -> TodayEntry {
+        context.isPreview ? .placeholder : entry(configuration, now: .now)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<TodayEntry>) -> Void) {
+    func timeline(for configuration: TodayWidgetIntent, in context: Context) async -> Timeline<TodayEntry> {
+        // The app learns which numbers widgets show, so its refreshes read them too.
+        SharedContainer.recordWidgetMetrics([configuration.primary.metric] + [configuration.secondary?.metric].compactMap { $0 })
         // The app reloads widgets after each refresh; between refreshes only the "N 分钟前" label ages.
         let now = Date()
-        let entries = (0..<4).map { step in
-            var entry = TodayEntry.load(now: now.addingTimeInterval(Double(step) * 900))
-            entry.date = now.addingTimeInterval(Double(step) * 900)
-            return entry
-        }
-        completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(3600))))
+        let entries = (0..<4).map { step in entry(configuration, now: now.addingTimeInterval(Double(step) * 900)) }
+        return Timeline(entries: entries, policy: .after(now.addingTimeInterval(3600)))
+    }
+
+    private func entry(_ configuration: TodayWidgetIntent, now: Date) -> TodayEntry {
+        TodayEntry.load(now: now, primary: configuration.primary.metric, secondary: configuration.secondary?.metric, project: configuration.project.isEveryProject ? nil : configuration.project.id)
     }
 }
 
@@ -37,7 +39,7 @@ struct TodayProvider: TimelineProvider {
 /// The widget's refresh button: reads every included project in the background and saves the result.
 struct RefreshAllIntent: AppIntent {
     static let title: LocalizedStringResource = "刷新全部项目"
-    static let description = IntentDescription("拉取每个项目的最新新增用户、收入和评论。")
+    static let description = IntentDescription("拉取每个项目卡片、合计和小组件上的数，以及评论。")
 
     func perform() async throws -> some IntentResult {
         let settings = SharedContainer.settings.load() ?? AppSettings()
@@ -56,8 +58,10 @@ struct RefreshAllIntent: AppIntent {
             provider = LiveProvider(tokens: TokenBroker(store: credentials))
             projects = SharedContainer.workspace.load()?.projects ?? []
         }
+        let widgets = SharedContainer.widgetMetrics()
         for project in projects where project.includeInRefresh {
-            let result = await provider.refresh(project)
+            let metrics = MetricsInUse.forProject(project, totals: settings.totals, widgets: widgets)
+            let result = await provider.refresh(project, metrics: metrics, previous: cache.snapshots[project.id])
             cache.snapshots[project.id] = result.snapshot.fillingGaps(from: cache.snapshots[project.id])
             if let reviews = result.reviews { cache.reviews[project.id] = reviews }
         }
@@ -71,24 +75,24 @@ struct RefreshAllIntent: AppIntent {
 
 struct TodayWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "ai.snuffle.today", provider: TodayProvider()) { entry in
+        AppIntentConfiguration(kind: "ai.snuffle.today", intent: TodayWidgetIntent.self, provider: TodayProvider()) { entry in
             TodayWidgetView(entry: entry)
                 .containerBackground(for: .widget) { WidgetPalette.card }
         }
         .configurationDisplayName("今日")
-        .description("所有项目今天的新增用户和收入，按一下就刷新。")
+        .description("选一个数，看全部项目加起来或单个项目，按一下就刷新。")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
 
 struct LockScreenWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "ai.snuffle.lock", provider: TodayProvider()) { entry in
+        AppIntentConfiguration(kind: "ai.snuffle.lock", intent: TodayWidgetIntent.self, provider: TodayProvider()) { entry in
             LockScreenView(entry: entry)
                 .containerBackground(for: .widget) { Color.clear }
         }
         .configurationDisplayName("今日一行")
-        .description("锁屏上看今天的新增用户和收入。")
+        .description("锁屏上看你选的数。")
         .supportedFamilies([.accessoryRectangular, .accessoryInline])
     }
 }
