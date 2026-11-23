@@ -111,6 +111,9 @@ final class AppModel {
         return !projects.prefix(Self.freeProjectLimit).contains { $0.id == project.id }
     }
 
+    /// A new project fits: always with Pro, otherwise while under the free limit.
+    var canAddProject: Bool { pro.isPro || workspace.projects.count < Self.freeProjectLimit }
+
     var needsOnboarding: Bool { !settings.demoMode && workspace.projects.isEmpty }
 
     /// Debug builds launched with `-storeShots` take App Store screenshots: no "示例" marks, and a demo day that has
