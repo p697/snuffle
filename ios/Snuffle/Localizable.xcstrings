@@ -6295,118 +6295,6 @@
         }
       }
     },
-    "PostHog 里登录过的人 · 每小时更新" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "الأشخاص المعرَّفون (المسجّلون) في PostHog · يُحدَّث كل ساعة"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In PostHog identifizierte (angemeldete) Personen · stündlich aktualisiert"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "People identified (signed in) in PostHog · updates hourly"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personas identificadas (con sesión) en PostHog · se actualiza cada hora"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personas identificadas (con sesión) en PostHog · se actualiza cada hora"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personnes identifiées (connectées) dans PostHog · mis à jour toutes les heures"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHog में पहचाने गए (साइन इन किए) लोग · हर घंटे अपडेट"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Persone identificate (con accesso) in PostHog · aggiornato ogni ora"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHogで識別済み（ログイン済み）のユーザー · 1時間ごとに更新"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHog에서 식별된(로그인한) 사람 · 매시간 업데이트"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pessoas identificadas (que entraram) no PostHog · atualiza a cada hora"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pessoas identificadas (com sessão) no PostHog · atualizado de hora a hora"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Опознанные (вошедшие) в PostHog люди · обновляется раз в час"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ผู้ที่ระบุตัวตนแล้ว (เข้าสู่ระบบ) ใน PostHog · อัปเดตทุกชั่วโมง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHog’da tanımlanan (giriş yapan) kişiler · saatte bir güncellenir"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ідентифіковані (що увійшли) в PostHog люди · оновлюється щогодини"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Người đã đăng nhập (được nhận diện) trong PostHog · cập nhật mỗi giờ"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHog 裡登入過的人 · 每小時更新"
-          }
-        }
-      }
-    },
     "RevenueCat" : {
       "localizations" : {
         "ar" : {
@@ -7639,114 +7527,114 @@
         }
       }
     },
-    "一个 PostHog 项目里常常既有 App，又有网站和官网访客。选哪些来源的人算进活跃、在线和页面浏览。" : {
+    "一个 PostHog 项目里常常既有 App，又有网站和官网访客。选哪些来源的人算进活跃、累计、在线和页面浏览。" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "غالبًا ما يضم مشروع PostHog الواحد تطبيقًا وموقعًا وزوار الموقع التعريفي. اختر المصادر التي يُحسب أشخاصها في النشطين والمتصلين ومشاهدات الصفحات."
+            "value" : "غالبًا ما يضم مشروع PostHog الواحد تطبيقًا وموقعًا وزوار الموقع التعريفي. اختر المصادر التي يُحسب أشخاصها في النشطين والإجمالي والمتصلين ومشاهدات الصفحات."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ein PostHog-Projekt enthält oft eine App, eine Website und Besucher der Marketingseite. Wähle, wessen Aktivität bei Aktiv, Online und Seitenaufrufen zählt."
+            "value" : "Ein PostHog-Projekt enthält oft eine App, eine Website und Besucher der Marketingseite. Wähle, wessen Aktivität bei Aktiv, Gesamt, Online und Seitenaufrufen zählt."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "One PostHog project often holds an app, a website and visitors to the marketing site. Choose whose activity counts toward active, online and page views."
+            "value" : "One PostHog project often holds an app, a website and visitors to the marketing site. Choose whose activity counts toward active, total, online and page views."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un proyecto de PostHog suele incluir una app, un sitio web y visitantes de la web comercial. Elige de qué orígenes cuentan las personas en activos, en línea y páginas vistas."
+            "value" : "Un proyecto de PostHog suele incluir una app, un sitio web y visitantes de la web comercial. Elige de qué orígenes cuentan las personas en activos, total, en línea y páginas vistas."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un proyecto de PostHog suele incluir una app, un sitio web y visitantes del sitio comercial. Elige de qué orígenes cuentan las personas en activos, en línea y vistas de página."
+            "value" : "Un proyecto de PostHog suele incluir una app, un sitio web y visitantes del sitio comercial. Elige de qué orígenes cuentan las personas en activos, total, en línea y vistas de página."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un projet PostHog réunit souvent une app, un site web et les visiteurs du site vitrine. Choisissez quelles sources comptent dans les actifs, en ligne et pages vues."
+            "value" : "Un projet PostHog réunit souvent une app, un site web et les visiteurs du site vitrine. Choisissez quelles sources comptent dans les actifs, le total, en ligne et pages vues."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "एक PostHog प्रोजेक्ट में अक्सर ऐप, वेबसाइट और मार्केटिंग साइट के विज़िटर साथ होते हैं। चुनें कि सक्रिय, ऑनलाइन और पेज व्यू में किन स्रोतों के लोग गिने जाएँ।"
+            "value" : "एक PostHog प्रोजेक्ट में अक्सर ऐप, वेबसाइट और मार्केटिंग साइट के विज़िटर साथ होते हैं। चुनें कि सक्रिय, कुल, ऑनलाइन और पेज व्यू में किन स्रोतों के लोग गिने जाएँ।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Un progetto PostHog spesso contiene un'app, un sito web e i visitatori del sito vetrina. Scegli quali fonti contano per attivi, online e visualizzazioni di pagina."
+            "value" : "Un progetto PostHog spesso contiene un'app, un sito web e i visitatori del sito vetrina. Scegli quali fonti contano per attivi, totale, online e visualizzazioni di pagina."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "1 つの PostHog プロジェクトには、アプリ、Web サイト、公式サイトの訪問者が混在していることがよくあります。アクティブ、オンライン、ページビューに含めるソースを選んでください。"
+            "value" : "1 つの PostHog プロジェクトには、アプリ、Web サイト、公式サイトの訪問者が混在していることがよくあります。アクティブ、累計、オンライン、ページビューに含めるソースを選んでください。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "하나의 PostHog 프로젝트에는 앱, 웹사이트, 홈페이지 방문자가 함께 있는 경우가 많습니다. 활성, 온라인, 페이지 조회에 포함할 출처를 선택하세요."
+            "value" : "하나의 PostHog 프로젝트에는 앱, 웹사이트, 홈페이지 방문자가 함께 있는 경우가 많습니다. 활성, 누적, 온라인, 페이지 조회에 포함할 출처를 선택하세요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Um projeto do PostHog costuma ter um app, um site e visitantes do site institucional. Escolha de quais origens as pessoas contam em ativos, online e visualizações de página."
+            "value" : "Um projeto do PostHog costuma ter um app, um site e visitantes do site institucional. Escolha de quais origens as pessoas contam em ativos, total, online e visualizações de página."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Um projeto do PostHog tem muitas vezes uma app, um site e visitantes do site institucional. Escolha de que origens as pessoas contam em ativos, online e visualizações de página."
+            "value" : "Um projeto do PostHog tem muitas vezes uma app, um site e visitantes do site institucional. Escolha de que origens as pessoas contam em ativos, total, online e visualizações de página."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В одном проекте PostHog часто есть приложение, веб-сайт и посетители промосайта. Выберите, чью активность учитывать в активных, онлайн и просмотрах страниц."
+            "value" : "В одном проекте PostHog часто есть приложение, веб-сайт и посетители промосайта. Выберите, чью активность учитывать в активных, всего, онлайн и просмотрах страниц."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "โปรเจกต์ PostHog เดียวมักมีทั้งแอป เว็บไซต์ และผู้เข้าชมเว็บไซต์หลัก เลือกว่าจะนับผู้คนจากแหล่งใดในผู้ใช้งาน ออนไลน์ และการดูหน้า"
+            "value" : "โปรเจกต์ PostHog เดียวมักมีทั้งแอป เว็บไซต์ และผู้เข้าชมเว็บไซต์หลัก เลือกว่าจะนับผู้คนจากแหล่งใดในผู้ใช้งาน ผู้ใช้ทั้งหมด ออนไลน์ และการดูหน้า"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bir PostHog projesinde çoğu zaman uygulama, web sitesi ve tanıtım sitesi ziyaretçileri birlikte bulunur. Aktif, çevrimiçi ve sayfa görüntülemeye hangi kaynakların sayılacağını seçin."
+            "value" : "Bir PostHog projesinde çoğu zaman uygulama, web sitesi ve tanıtım sitesi ziyaretçileri birlikte bulunur. Aktif, toplam, çevrimiçi ve sayfa görüntülemeye hangi kaynakların sayılacağını seçin."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В одному проєкті PostHog часто є застосунок, вебсайт і відвідувачі промосайту. Виберіть, чию активність враховувати в активних, онлайн і переглядах сторінок."
+            "value" : "В одному проєкті PostHog часто є застосунок, вебсайт і відвідувачі промосайту. Виберіть, чию активність враховувати в активних, всього, онлайн і переглядах сторінок."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Một dự án PostHog thường có cả ứng dụng, trang web và khách truy cập trang giới thiệu. Chọn nguồn nào được tính vào hoạt động, trực tuyến và lượt xem trang."
+            "value" : "Một dự án PostHog thường có cả ứng dụng, trang web và khách truy cập trang giới thiệu. Chọn nguồn nào được tính vào hoạt động, tổng, trực tuyến và lượt xem trang."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "一個 PostHog 專案裡常常同時有 App、網站和官網訪客。選擇哪些來源的人算進活躍、線上和頁面瀏覽。"
+            "value" : "一個 PostHog 專案裡常常同時有 App、網站和官網訪客。選擇哪些來源的人算進活躍、累計、線上和頁面瀏覽。"
           }
         }
       }
@@ -8867,118 +8755,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不參與一鍵重新整理"
-          }
-        }
-      }
-    },
-    "不含%@" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "بدون %@"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ohne %@"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Without %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin %@"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sin %@"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sans %@"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ के बिना"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Senza %@"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@を除く"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ 제외"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sem %@"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Sem %@"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Без: %@"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ไม่รวม %@"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ hariç"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Без: %@"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Không gồm %@"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "不含%@"
           }
         }
       }
@@ -17083,6 +16859,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "再連幾個，數字更完整"
+          }
+        }
+      }
+    },
+    "出现过的所有人，没登录的按设备算 · 每小时更新" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل من ظهر من قبل، ومن لم يسجّل الدخول يُحسب لكل جهاز · يُحدَّث كل ساعة"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle, die je aufgetaucht sind; ohne Anmeldung zählt jedes Gerät · Stündlich aktualisiert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everyone ever seen; people who never signed in count once per device · Updated hourly"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las personas vistas alguna vez; quienes no iniciaron sesión cuentan por dispositivo · Se actualiza cada hora"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas las personas vistas alguna vez; quienes no iniciaron sesión cuentan por dispositivo · Se actualiza cada hora"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toutes les personnes déjà vues ; sans connexion, chaque appareil compte · Mis à jour toutes les heures"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अब तक दिखे सभी लोग; बिना साइन इन वाले डिवाइस के हिसाब से गिने जाते हैं · हर घंटे अपडेट"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tutte le persone mai viste; chi non ha effettuato l'accesso conta per dispositivo · Aggiornato ogni ora"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "これまでに現れたすべての人。未ログインの人はデバイスごとに数えます · 1 時間ごとに更新"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금까지 나타난 모든 사람, 로그인하지 않은 사람은 기기별로 셈 · 매시간 업데이트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as pessoas já vistas; quem nunca entrou conta por dispositivo · Atualizado a cada hora"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Todas as pessoas já vistas; quem nunca iniciou sessão conta por dispositivo · Atualizado a cada hora"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все, кто когда-либо появлялся; без входа — по устройствам · Обновляется каждый час"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ทุกคนที่เคยปรากฏ คนที่ไม่ได้ลงชื่อเข้าใช้นับตามอุปกรณ์ · อัปเดตทุกชั่วโมง"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Şimdiye kadar görülen herkes; oturum açmayanlar cihaz başına sayılır · Saatlik güncellenir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Усі, хто коли-небудь з'являвся; без входу — за пристроями · Оновлюється щогодини"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tất cả những người từng xuất hiện; ai chưa đăng nhập được tính theo thiết bị · Cập nhật mỗi giờ"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "出現過的所有人，沒登入的按裝置算 · 每小時更新"
           }
         }
       }
@@ -25632,118 +25520,6 @@
         }
       }
     },
-    "所有来源都算" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تُحسب كل المصادر"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alle Quellen zählen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Every source counts"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cuentan todos los orígenes"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cuentan todos los orígenes"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toutes les sources comptent"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सभी स्रोत गिने जाते हैं"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Contano tutte le fonti"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "すべてのソースを含む"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모든 출처 포함"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas as origens contam"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas as origens contam"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Учитываются все источники"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "นับทุกแหล่ง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tüm kaynaklar sayılır"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Враховуються всі джерела"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tính mọi nguồn"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "所有來源都算"
-          }
-        }
-      }
-    },
     "所有项目用同一套数；哪个项目没连对应的数据源，就跳过那个数。按事件算的数只留在这个项目。" : {
       "localizations" : {
         "ar" : {
@@ -28764,6 +28540,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "改用帳號登入"
+          }
+        }
+      }
+    },
+    "改范围" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غيّر النطاق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereich ändern"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change scope"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar alcance"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambiar alcance"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modifier la portée"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दायरा बदलें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cambia ambito"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "範囲を変更"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "범위 변경"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mudar escopo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alterar âmbito"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить охват"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เปลี่ยนขอบเขต"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kapsamı değiştir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Змінити охоплення"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi phạm vi"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "改範圍"
           }
         }
       }
@@ -35842,114 +35730,338 @@
         }
       }
     },
-    "活跃、在线、页面浏览和「开始使用」的新增用户按这里选的来源算，一个人在几处出现只算一次。注册事件、收入和自定义事件按事件本身算，不分来源。" : {
+    "活跃、累计、在线、页面浏览和「开始使用」的新增用户按这里选的来源算，一个人在几处出现只算一次。注册事件、收入和自定义事件按事件本身算，不分来源。" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "يتبع النشطون والمتصلون ومشاهدات الصفحات والمستخدمون الجدد حسب «بدأوا الاستخدام» المصادرَ المختارة هنا، ومن يظهر في عدة أماكن يُحسب مرة واحدة. أما أحداث التسجيل والإيرادات والأحداث المخصصة فتُحسب بالأحداث نفسها من أي مصدر."
+            "value" : "يتبع النشطون والإجمالي والمتصلون ومشاهدات الصفحات والمستخدمون الجدد حسب «بدأوا الاستخدام» المصادرَ المختارة هنا، ومن يظهر في عدة أماكن يُحسب مرة واحدة. أما أحداث التسجيل والإيرادات والأحداث المخصصة فتُحسب بالأحداث نفسها من أي مصدر."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktiv, Online, Seitenaufrufe und neue Nutzer nach „Neu dabei“ zählen die hier gewählten Quellen; wer an mehreren Stellen auftaucht, zählt einmal. Registrierungs-Events, Umsatz und eigene Events zählen die Events selbst, aus jeder Quelle."
+            "value" : "Aktiv, Gesamt, Online, Seitenaufrufe und neue Nutzer nach „Neu dabei“ zählen die hier gewählten Quellen; wer an mehreren Stellen auftaucht, zählt einmal. Registrierungs-Events, Umsatz und eigene Events zählen die Events selbst, aus jeder Quelle."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Active, online, page views and new users counted by \"Started using\" follow the sources chosen here; someone seen in several places counts once. Sign-up events, revenue and custom events count the events themselves, from any source."
+            "value" : "Active, total, online, page views and new users counted by \"Started using\" follow the sources chosen here; someone seen in several places counts once. Sign-up events, revenue and custom events count the events themselves, from any source."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activos, en línea, páginas vistas y nuevos usuarios por «Empezaron a usar» siguen los orígenes elegidos aquí; quien aparece en varios sitios cuenta una vez. Los eventos de registro, los ingresos y los eventos personalizados cuentan los propios eventos, de cualquier origen."
+            "value" : "Activos, total, en línea, páginas vistas y nuevos usuarios por «Empezaron a usar» siguen los orígenes elegidos aquí; quien aparece en varios sitios cuenta una vez. Los eventos de registro, los ingresos y los eventos personalizados cuentan los propios eventos, de cualquier origen."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activos, en línea, vistas de página y nuevos usuarios por «Empezaron a usar» siguen los orígenes elegidos aquí; quien aparece en varios lugares cuenta una vez. Los eventos de registro, los ingresos y los eventos personalizados cuentan los propios eventos, de cualquier origen."
+            "value" : "Activos, total, en línea, vistas de página y nuevos usuarios por «Empezaron a usar» siguen los orígenes elegidos aquí; quien aparece en varios lugares cuenta una vez. Los eventos de registro, los ingresos y los eventos personalizados cuentan los propios eventos, de cualquier origen."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Actifs, en ligne, pages vues et nouveaux utilisateurs comptés par « Nouveaux actifs » suivent les sources choisies ici ; une personne vue à plusieurs endroits compte une fois. Les événements d'inscription, les revenus et les événements personnalisés comptent les événements eux-mêmes, quelle que soit la source."
+            "value" : "Actifs, total, en ligne, pages vues et nouveaux utilisateurs comptés par « Nouveaux actifs » suivent les sources choisies ici ; une personne vue à plusieurs endroits compte une fois. Les événements d'inscription, les revenus et les événements personnalisés comptent les événements eux-mêmes, quelle que soit la source."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "सक्रिय, ऑनलाइन, पेज व्यू और \"इस्तेमाल शुरू किया\" से गिने गए नए उपयोगकर्ता यहाँ चुने गए स्रोतों से गिने जाते हैं; कई जगह दिखने वाला व्यक्ति एक बार गिना जाता है। साइन-अप इवेंट, आय और कस्टम इवेंट किसी भी स्रोत से इवेंट के हिसाब से गिने जाते हैं।"
+            "value" : "सक्रिय, कुल, ऑनलाइन, पेज व्यू और \"इस्तेमाल शुरू किया\" से गिने गए नए उपयोगकर्ता यहाँ चुने गए स्रोतों से गिने जाते हैं; कई जगह दिखने वाला व्यक्ति एक बार गिना जाता है। साइन-अप इवेंट, आय और कस्टम इवेंट किसी भी स्रोत से इवेंट के हिसाब से गिने जाते हैं।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Attivi, online, visualizzazioni di pagina e nuovi utenti per «Hanno iniziato» seguono le fonti scelte qui; chi compare in più posti conta una volta. Eventi di registrazione, entrate ed eventi personalizzati contano gli eventi stessi, da qualsiasi fonte."
+            "value" : "Attivi, totale, online, visualizzazioni di pagina e nuovi utenti per «Hanno iniziato» seguono le fonti scelte qui; chi compare in più posti conta una volta. Eventi di registrazione, entrate ed eventi personalizzati contano gli eventi stessi, da qualsiasi fonte."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "アクティブ、オンライン、ページビュー、「利用開始」で数える新規ユーザーは、ここで選んだソースから数えます。複数の場所に現れた人も 1 人と数えます。サインアップイベント、収益、カスタムイベントはソースを問わずイベントそのものを数えます。"
+            "value" : "アクティブ、累計、オンライン、ページビュー、「利用開始」で数える新規ユーザーは、ここで選んだソースから数えます。複数の場所に現れた人も 1 人と数えます。サインアップイベント、収益、カスタムイベントはソースを問わずイベントそのものを数えます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "활성, 온라인, 페이지 조회, '사용 시작' 기준 신규 사용자는 여기서 고른 출처로 셉니다. 여러 곳에 나타난 사람도 한 번만 셉니다. 가입 이벤트, 수익, 사용자 지정 이벤트는 출처와 관계없이 이벤트 자체로 셉니다."
+            "value" : "활성, 누적, 온라인, 페이지 조회, '사용 시작' 기준 신규 사용자는 여기서 고른 출처로 셉니다. 여러 곳에 나타난 사람도 한 번만 셉니다. 가입 이벤트, 수익, 사용자 지정 이벤트는 출처와 관계없이 이벤트 자체로 셉니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ativos, online, visualizações de página e novos usuários por \"Começaram a usar\" seguem as origens escolhidas aqui; quem aparece em vários lugares conta uma vez. Eventos de cadastro, receita e eventos personalizados contam os próprios eventos, de qualquer origem."
+            "value" : "Ativos, total, online, visualizações de página e novos usuários por \"Começaram a usar\" seguem as origens escolhidas aqui; quem aparece em vários lugares conta uma vez. Eventos de cadastro, receita e eventos personalizados contam os próprios eventos, de qualquer origem."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ativos, online, visualizações de página e novos utilizadores por «Começaram a usar» seguem as origens escolhidas aqui; quem aparece em vários sítios conta uma vez. Eventos de registo, receitas e eventos personalizados contam os próprios eventos, de qualquer origem."
+            "value" : "Ativos, total, online, visualizações de página e novos utilizadores por «Começaram a usar» seguem as origens escolhidas aqui; quem aparece em vários sítios conta uma vez. Eventos de registo, receitas e eventos personalizados contam os próprios eventos, de qualquer origem."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Активные, онлайн, просмотры страниц и новые пользователи по «Начали пользоваться» учитывают выбранные здесь источники; человек, замеченный в нескольких местах, считается один раз. События регистрации, доход и свои события считают сами события из любого источника."
+            "value" : "Активные, всего, онлайн, просмотры страниц и новые пользователи по «Начали пользоваться» учитывают выбранные здесь источники; человек, замеченный в нескольких местах, считается один раз. События регистрации, доход и свои события считают сами события из любого источника."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ผู้ใช้งาน ออนไลน์ การดูหน้า และผู้ใช้ใหม่แบบ \"เริ่มใช้งาน\" นับตามแหล่งที่เลือกที่นี่ คนที่ปรากฏหลายที่นับครั้งเดียว ส่วนอีเวนต์การสมัคร รายได้ และอีเวนต์ที่กำหนดเองนับตามอีเวนต์เองจากทุกแหล่ง"
+            "value" : "ผู้ใช้งาน ผู้ใช้ทั้งหมด ออนไลน์ การดูหน้า และผู้ใช้ใหม่แบบ \"เริ่มใช้งาน\" นับตามแหล่งที่เลือกที่นี่ คนที่ปรากฏหลายที่นับครั้งเดียว ส่วนอีเวนต์การสมัคร รายได้ และอีเวนต์ที่กำหนดเองนับตามอีเวนต์เองจากทุกแหล่ง"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aktif, çevrimiçi, sayfa görüntüleme ve \"Kullanmaya başlayan\" ile sayılan yeni kullanıcılar burada seçilen kaynakları izler; birden çok yerde görülen kişi bir kez sayılır. Kayıt olayları, gelir ve özel olaylar kaynağa bakmadan olayların kendisini sayar."
+            "value" : "Aktif, toplam, çevrimiçi, sayfa görüntüleme ve \"Kullanmaya başlayan\" ile sayılan yeni kullanıcılar burada seçilen kaynakları izler; birden çok yerde görülen kişi bir kez sayılır. Kayıt olayları, gelir ve özel olaylar kaynağa bakmadan olayların kendisini sayar."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Активні, онлайн, перегляди сторінок і нові користувачі за «Почали користуватися» враховують вибрані тут джерела; людину, помічену в кількох місцях, рахують один раз. Події реєстрації, дохід і власні події рахують самі події з будь-якого джерела."
+            "value" : "Активні, всього, онлайн, перегляди сторінок і нові користувачі за «Почали користуватися» враховують вибрані тут джерела; людину, помічену в кількох місцях, рахують один раз. Події реєстрації, дохід і власні події рахують самі події з будь-якого джерела."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hoạt động, trực tuyến, lượt xem trang và người dùng mới theo \"Bắt đầu dùng\" được tính theo các nguồn chọn ở đây; một người xuất hiện ở nhiều nơi chỉ tính một lần. Sự kiện đăng ký, doanh thu và sự kiện tùy chỉnh tính theo chính sự kiện, từ mọi nguồn."
+            "value" : "Hoạt động, tổng, trực tuyến, lượt xem trang và người dùng mới theo \"Bắt đầu dùng\" được tính theo các nguồn chọn ở đây; một người xuất hiện ở nhiều nơi chỉ tính một lần. Sự kiện đăng ký, doanh thu và sự kiện tùy chỉnh tính theo chính sự kiện, từ mọi nguồn."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "活躍、線上、頁面瀏覽和「開始使用」的新增使用者按這裡選的來源算，一個人在幾處出現只算一次。註冊事件、收入和自訂事件按事件本身算，不分來源。"
+            "value" : "活躍、累計、線上、頁面瀏覽和「開始使用」的新增使用者按這裡選的來源算，一個人在幾處出現只算一次。註冊事件、收入和自訂事件按事件本身算，不分來源。"
+          }
+        }
+      }
+    },
+    "活跃、累计、在线和页面浏览不含%@。" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النشطون والإجمالي والمتصلون ومشاهدات الصفحات بدون %@."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiv, Gesamt, Online und Seitenaufrufe ohne %@."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active, total, online and page views leave out %@."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activos, total, en línea y páginas vistas sin %@."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activos, total, en línea y vistas de página sin %@."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actifs, total, en ligne et pages vues sans %@."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सक्रिय, कुल, ऑनलाइन और पेज व्यू में %@ शामिल नहीं।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivi, totale, online e visualizzazioni di pagina senza %@."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アクティブ、累計、オンライン、ページビューに%@は含みません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활성, 누적, 온라인, 페이지 조회에서 %@ 제외."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativos, total, online e visualizações de página sem %@."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativos, total, online e visualizações de página sem %@."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активные, всего, онлайн и просмотры страниц без: %@."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ผู้ใช้งาน ผู้ใช้ทั้งหมด ออนไลน์ และการดูหน้า ไม่รวม %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktif, toplam, çevrimiçi ve sayfa görüntülemeye %@ dahil değil."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активні, всього, онлайн і перегляди сторінок без: %@."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoạt động, tổng, trực tuyến và lượt xem trang không gồm %@."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活躍、累計、線上和頁面瀏覽不含%@。"
+          }
+        }
+      }
+    },
+    "活跃、累计、在线和页面浏览算所有来源的人。" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحسب النشطون والإجمالي والمتصلون ومشاهدات الصفحات كل المصادر."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiv, Gesamt, Online und Seitenaufrufe zählen alle Quellen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active, total, online and page views count every source."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activos, total, en línea y páginas vistas cuentan todos los orígenes."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activos, total, en línea y vistas de página cuentan todos los orígenes."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actifs, total, en ligne et pages vues comptent toutes les sources."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सक्रिय, कुल, ऑनलाइन और पेज व्यू सभी स्रोतों को गिनते हैं।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attivi, totale, online e visualizzazioni di pagina contano tutte le fonti."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アクティブ、累計、オンライン、ページビューはすべてのソースを数えます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "활성, 누적, 온라인, 페이지 조회는 모든 출처를 셉니다."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativos, total, online e visualizações de página contam todas as origens."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativos, total, online e visualizações de página contam todas as origens."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активные, всего, онлайн и просмотры страниц учитывают все источники."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ผู้ใช้งาน ผู้ใช้ทั้งหมด ออนไลน์ และการดูหน้า นับทุกแหล่ง"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktif, toplam, çevrimiçi ve sayfa görüntüleme tüm kaynakları sayar."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Активні, всього, онлайн і перегляди сторінок враховують усі джерела."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoạt động, tổng, trực tuyến và lượt xem trang tính mọi nguồn."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "活躍、累計、線上和頁面瀏覽算所有來源的人。"
           }
         }
       }
@@ -46964,118 +47076,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "這個帳號在 Google Play 管理中心裡還沒有 App。"
-          }
-        }
-      }
-    },
-    "这个项目还没有登录过的人，PostHog 数不出累计用户" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لم يسجّل أحد الدخول إلى هذا المشروع بعد، لذا لا يستطيع PostHog حساب إجمالي المستخدمين"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In diesem Projekt hat sich noch niemand angemeldet, daher kann PostHog keine Nutzer gesamt zählen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No one has signed in to this project yet, so PostHog has no total users to count"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nadie ha iniciado sesión en este proyecto todavía, así que PostHog no puede contar el total de usuarios"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nadie ha iniciado sesión en este proyecto todavía, así que PostHog no puede contar el total de usuarios"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personne ne s'est encore connecté à ce projet, PostHog ne peut donc pas compter le total des utilisateurs"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "इस प्रोजेक्ट में अभी तक किसी ने साइन इन नहीं किया, इसलिए PostHog कुल उपयोगकर्ता नहीं गिन सकता"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nessuno ha ancora effettuato l'accesso a questo progetto, quindi PostHog non può contare gli utenti totali"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "このプロジェクトにはまだログインした人がいないため、PostHog は累計ユーザーを数えられません"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 프로젝트에는 아직 로그인한 사람이 없어 PostHog가 누적 사용자를 셀 수 없습니다"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ninguém entrou neste projeto ainda, então o PostHog não consegue contar o total de usuários"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ninguém iniciou sessão neste projeto ainda, por isso o PostHog não consegue contar o total de utilizadores"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В этом проекте ещё никто не входил в аккаунт, поэтому PostHog не может посчитать всего пользователей"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ยังไม่มีใครลงชื่อเข้าใช้ในโปรเจกต์นี้ PostHog จึงนับผู้ใช้ทั้งหมดไม่ได้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bu projede henüz kimse oturum açmadı, bu yüzden PostHog toplam kullanıcıyı sayamıyor"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "У цьому проєкті ще ніхто не входив в обліковий запис, тому PostHog не може порахувати всього користувачів"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chưa ai đăng nhập vào dự án này nên PostHog chưa đếm được tổng người dùng"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "這個專案還沒有登入過的人，PostHog 數不出累計使用者"
           }
         }
       }

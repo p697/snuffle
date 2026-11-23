@@ -25,7 +25,7 @@ extension Metric {
         case .activeToday: String(localized: "今天有过任何动作的人")
         case .activeWeek: String(localized: "最近 7 天有过动作的人 · 每小时更新")
         case .activeMonth: String(localized: "最近 30 天有过动作的人 · 每小时更新")
-        case .totalUsers: String(localized: "PostHog 里登录过的人 · 每小时更新")
+        case .totalUsers: String(localized: "出现过的所有人，没登录的按设备算 · 每小时更新")
         case .online: String(localized: "最近 1 分钟")
         case .pageviews: String(localized: "今天网页浏览和 App 页面切换的次数")
         case .event(let name, let people):

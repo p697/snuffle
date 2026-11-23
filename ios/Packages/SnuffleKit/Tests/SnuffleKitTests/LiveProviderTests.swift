@@ -3,6 +3,21 @@ import Testing
 @testable import SnuffleKit
 
 /// Answers requests from a table keyed by host and path, so a whole refresh runs without the network.
+extension Data {
+    /// A request body that URLSession handed over as a stream.
+    init(reading stream: InputStream) {
+        self.init()
+        stream.open()
+        defer { stream.close() }
+        var buffer = [UInt8](repeating: 0, count: 4096)
+        while stream.hasBytesAvailable {
+            let count = stream.read(&buffer, maxLength: buffer.count)
+            guard count > 0 else { break }
+            append(buffer, count: count)
+        }
+    }
+}
+
 final class StubProtocol: URLProtocol, @unchecked Sendable {
     nonisolated(unsafe) static var routes: [String: (Int, String)] = [:]
     nonisolated(unsafe) static var seen: [URLRequest] = []
@@ -160,6 +175,42 @@ struct LiveProviderTests {
             #expect(queries() == 3, "and the hourly activity")
             #expect(reread.snapshot.fillingGaps(from: previous(other))[.activeMonth] != 1233)
         }
+    }
+
+    @Test func totalUsersReadsHistoryOnceThenAddsTheNewDays() async throws {
+        var scoped = project
+        scoped.metrics.excludedSurfaces = [.visitors]
+        let now = ISO8601.parse("2026-11-20T01:30:00Z")!
+        let today = ProjectClock(now: now, timeZoneIdentifier: "UTC").todayStart
+        let names = { StubProtocol.seen.compactMap { request -> String? in
+            guard let body = request.httpBodyStream.map(Data.init(reading:)) ?? request.httpBody,
+                  let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else { return nil }
+            return json["name"] as? String
+        } }
+
+        // First time: the whole history before today, and the people new today.
+        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[900,7]]}"#)])
+        let first = await provider(store: store).refresh(scoped, metrics: [.totalUsers], previous: nil)
+        #expect(names().contains("snuffle_people_before"))
+        #expect(first.snapshot.userTally == UserTally(people: 900 + 900, before: today), "the stub answers both queries with 900 first")
+
+        // Two days later: no history scan, the settled days move the tally and today adds on top.
+        let earlier = ProjectSnapshot(projectId: scoped.id, fetchedAt: now, dayStart: today, values: [.totalUsers: 1000],
+                                      hourlyReadAt: now.addingTimeInterval(-7200), countedAs: scoped.metrics.inEffect,
+                                      userTally: UserTally(people: 1000, before: today.addingTimeInterval(-2 * 86_400)))
+        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[30,4]]}"#)])
+        let next = await provider(store: store).refresh(scoped, metrics: [.totalUsers], previous: earlier)
+        #expect(!names().contains("snuffle_people_before"))
+        #expect(names().contains("snuffle_new_people"))
+        #expect(next.snapshot.userTally == UserTally(people: 1030, before: today))
+        #expect(next.snapshot[.totalUsers] == 1034)
+
+        // A tally kept under another scope is not used: the history is read again.
+        var other = earlier
+        other.countedAs = scoped.metrics.leaving(out: [])
+        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[30,4]]}"#)])
+        _ = await provider(store: store).refresh(scoped, metrics: [.totalUsers], previous: other)
+        #expect(names().contains("snuffle_people_before"))
     }
 
     @Test func oneFailingSourceDoesNotBlankTheRest() async {

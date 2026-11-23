@@ -274,9 +274,10 @@ final class SnuffleUITests: XCTestCase {
         app.buttons["加一个小数"].tap()
         XCTAssertTrue(app.staticTexts["加一个小数"].waitForExistence(timeout: 5))
         attach(app, name: "metric-library")
-        // Whose activity counts: website visitors start out left out, and can be counted.
+        // Whose activity counts is said under the numbers it changes, with the way to change it.
+        let scopeLine = app.staticTexts["scopeLine"]
+        XCTAssertTrue(scopeLine.label.contains("不含网站访客（未登录）"), scopeLine.label)
         let scope = app.buttons["scope"]
-        XCTAssertTrue(scope.label.contains("不含网站访客（未登录）"), scope.label)
         scope.tap()
         let visitors = app.switches["surface-visitors"]
         XCTAssertTrue(visitors.waitForExistence(timeout: 5))
@@ -286,8 +287,8 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertEqual(visitors.value as? String, "1")
         attach(app, name: "scope")
         app.buttons["返回"].tap()
-        XCTAssertTrue(scope.waitForExistence(timeout: 5))
-        XCTAssertTrue(scope.label.contains("所有来源都算"), scope.label)
+        XCTAssertTrue(scopeLine.waitForExistence(timeout: 5))
+        XCTAssertTrue(scopeLine.label.contains("所有来源"), scopeLine.label)
         let weekly = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '周活跃'")).firstMatch
         XCTAssertTrue(weekly.waitForExistence(timeout: 5))
         weekly.tap()

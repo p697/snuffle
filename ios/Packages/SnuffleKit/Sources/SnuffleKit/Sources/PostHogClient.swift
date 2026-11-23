@@ -277,7 +277,24 @@ public enum PostHogQueries {
 
     /// People PostHog has identified (signed in), ever. Profiles of anonymous people are left out: projects that send
     /// anonymous events often have none, so their count would mean nothing.
-    public static let totalUsers = "SELECT count() AS identified FROM persons WHERE is_identified = 1"
+    /// How long someone must be unseen to count again in total users: bounds each day's addition to a year of events.
+    public static let tallyLookbackDays = 365
+
+    /// Everyone the included surfaces saw before `date`: signed-in people once each, everyone else once per device.
+    /// Scans the whole history, so it runs once per project and scope; `newPeople` moves it forward.
+    public static func peopleBefore(_ date: Date, excluding excluded: Set<Surface>) -> String {
+        "SELECT uniq(person_id) AS people FROM events WHERE timestamp < fromUnixTimestamp(\(seconds(date)))\(and(scope(excluding: excluded)))"
+    }
+
+    /// People first seen since `since` (not in the year before it): those before today, which move the tally to
+    /// today, and those today.
+    public static func newPeople(since: Date, clock: ProjectClock, excluding excluded: Set<Surface>) -> String {
+        let start = seconds(since)
+        let today = seconds(clock.todayStart)
+        return "SELECT countIf(first < fromUnixTimestamp(\(today))) AS settled, countIf(first >= fromUnixTimestamp(\(today))) AS today "
+            + "FROM (SELECT min(timestamp) AS first FROM events WHERE timestamp >= fromUnixTimestamp(\(start - tallyLookbackDays * 86_400))\(and(scope(excluding: excluded))) GROUP BY person_id) "
+            + "WHERE first >= fromUnixTimestamp(\(start))"
+    }
 
     /// Events of the last 7 days with how many people sent each and how often, most people first.
     public static func eventStats(since: Date, limit: Int = 200) -> String {
