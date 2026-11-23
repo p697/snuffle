@@ -4,7 +4,9 @@ import SwiftUI
 /// 今日: the totals strip and one card per project. The refresh button lives in the tab bar.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.openPaywall) private var openPaywall
     @State private var showSettings = false
+    @State private var adding = false
     @State private var editingCard: Project?
     @State private var editingTotals = false
 
@@ -45,6 +47,7 @@ struct HomeView: View {
                 }
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
+            .sheet(isPresented: $adding) { AddProjectFlow() }
             .sheet(item: $editingCard) { project in CardEditor(project: project) }
             .sheet(isPresented: $editingTotals) { TotalsEditor() }
             .toolbar(.hidden, for: .navigationBar)
@@ -78,6 +81,25 @@ struct HomeView: View {
                 }
             }
             Spacer(minLength: 0)
+            // Demo projects are fixed; the way out is the 示例 button.
+            if !model.settings.demoMode {
+                Button {
+                    if model.canAddProject {
+                        adding = true
+                        Analytics.addProjectOpened(.home)
+                    } else {
+                        openPaywall(.projects)
+                    }
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(Palette.paper)
+                        .frame(width: 44, height: 44)
+                        .background(Palette.ink, in: Circle())
+                }
+                .accessibilityLabel("添加项目")
+                .accessibilityIdentifier("homeAddProject")
+            }
             Button {
                 showSettings = true
             } label: {
