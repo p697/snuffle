@@ -213,6 +213,26 @@ struct LiveProviderTests {
         #expect(names().contains("snuffle_people_before"))
     }
 
+    @Test func aTotalFromBeforeTalliesIsReadAgainAfterTheUpdate() async throws {
+        // What a build before tallies left in the cache: the signed-in count, read ten minutes ago, same scope.
+        var scoped = project
+        scoped.metrics.excludedSurfaces = [.visitors]
+        let now = ISO8601.parse("2026-11-20T01:30:00Z")!
+        let today = ProjectClock(now: now, timeZoneIdentifier: "UTC").todayStart
+        var old = try JSONSerialization.jsonObject(with: JSONEncoder().encode(ProjectSnapshot(
+            projectId: scoped.id, fetchedAt: now, dayStart: today, values: [.totalUsers: 0, .activeMonth: 814],
+            hourlyReadAt: now.addingTimeInterval(-600), countedAs: scoped.metrics.inEffect))) as! [String: Any]
+        old["userTally"] = nil
+        let cached = try JSONDecoder().decode(ProjectSnapshot.self, from: JSONSerialization.data(withJSONObject: old))
+        #expect(cached[.totalUsers] == nil)
+        #expect(cached[.activeMonth] == 814)
+
+        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[907,33]]}"#)])
+        let result = await provider(store: store).refresh(scoped, metrics: [.totalUsers, .activeMonth], previous: cached)
+        #expect(result.snapshot.userTally == UserTally(people: 907 + 907, before: today), "the stub answers every query alike")
+        #expect(result.snapshot[.totalUsers] != nil && result.snapshot[.totalUsers] != 0)
+    }
+
     @Test func oneFailingSourceDoesNotBlankTheRest() async {
         StubProtocol.reset([
             "us.posthog.com/api/projects/42/query": (200, #"{"results":[[18,5,1,3]]}"#),

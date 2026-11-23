@@ -219,7 +219,8 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             newUsersYesterday: book.newUsersYesterday,
             hourlyNewUsers: book.hourly,
             hourlyReadAt: simulatedNow,
-            countedAs: project.metrics.inEffect
+            countedAs: project.metrics.inEffect,
+            userTally: values[.totalUsers].map { UserTally(people: Int($0) - book.newUsers, before: dayStart) }
         )
         switch project.metrics.revenue {
         case .posthogEvent:
