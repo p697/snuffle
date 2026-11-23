@@ -163,9 +163,10 @@ struct ScopeOptions: View {
         var scoped = project
         scoped.metrics.excludedSurfaces = project.metrics.surfacesLeftOut
         measuring = true
-        defer { measuring = false }
         let values = try? await model.provider.measure(scoped, metrics: Set(Self.previewMetrics))
+        // Switched again meanwhile: the newer read owns the preview.
         guard !Task.isCancelled else { return }
+        measuring = false
         withAnimation(.snappy) { preview = values ?? [:] }
     }
 }

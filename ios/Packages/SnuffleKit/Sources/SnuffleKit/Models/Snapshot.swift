@@ -16,6 +16,9 @@ public struct ProjectSnapshot: Hashable, Sendable {
     /// When the hourly metrics (`Metric.isHourly`) were last read without a failure.
     public var hourlyReadAt: Date?
     public var failures: [SourceFailure]
+    /// The counting and scope its numbers were read under (`MetricSettings.inEffect`). Numbers that follow them
+    /// (`Metric.followsCounting`) are never carried to, or shown for, other settings. Nil in caches from before.
+    public var countedAs: MetricSettings?
 
     public init(
         projectId: UUID,
@@ -26,7 +29,8 @@ public struct ProjectSnapshot: Hashable, Sendable {
         hourlyNewUsers: [Int] = [],
         revenueSource: Platform? = nil,
         hourlyReadAt: Date? = nil,
-        failures: [SourceFailure] = []
+        failures: [SourceFailure] = [],
+        countedAs: MetricSettings? = nil
     ) {
         self.projectId = projectId
         self.fetchedAt = fetchedAt
@@ -37,11 +41,17 @@ public struct ProjectSnapshot: Hashable, Sendable {
         self.revenueSource = revenueSource
         self.hourlyReadAt = hourlyReadAt
         self.failures = failures
+        self.countedAs = countedAs
     }
 
     public subscript(metric: Metric) -> Double? {
         get { values[metric] }
         set { values[metric] = newValue }
+    }
+
+    /// The values that mean the same under `settings`: those that follow counting only when read under it.
+    public func values(countedAs settings: MetricSettings) -> [Metric: Double] {
+        countedAs == settings.inEffect ? values : values.filter { !$0.key.followsCounting }
     }
 
     public var newUsers: Int? { values[.newUsers].map { Int($0) } }
@@ -56,10 +66,12 @@ public struct ProjectSnapshot: Hashable, Sendable {
         guard let previous else { return self }
         var merged = self
         let sameDayFailure = previous.dayStart == dayStart && !failures.isEmpty
-        for (metric, value) in previous.values where merged.values[metric] == nil && (metric.isHourly || sameDayFailure) {
+        // Numbers read under other counting or scope count something else: never carry them over.
+        let sameCounting = previous.countedAs == countedAs
+        for (metric, value) in previous.values where merged.values[metric] == nil && (metric.isHourly || sameDayFailure) && (sameCounting || !metric.followsCounting) {
             merged.values[metric] = value
         }
-        if hourlyReadAt == nil { merged.hourlyReadAt = previous.hourlyReadAt }
+        if hourlyReadAt == nil && sameCounting { merged.hourlyReadAt = previous.hourlyReadAt }
         if sameDayFailure {
             merged.newUsersYesterday = newUsersYesterday ?? previous.newUsersYesterday
             if hourlyNewUsers.isEmpty { merged.hourlyNewUsers = previous.hourlyNewUsers }
@@ -79,7 +91,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
 
 extension ProjectSnapshot: Codable {
     enum CodingKeys: String, CodingKey {
-        case projectId, fetchedAt, dayStart, values, newUsersYesterday, hourlyNewUsers, revenueSource, hourlyReadAt, failures
+        case projectId, fetchedAt, dayStart, values, newUsersYesterday, hourlyNewUsers, revenueSource, hourlyReadAt, failures, countedAs
     }
 
     /// Values are stored by metric id. A cache from before metrics had ids reads as empty: the next refresh fills it.
@@ -95,6 +107,7 @@ extension ProjectSnapshot: Codable {
         revenueSource = try container.decodeIfPresent(Platform.self, forKey: .revenueSource)
         hourlyReadAt = try container.decodeIfPresent(Date.self, forKey: .hourlyReadAt)
         failures = try container.decodeIfPresent([SourceFailure].self, forKey: .failures) ?? []
+        countedAs = try container.decodeIfPresent(MetricSettings.self, forKey: .countedAs)
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -108,6 +121,7 @@ extension ProjectSnapshot: Codable {
         try container.encodeIfPresent(revenueSource, forKey: .revenueSource)
         try container.encodeIfPresent(hourlyReadAt, forKey: .hourlyReadAt)
         try container.encode(failures, forKey: .failures)
+        try container.encodeIfPresent(countedAs, forKey: .countedAs)
     }
 }
 

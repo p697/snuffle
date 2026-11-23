@@ -228,6 +228,15 @@ public struct MetricSettings: Codable, Hashable, Sendable {
     /// What to leave out now: the person's choice, or website visitors while nothing was chosen or seen yet.
     public var surfacesLeftOut: Set<Surface> { excludedSurfaces ?? [.visitors] }
 
+    /// These settings with the surfaces actually left out, as numbers are read under them.
+    public var inEffect: MetricSettings { leaving(out: surfacesLeftOut) }
+
+    public func leaving(out surfaces: Set<Surface>) -> MetricSettings {
+        var settings = self
+        settings.excludedSurfaces = surfaces
+        return settings
+    }
+
     /// PostHog's conventional signup event and the install event its mobile SDKs send.
     public static let signupEvent = "user_signed_up"
     public static let installEvent = "Application Installed"

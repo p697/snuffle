@@ -359,7 +359,6 @@ final class AppModel {
     func save(project: Project) {
         let index = workspace.projects.firstIndex { $0.id == project.id }
         if let index {
-            forgetCounting(of: workspace.projects[index], now: project)
             workspace.projects[index] = project
         } else {
             workspace.projects.append(project)
@@ -369,16 +368,6 @@ final class AppModel {
         Analytics.projectSaved(project, isNew: index == nil, projectCount: workspace.projects.count)
         SharedContainer.removeProjectIcons(project.id, keeping: project.iconVersion)
         WidgetCenter.shared.reloadAllTimelines()
-    }
-
-    /// Numbers read under a project's old counting or scope mean something else now: forget them, so the refresh
-    /// that follows reads them again, the hourly ones too, instead of keeping the old values.
-    private func forgetCounting(of old: Project, now new: Project) {
-        guard old.metrics != new.metrics, var snapshot = cache.snapshots[new.id] else { return }
-        for metric in snapshot.values.keys where metric.followsCounting { snapshot.values[metric] = nil }
-        snapshot.hourlyReadAt = nil
-        cache.snapshots[new.id] = snapshot
-        saveCache()
     }
 
     /// Saves a card layout for `project`, or for every project when `everywhere` (each project's own events stay
@@ -403,7 +392,9 @@ final class AppModel {
         SharedContainer.workspace.save(workspace)
         // What the library just read is today's number too: keep it rather than reading it again.
         if !countingChanged, !measured.isEmpty, var snapshot = cache.snapshots[project.id] {
-            snapshot.values.merge(measured) { $1 }
+            // Unless the cache was read under other counting, whose numbers the next refresh replaces anyway.
+            let current = snapshot.countedAs == project.metrics.inEffect
+            snapshot.values.merge(measured.filter { current || !$0.key.followsCounting }) { $1 }
             cache.snapshots[project.id] = snapshot
             saveCache()
         }

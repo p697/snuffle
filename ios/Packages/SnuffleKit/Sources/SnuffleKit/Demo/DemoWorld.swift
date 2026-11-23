@@ -218,7 +218,8 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             values: values,
             newUsersYesterday: book.newUsersYesterday,
             hourlyNewUsers: book.hourly,
-            hourlyReadAt: simulatedNow
+            hourlyReadAt: simulatedNow,
+            countedAs: project.metrics.inEffect
         )
         switch project.metrics.revenue {
         case .posthogEvent:
