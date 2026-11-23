@@ -135,7 +135,6 @@ struct ProjectCard: View {
                 )
                 .padding(.horizontal, 2)
                 .background(alignment: .bottomLeading) { Highlighter(on: rise != nil, fading: model.marksFading) }
-                .modifier(SettleFlash(trigger: model.settles[project.id] ?? 0))
                 .layoutPriority(1)
                 if chip {
                     DeltaChip(text: rise.map(metric.delta), visible: rise != nil, size: 14)
@@ -402,22 +401,6 @@ extension Shake {
         var trigger: Int
         func body(content: Content) -> some View {
             content.modifier(Shake(trigger: trigger)).animation(.easeInOut(duration: 0.3), value: trigger)
-        }
-    }
-}
-
-/// A brief dim-and-return on the number when a refresh found nothing new: "checked".
-struct SettleFlash: ViewModifier {
-    var trigger: Int
-
-    func body(content: Content) -> some View {
-        content.keyframeAnimator(initialValue: 1.0, trigger: trigger) { view, opacity in
-            view.opacity(opacity)
-        } keyframes: { _ in
-            KeyframeTrack {
-                LinearKeyframe(0.45, duration: 0.01)
-                CubicKeyframe(1, duration: 0.3)
-            }
         }
     }
 }
