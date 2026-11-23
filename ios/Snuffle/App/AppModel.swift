@@ -55,8 +55,6 @@ final class AppModel {
     private(set) var totalsMark: SnapshotChange?
     /// Bumped when a card should shake for a failed source.
     private(set) var shakes: [UUID: Int] = [:]
-    /// Bumped when a card checked and nothing changed, for the settle flash.
-    private(set) var settles: [UUID: Int] = [:]
     private(set) var cat = CatState()
     /// Progress of the current refresh (0…1) for the ring around the button.
     private(set) var refreshProgress: Double = 0
@@ -235,8 +233,6 @@ final class AppModel {
                     anySale = true
                     feedback.sale()
                 }
-            } else {
-                settles[project.id, default: 0] += 1
             }
             if !snapshot.failures.isEmpty {
                 failedProjects += 1
