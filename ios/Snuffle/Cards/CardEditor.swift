@@ -12,7 +12,7 @@ struct CardEditor: View {
     @State private var everywhere = false
     @State private var picking: CardSlot?
     /// Numbers the library read that the cache does not have yet, so the preview shows them at once.
-    @State private var measured: [Metric: Double] = [:]
+    @State private var measured = MeasuredNumbers()
 
     init(project: Project) {
         original = project
@@ -66,7 +66,7 @@ struct CardEditor: View {
 
     private var preview: ProjectSnapshot {
         var snapshot = model.snapshot(draft.id) ?? ProjectSnapshot(projectId: draft.id, fetchedAt: .now, dayStart: .now)
-        snapshot.values.merge(measured) { $1 }
+        snapshot.values = snapshot.values(countedAs: draft.metrics).merging(measured.values(countedAs: draft.metrics)) { $1 }
         snapshot.failures = []
         return snapshot
     }
@@ -146,7 +146,7 @@ struct CardEditor: View {
         var before = original
         before.card = draft.card
         if before != draft { model.save(project: draft) }
-        model.saveCard(layout, for: draft, everywhere: everywhere, countingChanged: before != draft, measured: measured)
+        model.saveCard(layout, for: draft, everywhere: everywhere, countingChanged: before != draft, measured: measured.values(countedAs: draft.metrics))
         dismiss()
     }
 }

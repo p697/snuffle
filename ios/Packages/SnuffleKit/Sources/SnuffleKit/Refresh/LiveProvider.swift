@@ -67,7 +67,9 @@ public struct LiveProvider: DataProvider {
     public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?) async -> RefreshResult {
         let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone)
         let wanted = metrics.filter { $0.isAvailable(in: project) }
-        let readHourly = previous?.needsHourlyRead(wanted, at: clock.now) ?? wanted.contains(where: \.isHourly)
+        // Hourly numbers read under other counting or scope are read again, not kept for the rest of the hour.
+        let current = previous.flatMap { $0.countedAs == project.metrics.inEffect ? $0 : nil }
+        let readHourly = current?.needsHourlyRead(wanted, at: clock.now) ?? wanted.contains(where: \.isHourly)
         let parts = await read(project, wanted: wanted, clock: clock, readHourly: readHourly, reviews: project.hasStore)
         return Self.assemble(parts, project: project, clock: clock, readHourly: readHourly)
     }
@@ -271,6 +273,7 @@ public struct LiveProvider: DataProvider {
         if let reviews { snapshot.values[.reviewsToAnswer] = Double(reviews.filter(\.needsReply).count) }
         snapshot.failures.sort { $0.platform.rawValue < $1.platform.rawValue }
         // A partial list would drop the failed store's reviews from the inbox, so only a complete one replaces it.
+        snapshot.countedAs = project.metrics.leaving(out: surfaces ?? project.metrics.surfacesLeftOut)
         return RefreshResult(snapshot: snapshot, reviews: storeFailed ? nil : reviews, posthogTimeZone: zone, excludedSurfaces: surfaces)
     }
 
