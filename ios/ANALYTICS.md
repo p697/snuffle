@@ -41,7 +41,7 @@ Business charts use `client_app = 'snuffle_ios' AND app_environment = 'release' 
 | `demo_mode_changed` | Demo mode turned on or off, from anywhere | `enabled` |
 | `add_project_opened` | The add-project flow opens | `source`: welcome, home, projects, key_file (a `.p8` opened in Snuffle) |
 | `source_connect_resolved` | A sign-in or key check against a platform ends | `platform`, `method` (oauth, key, saved), `flow` (new_project, existing_project), `outcome` (succeeded, failed, cancelled), `error_kind` on failure |
-| `project_saved` | A project is created or edited | `is_new`, `source_count`, `has_posthog`, `has_revenuecat`, `has_app_store`, `has_google_play`, `project_count` |
+| `project_saved` | A project is created or edited | `is_new`, `source_count`, `has_posthog`, `has_revenuecat`, `has_app_store`, `has_google_play`, `project_count`, `excluded_surfaces` (the kinds of traffic left out of people numbers: `ios`, `android`, `web`, `visitors`, `other`; empty without PostHog) |
 | `project_deleted` | A project is deleted | `source_count`, `project_count` |
 | `card_layout_saved` | "完成" in the card editor | `big`, `small` (metric kinds in order, e.g. `new_users`, `active_month`, `installs`; any other event is `event`, never its name), `everywhere` (applied to every project) |
 | `totals_layout_saved` | "完成" in the totals editor | `metrics` (the three metric kinds, left to right) |

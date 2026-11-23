@@ -75,7 +75,7 @@ struct CountingOptions: View {
                 }
             }
             Text(kind == .newUsers
-                 ? "注册事件和自定义事件按今天触发的人数算；开始使用是今天第一次打开 App 或在网站登录、之前 30 天没出现过的人，不含没登录的网站访客。项目里只有网站访客时，才按访客算。"
+                 ? "注册事件和自定义事件按今天触发的人数算，不分来源；开始使用是今天第一次出现、之前 30 天没来过的人，按「算哪些人」里选的来源算。"
                  : "PostHog 付费事件把金额加起来，并能列出每一笔订单；RevenueCat 只给每天的总额。金额按美元显示。")
                 .font(.system(size: 12))
                 .foregroundStyle(Palette.ink2)

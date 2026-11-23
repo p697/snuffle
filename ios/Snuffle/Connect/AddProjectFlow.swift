@@ -268,6 +268,8 @@ private struct ConnectedPage: View {
         key.name = ""
         key.tint = .ink
         key.iconVersion = nil
+        // Adopting the surfaces the first preview found must not read it again when they match the default.
+        key.metrics.excludedSurfaces = key.metrics.surfacesLeftOut
         return key
     }
 
@@ -276,6 +278,9 @@ private struct ConnectedPage: View {
         let project = session.finished
         let result = await model.provider.refresh(project, metrics: Set(project.card.metrics), previous: nil)
         preview = result.snapshot
+        if session.project.metrics.excludedSurfaces == nil, let excluded = result.excludedSurfaces {
+            session.project.metrics.excludedSurfaces = excluded
+        }
         loading = false
     }
 }

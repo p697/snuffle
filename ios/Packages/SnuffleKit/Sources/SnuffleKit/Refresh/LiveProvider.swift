@@ -57,6 +57,7 @@ public struct LiveProvider: DataProvider {
         case newUsersDetail(yesterday: Int?, hourly: [Int])
         case revenueSource(Platform)
         case timeZone(String)
+        case surfaces(Set<Surface>)
         case reviews([Review])
         case failure(SourceFailure)
         /// An hourly metric could not be read; the next refresh tries again, and the card keeps the last value.
@@ -81,6 +82,15 @@ public struct LiveProvider: DataProvider {
         return values
     }
 
+    public func surfaces(for project: Project) async throws -> [SurfaceStat] {
+        guard let link = project.posthog else { return [] }
+        let clock = ProjectClock(now: now(), timeZoneIdentifier: link.timeZone)
+        let rows = try await withPostHog(link.accountId) {
+            try await $0.query(projectId: link.projectId, PostHogQueries.surfaceStats(clock: clock), name: "snuffle_surfaces")
+        }
+        return PostHogParsing.surfaceStats(rows)
+    }
+
     public func events(for project: Project) async throws -> [EventStat] {
         guard let link = project.posthog else { return [] }
         let since = now().addingTimeInterval(-7 * 86_400)
@@ -92,11 +102,18 @@ public struct LiveProvider: DataProvider {
 
     /// Reads every source the wanted metrics need, at once; each fails on its own.
     private func read(_ project: Project, wanted: Set<Metric>, clock: ProjectClock, readHourly: Bool, reviews: Bool) async -> [Part] {
-        await withTaskGroup(of: [Part].self) { group in
+        // A project whose surfaces were never chosen looks at its events once, before anything is counted by them.
+        var found: Set<Surface>?
+        if project.posthog != nil, project.metrics.excludedSurfaces == nil,
+           let stats = try? await surfaces(for: project), !stats.isEmpty {
+            found = Surface.defaultExcluded(seen: stats.filter { $0.people > 0 }.map(\.surface))
+        }
+        let excluded = found ?? project.metrics.surfacesLeftOut
+        let parts = await withTaskGroup(of: [Part].self) { group in
             if let link = project.posthog {
-                group.addTask { await self.posthogPart(project, link: link, wanted: wanted, clock: clock) }
+                group.addTask { await self.posthogPart(project, link: link, wanted: wanted, clock: clock, excluded: excluded) }
                 if readHourly, wanted.contains(where: { $0.isHourly && $0.source == .posthog }) {
-                    group.addTask { await self.posthogHourlyPart(link: link, wanted: wanted, clock: clock) }
+                    group.addTask { await self.posthogHourlyPart(link: link, wanted: wanted, clock: clock, excluded: excluded) }
                 }
             }
             if let link = project.revenueCat {
@@ -150,11 +167,12 @@ public struct LiveProvider: DataProvider {
             for await batch in group { all += batch }
             return all
         }
+        return parts + (found.map { [Part.surfaces($0)] } ?? [])
     }
 
     /// Today's PostHog numbers: new users with their hours, people active and online, page views, event revenue and
     /// orders, and the event metrics asked for. Two or three queries over today and yesterday, whatever is shown.
-    private func posthogPart(_ project: Project, link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock) async -> [Part] {
+    private func posthogPart(_ project: Project, link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock, excluded: Set<Surface>) async -> [Part] {
         do {
             let settings = project.metrics
             let events = wanted.filter { if case .event = $0 { true } else { false } }.sorted { $0.id < $1.id }
@@ -164,10 +182,10 @@ public struct LiveProvider: DataProvider {
                     guard let countsQuery else { return [] }
                     return try await client.query(projectId: link.projectId, countsQuery.sql, name: "snuffle_counts")
                 }()
-                async let presenceRow = client.query(projectId: link.projectId, PostHogQueries.presence(clock: clock), name: "snuffle_presence")
+                async let presenceRow = client.query(projectId: link.projectId, PostHogQueries.presence(clock: clock, excluding: excluded), name: "snuffle_presence")
                 async let firstSeenRow: [[JSONValue]] = {
                     guard settings.newUsers == .firstSeen else { return [] }
-                    return try await client.query(projectId: link.projectId, PostHogQueries.firstSeen(clock: clock), name: "snuffle_first_seen")
+                    return try await client.query(projectId: link.projectId, PostHogQueries.firstSeen(clock: clock, excluding: excluded), name: "snuffle_first_seen")
                 }()
                 // Read alongside the queries, so it costs no extra wait; a failure here never fails the numbers.
                 async let zone = try? client.timeZone(projectId: link.projectId)
@@ -199,13 +217,13 @@ public struct LiveProvider: DataProvider {
     }
 
     /// People active this week and month and the total: scans of 30 days and of the people table, so hourly only.
-    private func posthogHourlyPart(link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock) async -> [Part] {
+    private func posthogHourlyPart(link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock, excluded: Set<Surface>) async -> [Part] {
         do {
             return try await withPostHog(link.accountId) { client in
                 let needsActivity = wanted.contains(.activeWeek) || wanted.contains(.activeMonth)
                 async let activityRow: [[JSONValue]] = {
                     guard needsActivity else { return [] }
-                    return try await client.query(projectId: link.projectId, PostHogQueries.activity(clock: clock, month: wanted.contains(.activeMonth)), name: "snuffle_activity")
+                    return try await client.query(projectId: link.projectId, PostHogQueries.activity(clock: clock, month: wanted.contains(.activeMonth), excluding: excluded), name: "snuffle_activity")
                 }()
                 async let totalRow: [[JSONValue]] = {
                     guard wanted.contains(.totalUsers) else { return [] }
@@ -230,6 +248,7 @@ public struct LiveProvider: DataProvider {
         var storeFailed = false
         var hourlyFailed = false
         var zone: String?
+        var surfaces: Set<Surface>?
         for part in parts {
             switch part {
             case .values(let values): snapshot.values.merge(values) { $1 }
@@ -238,6 +257,7 @@ public struct LiveProvider: DataProvider {
                 snapshot.hourlyNewUsers = hourly
             case .revenueSource(let platform): snapshot.revenueSource = platform
             case .timeZone(let identifier): zone = identifier
+            case .surfaces(let excluded): surfaces = excluded
             case .reviews(let list): reviews = (reviews ?? []) + list
             case .hourlyFailed: hourlyFailed = true
             case .failure(let failure):
@@ -251,7 +271,7 @@ public struct LiveProvider: DataProvider {
         if let reviews { snapshot.values[.reviewsToAnswer] = Double(reviews.filter(\.needsReply).count) }
         snapshot.failures.sort { $0.platform.rawValue < $1.platform.rawValue }
         // A partial list would drop the failed store's reviews from the inbox, so only a complete one replaces it.
-        return RefreshResult(snapshot: snapshot, reviews: storeFailed ? nil : reviews, posthogTimeZone: zone)
+        return RefreshResult(snapshot: snapshot, reviews: storeFailed ? nil : reviews, posthogTimeZone: zone, excludedSurfaces: surfaces)
     }
 
     static func failure(_ platform: Platform, _ error: Error) -> SourceFailure {
@@ -300,7 +320,7 @@ public struct LiveProvider: DataProvider {
             async let rows = client.query(projectId: link.projectId, PostHogQueries.history(metrics: metrics, clock: clock, days: days), name: "snuffle_history")
             async let firstSeen: [[JSONValue]]? = {
                 guard metrics.newUsers == .firstSeen else { return nil }
-                return try await client.query(projectId: link.projectId, PostHogQueries.firstSeenHistory(clock: clock, days: days), name: "snuffle_first_seen_history")
+                return try await client.query(projectId: link.projectId, PostHogQueries.firstSeenHistory(clock: clock, days: days, excluding: metrics.surfacesLeftOut), name: "snuffle_first_seen_history")
             }()
             return try await (rows, firstSeen)
         }

@@ -215,11 +215,18 @@ public struct MetricSettings: Codable, Hashable, Sendable {
 
     public var newUsers: NewUsers
     public var revenue: Revenue
+    /// Surfaces left out of the people-based numbers (`Metric.isScoped`). Nil until the project's events were seen
+    /// once; the first refresh fills it with `Surface.defaultExcluded`.
+    public var excludedSurfaces: Set<Surface>?
 
-    public init(newUsers: NewUsers, revenue: Revenue) {
+    public init(newUsers: NewUsers, revenue: Revenue, excludedSurfaces: Set<Surface>? = nil) {
         self.newUsers = newUsers
         self.revenue = revenue
+        self.excludedSurfaces = excludedSurfaces
     }
+
+    /// What to leave out now: the person's choice, or website visitors while nothing was chosen or seen yet.
+    public var surfacesLeftOut: Set<Surface> { excludedSurfaces ?? [.visitors] }
 
     /// PostHog's conventional signup event and the install event its mobile SDKs send.
     public static let signupEvent = "user_signed_up"

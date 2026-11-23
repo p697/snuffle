@@ -58,38 +58,65 @@ struct PostHogTests {
     @Test func hourlyQueriesScanOnlyTheWindowAsked() {
         let week = Int(clock.now.timeIntervalSince1970) - 7 * 86_400
         let month = Int(clock.now.timeIntervalSince1970) - 30 * 86_400
-        #expect(PostHogQueries.activity(clock: clock, month: false) == "SELECT uniq(person_id) AS week FROM events WHERE timestamp >= fromUnixTimestamp(\(week))")
-        #expect(PostHogQueries.activity(clock: clock, month: true).hasSuffix("FROM events WHERE timestamp >= fromUnixTimestamp(\(month))"))
+        #expect(PostHogQueries.activity(clock: clock, month: false, excluding: []) == "SELECT uniq(person_id) AS week FROM events WHERE timestamp >= fromUnixTimestamp(\(week))")
+        #expect(PostHogQueries.activity(clock: clock, month: true, excluding: []).hasSuffix("FROM events WHERE timestamp >= fromUnixTimestamp(\(month))"))
         #expect(PostHogQueries.totalUsers.hasSuffix("FROM persons WHERE is_identified = 1"))
         let stats = PostHogParsing.eventStats([[.string("$set"), .number(9), .number(9)], [.string("user_signed_up"), .number(4), .number(5)]])
         #expect(stats == [EventStat(name: "user_signed_up", people: 4, times: 5)])
         #expect(stats.first?.looksLikeSignup == true)
-        #expect(PostHogQueries.presence(clock: clock).contains("countIf(event = '$pageview') AS pageviews"))
+        #expect(PostHogQueries.presence(clock: clock, excluding: []).contains("countIf(event IN ('$pageview', '$screen'))"))
     }
 
     @Test func firstSeenComesFromEventsWithinABoundedLookback() {
         // Anonymous events have no person profile, so new people are counted from their first event, and only
         // the last 30 days (plus the days shown) are scanned.
-        let sql = PostHogQueries.firstSeen(clock: clock)
+        let sql = PostHogQueries.firstSeen(clock: clock, excluding: [])
         let lookback = Int(clock.yesterdayStart.timeIntervalSince1970) - 30 * 86_400
         #expect(!sql.contains("persons"))
         #expect(sql.contains("FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback)) GROUP BY person_id"))
         #expect(sql.contains("countIf(first >= fromUnixTimestamp(\(Int(clock.todayStart.timeIntervalSince1970)))) AS new_today"))
         #expect(sql.contains("countIf(first >= fromUnixTimestamp(1795132800) AND first < fromUnixTimestamp(1795136400)) AS h0"))
 
-        let history = PostHogQueries.firstSeenHistory(clock: clock, days: 7)
+        let history = PostHogQueries.firstSeenHistory(clock: clock, days: 7, excluding: [])
         let start = Int(clock.historyStart(days: 7).timeIntervalSince1970)
         #expect(history.contains("timestamp >= fromUnixTimestamp(\(start - 30 * 86_400))"))
         #expect(history.hasSuffix("WHERE first >= fromUnixTimestamp(\(start)) GROUP BY day ORDER BY day"))
     }
 
-    @Test func websiteVisitorsAreNotNewUsers() {
-        // Anonymous posthog-js traffic is someone reading the website; apps, servers and signed-in web users count.
-        // A project with nothing but visitors falls back to everyone, so a site without sign-in still has new users.
-        #expect(PostHogQueries.productUse == "(ifNull(properties.$lib, '') != 'web' OR ifNull(toString(properties.$is_identified), '') = 'true')")
-        let sql = PostHogQueries.firstSeen(clock: clock)
-        #expect(sql.contains("minIf(timestamp, \(PostHogQueries.productUse)) AS first_use, max(\(PostHogQueries.productUse)) AS uses"))
-        #expect(sql.contains("SELECT if(max(uses) OVER () = 1, first_use, first_event) AS first"))
+    @Test func surfacesComeFromTheSDKsOwnProperties() {
+        // Signed-out web traffic is someone reading the website; apps, servers and signed-in web users are the product.
+        let surface = PostHogQueries.surface
+        #expect(surface.hasPrefix("multiIf(properties.$lib = 'web', if(ifNull(toString(properties.$is_identified), '') = 'true', 'web', 'visitors')"))
+        #expect(surface.contains("properties.$lib IN ('posthog-ios', 'posthog-android', 'posthog-react-native', 'posthog-flutter')"))
+        #expect(surface.contains("multiIf(properties.$os IN ('iOS', 'iPadOS'), 'ios', properties.$os = 'Android', 'android', 'other')"))
+        #expect(PostHogQueries.scope(excluding: []) == nil)
+        #expect(PostHogQueries.scope(excluding: [.visitors, .other]) == "\(surface) NOT IN ('other', 'visitors')")
+        let stats = PostHogParsing.surfaceStats([[.string("android"), .number(639)], [.string("visitors"), .number(422)], [.string("tv"), .number(1)]])
+        #expect(stats == [SurfaceStat(surface: .android, people: 639), SurfaceStat(surface: .visitors, people: 422)])
+    }
+
+    @Test func peopleNumbersFollowTheProjectsScope() {
+        let scope = " AND \(PostHogQueries.scope(excluding: [.visitors])!)"
+        #expect(PostHogQueries.presence(clock: clock, excluding: [.visitors]).hasSuffix(scope))
+        #expect(PostHogQueries.activity(clock: clock, month: true, excluding: [.visitors]).hasSuffix(scope))
+        #expect(PostHogQueries.firstSeen(clock: clock, excluding: [.visitors]).contains("\(scope) GROUP BY person_id"))
+        #expect(PostHogQueries.firstSeenHistory(clock: clock, days: 7, excluding: [.visitors]).contains("\(scope) GROUP BY person_id"))
+        // Sign-ups and revenue are their events wherever they came from; only the active column follows the scope.
+        let metrics = MetricSettings(newUsers: .event("user_signed_up"), revenue: .none, excludedSurfaces: [.visitors])
+        let history = PostHogQueries.history(metrics: metrics, clock: clock, days: 7)
+        #expect(history.contains("uniqIf(person_id, \(PostHogQueries.scope(excluding: [.visitors])!))"))
+        #expect(history.contains("uniqExactIf(person_id, event = 'user_signed_up') AS new_users"))
+    }
+
+    @Test func visitorsAreLeftOutUnlessTheyAreAllThereIs() {
+        #expect(Surface.defaultExcluded(seen: [.ios, .visitors]) == [.visitors])
+        #expect(Surface.defaultExcluded(seen: [.other]) == [.visitors])
+        #expect(Surface.defaultExcluded(seen: [.visitors]) == [])
+        #expect(Surface.defaultExcluded(seen: []) == [])
+        // Projects saved before scopes existed decode with no choice yet, and leave visitors out meanwhile.
+        let old = try! JSONDecoder().decode(MetricSettings.self, from: Data(#"{"newUsers":{"firstSeen":{}},"revenue":{"none":{}}}"#.utf8))
+        #expect(old.excludedSurfaces == nil)
+        #expect(old.surfacesLeftOut == [.visitors])
     }
 
     @Test func historyDaysFollowTheProjectZone() {
@@ -98,7 +125,7 @@ struct PostHogTests {
         let sql = PostHogQueries.history(metrics: metrics, clock: shanghai, days: 7)
         #expect(sql.hasPrefix("SELECT toString(toDate(toTimeZone(timestamp, 'Asia/Shanghai'))) AS day"))
         #expect(sql.contains("uniqExactIf(person_id, event = 'user_signed_up') AS new_users"))
-        #expect(PostHogQueries.firstSeenHistory(clock: shanghai, days: 7).hasPrefix("SELECT toString(toDate(toTimeZone(first, 'Asia/Shanghai'))) AS day"))
+        #expect(PostHogQueries.firstSeenHistory(clock: shanghai, days: 7, excluding: []).hasPrefix("SELECT toString(toDate(toTimeZone(first, 'Asia/Shanghai'))) AS day"))
     }
 
     @Test func parsesCountsByColumn() throws {

@@ -7,11 +7,15 @@ public struct RefreshResult: Sendable {
     public var reviews: [Review]?
     /// The PostHog project's current time zone, so a zone changed in PostHog after connecting is picked up.
     public var posthogTimeZone: String?
+    /// The surfaces to leave out, found from the project's events when none were chosen yet; the app saves them, so
+    /// this is read once per project.
+    public var excludedSurfaces: Set<Surface>?
 
-    public init(snapshot: ProjectSnapshot, reviews: [Review]?, posthogTimeZone: String? = nil) {
+    public init(snapshot: ProjectSnapshot, reviews: [Review]?, posthogTimeZone: String? = nil, excludedSurfaces: Set<Surface>? = nil) {
         self.snapshot = snapshot
         self.reviews = reviews
         self.posthogTimeZone = posthogTimeZone
+        self.excludedSurfaces = excludedSurfaces
     }
 }
 
@@ -24,6 +28,8 @@ public protocol DataProvider: Sendable {
     func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double]
     /// The project's events of the last 7 days, for choosing one to count.
     func events(for project: Project) async throws -> [EventStat]
+    /// The project's surfaces with their people in the last 30 days, for choosing which to count.
+    func surfaces(for project: Project) async throws -> [SurfaceStat]
     func orders(for project: Project) async throws -> [Order]
     func overview(for project: Project) async throws -> SubscriptionOverview?
     func history(for project: Project, days: Int) async throws -> [DailyPoint]

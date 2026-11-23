@@ -143,6 +143,8 @@ enum Analytics {
             "has_app_store": project.appStore != nil,
             "has_google_play": project.googlePlay != nil,
             "project_count": projectCount,
+            // Which kinds of traffic the project leaves out of its people numbers: surface kinds, never counts.
+            "excluded_surfaces": project.posthog == nil ? [] : project.metrics.surfacesLeftOut.map(\.rawValue).sorted(),
         ])
     }
 

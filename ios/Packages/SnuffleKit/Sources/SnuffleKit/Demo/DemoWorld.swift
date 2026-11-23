@@ -53,7 +53,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             posthog: PostHogLink(accountId: demoAccount, projectId: 1, projectName: "Lumen Notes", timeZone: TimeZone.current.identifier),
             appStore: AppStoreLink(accountId: demoAccount, appId: "1", appName: "Lumen Notes", bundleId: "com.example.lumen"),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.lumen"),
-            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .posthogEvent(event: "purchase", valueProperty: "value")),
+            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), excludedSurfaces: [.visitors]),
             card: CardLayout(big: [.newUsers], small: [.revenue, .installs, .reviewsToAnswer])
         ),
         Project(
@@ -61,17 +61,33 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             posthog: PostHogLink(accountId: demoAccount, projectId: 2, projectName: "Pocket Ferry", timeZone: TimeZone.current.identifier),
             revenueCat: RevenueCatLink(accountId: demoAccount, projectId: "demo", projectName: "Pocket Ferry"),
             appStore: AppStoreLink(accountId: demoAccount, appId: "2", appName: "Pocket Ferry", bundleId: "com.example.ferry"),
-            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .revenueCat),
+            metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .revenueCat, excludedSurfaces: [.visitors]),
             card: CardLayout(big: [.mrr, .newUsers], small: [.activeSubscriptions, .activeTrials, .reviewsToAnswer])
         ),
         Project(
             id: atlasId, name: "Quiet Atlas", tint: .cocoa,
             posthog: PostHogLink(accountId: demoAccount, projectId: 3, projectName: "Quiet Atlas", timeZone: TimeZone.current.identifier),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.atlas"),
-            metrics: MetricSettings(newUsers: .firstSeen, revenue: .none),
+            metrics: MetricSettings(newUsers: .firstSeen, revenue: .none, excludedSurfaces: [.visitors]),
             card: CardLayout(big: [.newUsers], small: [.activeToday, .event("paywall_viewed", people: false), .reviewsToAnswer])
         )
     ]
+
+    /// Each demo project's surfaces, as shares of its monthly active people when website visitors are left out (so the
+    /// shares of the counted surfaces add up to 1).
+    static let surfaceShares: [UUID: [Surface: Double]] = [
+        lumenId: [.web: 0.52, .ios: 0.27, .android: 0.18, .other: 0.03, .visitors: 1.9],
+        ferryId: [.ios: 0.74, .android: 0.26, .visitors: 3.1],
+        atlasId: [.android: 0.81, .ios: 0.19, .visitors: 0.6]
+    ]
+
+    /// How much bigger people-based numbers get with these surfaces than with the demo's own choice.
+    static func scale(_ projectId: UUID, excluding excluded: Set<Surface>) -> Double {
+        let shares = surfaceShares[projectId] ?? [:]
+        let chosen = shares.filter { !excluded.contains($0.key) }.values.reduce(0, +)
+        let standard = shares.filter { $0.key != .visitors }.values.reduce(0, +)
+        return standard > 0 ? chosen / standard : 1
+    }
 
     /// Each demo project's events with how often they are sent a day and the share of senders among them.
     static let events: [UUID: [(name: String, perDay: Double, peopleShare: Double)]] = [
@@ -174,6 +190,11 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             .activeMonth: (pace.activePerDay * 8.1 + Double(book.active) * 0.6).rounded(),
             .totalUsers: (pace.yesterdayTotal * 260 + Double(book.newUsers)).rounded()
         ]
+        // Other surfaces than the demo's own (the surfaces page previews each choice).
+        let scale = DemoWorld.scale(project.id, excluding: project.metrics.surfacesLeftOut)
+        for metric in [Metric.activeToday, .online, .activeWeek, .activeMonth] {
+            values[metric] = values[metric].map { ($0 * scale).rounded() }
+        }
         // Counted another way than the demo project does (the counting page previews each choice).
         if project.metrics.newUsers != DemoWorld.projects.first(where: { $0.id == project.id })?.metrics.newUsers {
             switch project.metrics.newUsers {
@@ -183,11 +204,12 @@ public struct DemoWorld: Codable, Sendable, Equatable {
                 values[.newUsers] = name == MetricSettings.signupEvent ? (Double(book.newUsers) * 0.45).rounded() : (Double(book.events[name] ?? 0) * share).rounded()
             }
         }
+        if project.metrics.newUsers == .firstSeen { values[.newUsers] = values[.newUsers].map { ($0 * scale).rounded() } }
         for event in DemoWorld.events[project.id] ?? [] {
             let times = Double(book.events[event.name] ?? Int(event.perDay * fraction))
             values[.event(event.name, people: false)] = times
             values[.event(event.name, people: true)] = (times * event.peopleShare).rounded()
-            if event.name == "$pageview" || event.name == "$screen" { values[.pageviews] = times }
+            if event.name == "$pageview" || event.name == "$screen" { values[.pageviews] = (times * scale).rounded() }
         }
         var snapshot = ProjectSnapshot(
             projectId: project.id,
@@ -222,6 +244,15 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             snapshot.failures = [SourceFailure(platform: .revenueCat, message: SourceError.http(.revenueCat, 503, String(localized: "服务暂时不可用", bundle: .module)).localizedDescription, kind: .serverError)]
         }
         return snapshot
+    }
+
+    /// The demo project's surfaces, as the surfaces page lists them.
+    public func surfaceStats(for projectId: UUID) -> [SurfaceStat] {
+        guard let book = books.first(where: { $0.projectId == projectId }) else { return [] }
+        let month = book.pace.activePerDay * 8.1 + Double(book.active) * 0.6
+        return (DemoWorld.surfaceShares[projectId] ?? [:])
+            .map { SurfaceStat(surface: $0.key, people: Int(month * $0.value)) }
+            .sorted { $0.people > $1.people }
     }
 
     /// The demo project's events, as the event picker lists them.
