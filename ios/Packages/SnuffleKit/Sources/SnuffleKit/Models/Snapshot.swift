@@ -114,6 +114,10 @@ extension ProjectSnapshot: Codable {
         failures = try container.decodeIfPresent([SourceFailure].self, forKey: .failures) ?? []
         countedAs = try container.decodeIfPresent(MetricSettings.self, forKey: .countedAs)
         userTally = try container.decodeIfPresent(UserTally.self, forKey: .userTally)
+        // Caches from before total users was tallied hold the signed-in count (often 0) under the same scope; dropping it
+        // makes the next refresh read the real total instead of keeping it for the rest of the hour. Every total is
+        // written with its tally since, so this only touches those caches; remove it once builds before 71 are gone.
+        if userTally == nil { values[.totalUsers] = nil }
     }
 
     public func encode(to encoder: Encoder) throws {
