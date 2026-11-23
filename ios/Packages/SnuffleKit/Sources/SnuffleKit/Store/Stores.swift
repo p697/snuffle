@@ -31,6 +31,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var refreshOnOpen: Bool
     public var replyTone: ReplyTone
     public var replySignature: String
+    /// The three numbers in the totals strip, each added up across projects.
+    public var totals: [Metric]
 
     public init(
         demoMode: Bool = false,
@@ -40,7 +42,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
         sound: Bool = false,
         refreshOnOpen: Bool = true,
         replyTone: ReplyTone = .warm,
-        replySignature: String = ""
+        replySignature: String = "",
+        totals: [Metric] = CardLayout.standardTotals
     ) {
         self.demoMode = demoMode
         self.theme = theme
@@ -50,6 +53,48 @@ public struct AppSettings: Codable, Sendable, Equatable {
         self.refreshOnOpen = refreshOnOpen
         self.replyTone = replyTone
         self.replySignature = replySignature
+        self.totals = totals
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case demoMode, theme, accent, haptics, sound, refreshOnOpen, replyTone, replySignature, totals
+    }
+
+    /// Every key is optional, so a setting added later never resets the others saved before it.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let standard = AppSettings()
+        demoMode = try container.decodeIfPresent(Bool.self, forKey: .demoMode) ?? standard.demoMode
+        theme = (try? container.decodeIfPresent(Theme.self, forKey: .theme)) ?? standard.theme
+        accent = (try? container.decodeIfPresent(Accent.self, forKey: .accent)) ?? standard.accent
+        haptics = try container.decodeIfPresent(Bool.self, forKey: .haptics) ?? standard.haptics
+        sound = try container.decodeIfPresent(Bool.self, forKey: .sound) ?? standard.sound
+        refreshOnOpen = try container.decodeIfPresent(Bool.self, forKey: .refreshOnOpen) ?? standard.refreshOnOpen
+        replyTone = (try? container.decodeIfPresent(ReplyTone.self, forKey: .replyTone)) ?? standard.replyTone
+        replySignature = try container.decodeIfPresent(String.self, forKey: .replySignature) ?? standard.replySignature
+        let totals = (try container.decodeIfPresent([String].self, forKey: .totals) ?? []).compactMap(Metric.init(id:)).filter(\.isShared)
+        self.totals = totals.count == CardLayout.standardTotals.count ? totals : standard.totals
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(demoMode, forKey: .demoMode)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(accent, forKey: .accent)
+        try container.encode(haptics, forKey: .haptics)
+        try container.encode(sound, forKey: .sound)
+        try container.encode(refreshOnOpen, forKey: .refreshOnOpen)
+        try container.encode(replyTone, forKey: .replyTone)
+        try container.encode(replySignature, forKey: .replySignature)
+        try container.encode(totals.map(\.id), forKey: .totals)
+    }
+}
+
+/// The numbers a refresh reads for a project: its card, the totals strip and the widgets on screen. Anything else
+/// costs a query nobody looks at.
+public enum MetricsInUse {
+    public static func forProject(_ project: Project, totals: [Metric], widgets: Set<Metric>) -> Set<Metric> {
+        Set(project.card.metrics + totals + widgets).filter { $0.isAvailable(in: project) }
     }
 }
 
@@ -129,6 +174,20 @@ public enum SharedContainer {
     public static var hidesDemoMarks: Bool {
         get { UserDefaults(suiteName: appGroup)?.bool(forKey: "hidesDemoMarks") ?? false }
         set { UserDefaults(suiteName: appGroup)?.set(newValue, forKey: "hidesDemoMarks") }
+    }
+
+    /// The metrics placed widgets show, recorded by the widget each time it draws, so the app reads them too.
+    /// Entries older than a day belong to widgets that were removed (a placed widget redraws at least hourly).
+    public static func widgetMetrics(now: Date = .now) -> Set<Metric> {
+        let seen = UserDefaults(suiteName: appGroup)?.dictionary(forKey: "widgetMetrics") as? [String: Date] ?? [:]
+        return Set(seen.compactMap { id, date in now.timeIntervalSince(date) < 86_400 ? Metric(id: id) : nil })
+    }
+
+    public static func recordWidgetMetrics(_ metrics: [Metric], now: Date = .now) {
+        let defaults = UserDefaults(suiteName: appGroup)
+        var seen = (defaults?.dictionary(forKey: "widgetMetrics") as? [String: Date] ?? [:]).filter { now.timeIntervalSince($0.value) < 86_400 }
+        for metric in metrics { seen[metric.id] = now }
+        defaults?.set(seen, forKey: "widgetMetrics")
     }
 
     /// A project's picture. The version is in the name, so an edit that is cancelled never replaces the saved one.

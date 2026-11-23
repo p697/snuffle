@@ -109,7 +109,7 @@ private struct TabBar: View {
             item(.today, String(localized: "今日"), "waveform.path.ecg")
             item(.money, String(localized: "收入"), "dollarsign.circle")
             Color.clear.frame(width: 104, height: 46)
-            item(.reviews, String(localized: "评论"), "text.bubble", badge: model.totals.reviewsToAnswer)
+            item(.reviews, String(localized: "评论"), "text.bubble", badge: Int(model.total(.reviewsToAnswer) ?? 0))
             item(.projects, String(localized: "项目"), "square.grid.2x2")
         }
         .padding(.horizontal, 12)

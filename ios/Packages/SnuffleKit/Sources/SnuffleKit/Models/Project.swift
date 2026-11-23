@@ -30,6 +30,8 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
     public var appStore: AppStoreLink?
     public var googlePlay: GooglePlayLink?
     public var metrics: MetricSettings
+    /// The numbers on the project's card.
+    public var card: CardLayout
     /// Set when the person picked a picture for the project; bumped on every change. The picture lives only on this
     /// phone (`SharedContainer.projectIcon`), so it is lost with the app, like the rest of the local data.
     public var iconVersion: Int?
@@ -44,6 +46,7 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         appStore: AppStoreLink? = nil,
         googlePlay: GooglePlayLink? = nil,
         metrics: MetricSettings = .standard,
+        card: CardLayout? = nil,
         iconVersion: Int? = nil
     ) {
         self.id = id
@@ -56,6 +59,52 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         self.googlePlay = googlePlay
         self.metrics = metrics
         self.iconVersion = iconVersion
+        self.card = CardLayout(big: [])
+        self.card = card ?? CardLayout.standard(for: self)
+    }
+
+    /// Reads projects saved before cards were customizable (TestFlight builds before November 23, 2026), which had a fixed big
+    /// number and a "second number" in `metrics.extra`. Remove once those builds are out of use.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        tint = try container.decode(ProjectTint.self, forKey: .tint)
+        includeInRefresh = try container.decode(Bool.self, forKey: .includeInRefresh)
+        posthog = try container.decodeIfPresent(PostHogLink.self, forKey: .posthog)
+        revenueCat = try container.decodeIfPresent(RevenueCatLink.self, forKey: .revenueCat)
+        appStore = try container.decodeIfPresent(AppStoreLink.self, forKey: .appStore)
+        googlePlay = try container.decodeIfPresent(GooglePlayLink.self, forKey: .googlePlay)
+        metrics = try container.decode(MetricSettings.self, forKey: .metrics)
+        iconVersion = try container.decodeIfPresent(Int.self, forKey: .iconVersion)
+        card = CardLayout(big: [])
+        if let saved = try container.decodeIfPresent(CardLayout.self, forKey: .card) {
+            card = saved
+        } else {
+            // The old card: revenue, then the second number (PostHog only), then reviews.
+            var small = CardLayout.standard(for: self, sendsInstalls: false).small
+            if posthog != nil, let extra = (try? container.decode(LegacyMetrics.self, forKey: .metrics))?.extra?.metric {
+                small.insert(extra, at: min(small.count, metrics.revenue == .none ? 0 : 1))
+            }
+            card = CardLayout(big: CardLayout.standard(for: self).big, small: small)
+        }
+    }
+
+    private struct LegacyMetrics: Decodable {
+        enum Extra: Decodable {
+            case installs
+            case event(name: String, label: String)
+            case none
+
+            var metric: Metric? {
+                switch self {
+                case .installs: .installs
+                case .event(let name, _): name.isEmpty ? nil : .event(name, people: false)
+                case .none: nil
+                }
+            }
+        }
+        var extra: Extra?
     }
 
     /// The letter on the project's square badge.
@@ -77,6 +126,18 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
     }
 
     public var hasStore: Bool { appStore != nil || googlePlay != nil }
+
+    /// Disconnects a platform. Revenue counted by RevenueCat stops being counted rather than counting nothing.
+    public mutating func unlink(_ platform: Platform) {
+        switch platform {
+        case .posthog: posthog = nil
+        case .revenueCat:
+            revenueCat = nil
+            if metrics.revenue == .revenueCat { metrics.revenue = .none }
+        case .appStore: appStore = nil
+        case .googlePlay: googlePlay = nil
+        }
+    }
 }
 
 /// Badge colours. Stored by name so a palette change never rewrites saved projects.
@@ -152,38 +213,26 @@ public struct MetricSettings: Codable, Hashable, Sendable {
         case none
     }
 
-    /// The second small number on the card.
-    public enum Extra: Codable, Hashable, Sendable {
-        /// PostHog's `Application Installed` event (`MetricSettings.installEvent`).
-        case installs
-        /// Any event, shown as "<count> <label>", e.g. "25 次付费墙浏览".
-        case event(name: String, label: String)
-        case none
-    }
-
     public var newUsers: NewUsers
     public var revenue: Revenue
-    public var extra: Extra
 
-    public init(newUsers: NewUsers, revenue: Revenue, extra: Extra) {
+    public init(newUsers: NewUsers, revenue: Revenue) {
         self.newUsers = newUsers
         self.revenue = revenue
-        self.extra = extra
     }
 
     /// PostHog's conventional signup event and the install event its mobile SDKs send.
     public static let signupEvent = "user_signed_up"
     public static let installEvent = "Application Installed"
 
-    public static let standard = MetricSettings(newUsers: .event(signupEvent), revenue: .none, extra: .installs)
+    public static let standard = MetricSettings(newUsers: .event(signupEvent), revenue: .none)
+}
 
-    /// Defaults for a project, given which of the conventional events it actually sends: a project without signups
-    /// counts first-seen people, and one without installs shows no second number, so nothing sits at zero forever.
-    public static func suggested(seenEvents: Set<String>) -> MetricSettings {
-        MetricSettings(
-            newUsers: seenEvents.contains(signupEvent) ? .event(signupEvent) : .firstSeen,
-            revenue: .none,
-            extra: seenEvents.contains(installEvent) ? .installs : .none
-        )
+extension Project {
+    /// Counting and card defaults from the events the project actually sends: without signups new users are
+    /// first-seen people, and without installs the card has no install pill, so nothing sits at zero forever.
+    public mutating func adoptDefaults(seenEvents: Set<String>) {
+        metrics.newUsers = seenEvents.contains(MetricSettings.signupEvent) ? .event(MetricSettings.signupEvent) : .firstSeen
+        card = CardLayout.standard(for: self, sendsInstalls: seenEvents.contains(MetricSettings.installEvent))
     }
 }

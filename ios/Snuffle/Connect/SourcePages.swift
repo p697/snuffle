@@ -360,9 +360,9 @@ enum PostHogLinker {
         guard let (host, token) = try? await TokenBroker(store: model.credentials).posthogToken(account.id) else { return }
         let query = PostHogQueries.eventsSeen([MetricSettings.signupEvent, MetricSettings.installEvent], since: Date().addingTimeInterval(-30 * 86_400))
         guard let rows = try? await PostHogClient(host: host, token: { token }).query(projectId: item.id, query, name: "snuffle-defaults") else { return }
-        let suggested = MetricSettings.suggested(seenEvents: PostHogParsing.eventNames(rows))
-        session.project.metrics.newUsers = suggested.newUsers
-        session.project.metrics.extra = suggested.extra
+        let seen = PostHogParsing.eventNames(rows)
+        session.project.adoptDefaults(seenEvents: seen)
+        session.sendsInstalls = seen.contains(MetricSettings.installEvent)
     }
 }
 

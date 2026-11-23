@@ -1,91 +1,117 @@
 import Foundation
 
-/// Everything one refresh learned about one project. Optional fields are nil when no connected source provides them.
-public struct ProjectSnapshot: Codable, Hashable, Sendable {
+/// Everything one refresh learned about one project. A metric is missing when no connected source provides it, or
+/// when nothing on screen asked for it.
+public struct ProjectSnapshot: Hashable, Sendable {
     public var projectId: UUID
     public var fetchedAt: Date
     /// Start of "today" in the project's time zone when this was fetched; deltas never cross it.
     public var dayStart: Date
-    public var newUsers: Int?
+    public var values: [Metric: Double]
     /// New users yesterday up to the same time of day.
     public var newUsersYesterday: Int?
     /// New users per hour of today so far, oldest first.
     public var hourlyNewUsers: [Int]
-    public var online: Int?
-    public var active: Int?
-    public var revenue: Double?
-    /// Number of orders behind `revenue`; nil when the source only reports a total (RevenueCat).
-    public var sales: Int?
     public var revenueSource: Platform?
-    public var extra: ExtraCount?
-    public var reviewsToAnswer: Int?
+    /// When the hourly metrics (`Metric.isHourly`) were last read without a failure.
+    public var hourlyReadAt: Date?
     public var failures: [SourceFailure]
 
     public init(
         projectId: UUID,
         fetchedAt: Date,
         dayStart: Date,
-        newUsers: Int? = nil,
+        values: [Metric: Double] = [:],
         newUsersYesterday: Int? = nil,
         hourlyNewUsers: [Int] = [],
-        online: Int? = nil,
-        active: Int? = nil,
-        revenue: Double? = nil,
-        sales: Int? = nil,
         revenueSource: Platform? = nil,
-        extra: ExtraCount? = nil,
-        reviewsToAnswer: Int? = nil,
+        hourlyReadAt: Date? = nil,
         failures: [SourceFailure] = []
     ) {
         self.projectId = projectId
         self.fetchedAt = fetchedAt
         self.dayStart = dayStart
-        self.newUsers = newUsers
+        self.values = values
         self.newUsersYesterday = newUsersYesterday
         self.hourlyNewUsers = hourlyNewUsers
-        self.online = online
-        self.active = active
-        self.revenue = revenue
-        self.sales = sales
         self.revenueSource = revenueSource
-        self.extra = extra
-        self.reviewsToAnswer = reviewsToAnswer
+        self.hourlyReadAt = hourlyReadAt
         self.failures = failures
     }
 
-    /// Keeps the last known value for anything a failed source could not refresh, so one broken source never blanks the card.
+    public subscript(metric: Metric) -> Double? {
+        get { values[metric] }
+        set { values[metric] = newValue }
+    }
+
+    public var newUsers: Int? { values[.newUsers].map { Int($0) } }
+    public var revenue: Double? { values[.revenue] }
+    public var orders: Int? { values[.orders].map { Int($0) } }
+    public var online: Int? { values[.online].map { Int($0) } }
+    public var reviewsToAnswer: Int? { values[.reviewsToAnswer].map { Int($0) } }
+
+    /// Fills what this refresh did not read from the previous snapshot: hourly metrics between their hourly reads,
+    /// and, on the same day, anything a failed source could not refresh, so one broken source never blanks the card.
     public func fillingGaps(from previous: ProjectSnapshot?) -> ProjectSnapshot {
-        guard let previous, previous.dayStart == dayStart, !failures.isEmpty else { return self }
+        guard let previous else { return self }
         var merged = self
-        merged.newUsers = newUsers ?? previous.newUsers
-        merged.newUsersYesterday = newUsersYesterday ?? previous.newUsersYesterday
-        if hourlyNewUsers.isEmpty { merged.hourlyNewUsers = previous.hourlyNewUsers }
-        merged.online = online ?? previous.online
-        merged.active = active ?? previous.active
-        merged.revenue = revenue ?? previous.revenue
-        merged.sales = sales ?? previous.sales
-        merged.revenueSource = revenueSource ?? previous.revenueSource
-        merged.extra = extra ?? previous.extra
-        merged.reviewsToAnswer = reviewsToAnswer ?? previous.reviewsToAnswer
+        let sameDayFailure = previous.dayStart == dayStart && !failures.isEmpty
+        for (metric, value) in previous.values where merged.values[metric] == nil && (metric.isHourly || sameDayFailure) {
+            merged.values[metric] = value
+        }
+        if hourlyReadAt == nil { merged.hourlyReadAt = previous.hourlyReadAt }
+        if sameDayFailure {
+            merged.newUsersYesterday = newUsersYesterday ?? previous.newUsersYesterday
+            if hourlyNewUsers.isEmpty { merged.hourlyNewUsers = previous.hourlyNewUsers }
+            merged.revenueSource = revenueSource ?? previous.revenueSource
+        }
         return merged
     }
+
+    /// Whether a refresh at `now` should read the hourly metrics in `wanted` again.
+    public func needsHourlyRead(_ wanted: Set<Metric>, at now: Date) -> Bool {
+        let hourly = wanted.filter(\.isHourly)
+        guard !hourly.isEmpty else { return false }
+        guard let read = hourlyReadAt, now.timeIntervalSince(read) < Metric.hourlyInterval else { return true }
+        return hourly.contains { values[$0] == nil }
+    }
 }
 
-public struct ExtraCount: Codable, Hashable, Sendable {
-    public var value: Int
-    /// Text after the number, e.g. "次安装".
-    public var label: String
-
-    public init(value: Int, label: String) {
-        self.value = value
-        self.label = label
+extension ProjectSnapshot: Codable {
+    enum CodingKeys: String, CodingKey {
+        case projectId, fetchedAt, dayStart, values, newUsersYesterday, hourlyNewUsers, revenueSource, hourlyReadAt, failures
     }
 
-    /// The label for PostHog's install event, in the person's language when the snapshot was taken.
-    public static var installsLabel: String { String(localized: "次安装", bundle: .module) }
+    /// Values are stored by metric id. A cache from before metrics had ids reads as empty: the next refresh fills it.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        projectId = try container.decode(UUID.self, forKey: .projectId)
+        fetchedAt = try container.decode(Date.self, forKey: .fetchedAt)
+        dayStart = try container.decode(Date.self, forKey: .dayStart)
+        let stored = try container.decodeIfPresent([String: Double].self, forKey: .values) ?? [:]
+        values = Dictionary(stored.compactMap { key, value in Metric(id: key).map { ($0, value) } }, uniquingKeysWith: { first, _ in first })
+        newUsersYesterday = try container.decodeIfPresent(Int.self, forKey: .newUsersYesterday)
+        hourlyNewUsers = try container.decodeIfPresent([Int].self, forKey: .hourlyNewUsers) ?? []
+        revenueSource = try container.decodeIfPresent(Platform.self, forKey: .revenueSource)
+        hourlyReadAt = try container.decodeIfPresent(Date.self, forKey: .hourlyReadAt)
+        failures = try container.decodeIfPresent([SourceFailure].self, forKey: .failures) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(projectId, forKey: .projectId)
+        try container.encode(fetchedAt, forKey: .fetchedAt)
+        try container.encode(dayStart, forKey: .dayStart)
+        try container.encode(Dictionary(uniqueKeysWithValues: values.map { ($0.key.id, $0.value) }), forKey: .values)
+        try container.encodeIfPresent(newUsersYesterday, forKey: .newUsersYesterday)
+        try container.encode(hourlyNewUsers, forKey: .hourlyNewUsers)
+        try container.encodeIfPresent(revenueSource, forKey: .revenueSource)
+        try container.encodeIfPresent(hourlyReadAt, forKey: .hourlyReadAt)
+        try container.encode(failures, forKey: .failures)
+    }
 }
 
-public struct SourceFailure: Codable, Hashable, Sendable {
+public struct SourceFailure: Codable, Hashable, Sendable, LocalizedError {
     public var platform: Platform
     public var message: String
     /// Nil in caches written before kinds were recorded.
@@ -96,37 +122,45 @@ public struct SourceFailure: Codable, Hashable, Sendable {
         self.message = message
         self.kind = kind
     }
+
+    public var errorDescription: String? { message }
 }
 
-/// What went up between two refreshes of the same day. Nothing goes up across midnight: a new day starts from its own numbers.
+/// What went up between two refreshes of the same day. Nothing goes up across midnight: a new day starts from its own
+/// numbers.
 public struct SnapshotChange: Hashable, Sendable {
-    public var newUsers: Int
-    public var revenue: Double
-    public var sales: Int
-    /// New reviews waiting for a reply. Worth marking, but not a reason to celebrate.
-    public var reviews: Int
+    /// How much each metric rose; metrics that stayed or fell are absent.
+    public var rises: [Metric: Double]
 
-    public static let none = SnapshotChange(newUsers: 0, revenue: 0, sales: 0)
+    public static let none = SnapshotChange(rises: [:])
 
-    public var isUp: Bool { newUsers > 0 || revenue > 0.004 }
-    public var hasSale: Bool { revenue > 0.004 || sales > 0 }
-    public var isNews: Bool { isUp || reviews > 0 }
-
-    public init(newUsers: Int, revenue: Double, sales: Int, reviews: Int = 0) {
-        self.newUsers = newUsers
-        self.revenue = revenue
-        self.sales = sales
-        self.reviews = reviews
+    public init(rises: [Metric: Double]) {
+        self.rises = rises
     }
 
-    public init(from old: ProjectSnapshot?, to new: ProjectSnapshot) {
+    /// The rises among `metrics` (what a card or the strip shows), measured from `old` to `new`.
+    public init(from old: ProjectSnapshot?, to new: ProjectSnapshot, metrics: some Sequence<Metric>) {
         guard let old, old.dayStart == new.dayStart else {
             self = .none
             return
         }
-        newUsers = max(0, (new.newUsers ?? 0) - (old.newUsers ?? 0))
-        revenue = max(0, (new.revenue ?? 0) - (old.revenue ?? 0))
-        sales = max(0, (new.sales ?? 0) - (old.sales ?? 0))
-        reviews = max(0, (new.reviewsToAnswer ?? 0) - (old.reviewsToAnswer ?? 0))
+        var rises: [Metric: Double] = [:]
+        for metric in Set(metrics) where metric.rise != .ignore {
+            guard let before = old[metric], let after = new[metric], after - before > 0.004 else { continue }
+            rises[metric] = after - before
+        }
+        self.rises = rises
+    }
+
+    public subscript(metric: Metric) -> Double? { rises[metric] }
+
+    /// Something good went up: worth the cat's glee.
+    public var isUp: Bool { rises.keys.contains { $0.rise == .celebrate } }
+    public var hasSale: Bool { rises.keys.contains(where: \.isSale) }
+    /// Anything to mark, including a new review to answer.
+    public var isNews: Bool { !rises.isEmpty }
+
+    public mutating func add(_ other: SnapshotChange) {
+        rises.merge(other.rises, uniquingKeysWith: +)
     }
 }

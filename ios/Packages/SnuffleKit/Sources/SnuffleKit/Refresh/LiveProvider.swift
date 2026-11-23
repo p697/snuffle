@@ -53,31 +53,82 @@ public struct LiveProvider: DataProvider {
     // MARK: Refresh
 
     private enum Part: Sendable {
-        case posthog(PostHogParsing.Counts?, firstSeen: (Int?, Int?, [Int])?, online: Int?, active: Int?)
+        case values([Metric: Double])
+        case newUsersDetail(yesterday: Int?, hourly: [Int])
+        case revenueSource(Platform)
         case timeZone(String)
-        case revenueCat(Double)
         case reviews([Review])
         case failure(SourceFailure)
+        /// An hourly metric could not be read; the next refresh tries again, and the card keeps the last value.
+        case hourlyFailed
     }
 
-    public func refresh(_ project: Project) async -> RefreshResult {
+    public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?) async -> RefreshResult {
         let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone)
-        let parts = await withTaskGroup(of: [Part].self) { group in
+        let wanted = metrics.filter { $0.isAvailable(in: project) }
+        let readHourly = previous?.needsHourlyRead(wanted, at: clock.now) ?? wanted.contains(where: \.isHourly)
+        let parts = await read(project, wanted: wanted, clock: clock, readHourly: readHourly, reviews: project.hasStore)
+        return Self.assemble(parts, project: project, clock: clock, readHourly: readHourly)
+    }
+
+    public func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double] {
+        let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone)
+        let wanted = metrics.filter { $0.isAvailable(in: project) }
+        let parts = await read(project, wanted: wanted, clock: clock, readHourly: true, reviews: wanted.contains(.reviewsToAnswer))
+        let result = Self.assemble(parts, project: project, clock: clock, readHourly: true)
+        let values = result.snapshot.values.filter { wanted.contains($0.key) }
+        if values.isEmpty, let failure = result.snapshot.failures.first { throw failure }
+        return values
+    }
+
+    public func events(for project: Project) async throws -> [EventStat] {
+        guard let link = project.posthog else { return [] }
+        let since = now().addingTimeInterval(-7 * 86_400)
+        let rows = try await withPostHog(link.accountId) {
+            try await $0.query(projectId: link.projectId, PostHogQueries.eventStats(since: since), name: "snuffle_event_stats")
+        }
+        return PostHogParsing.eventStats(rows)
+    }
+
+    /// Reads every source the wanted metrics need, at once; each fails on its own.
+    private func read(_ project: Project, wanted: Set<Metric>, clock: ProjectClock, readHourly: Bool, reviews: Bool) async -> [Part] {
+        await withTaskGroup(of: [Part].self) { group in
             if let link = project.posthog {
-                group.addTask { await self.posthogPart(project, link: link, clock: clock) }
+                group.addTask { await self.posthogPart(project, link: link, wanted: wanted, clock: clock) }
+                if readHourly, wanted.contains(where: { $0.isHourly && $0.source == .posthog }) {
+                    group.addTask { await self.posthogHourlyPart(link: link, wanted: wanted, clock: clock) }
+                }
             }
-            if let link = project.revenueCat, project.metrics.revenue == .revenueCat {
-                group.addTask {
-                    do {
-                        let client = try await self.revenueCat(link.accountId)
-                        let day = RevenueCatClient.utcDate(clock.now)
-                        return [.revenueCat(try await client.revenue(projectId: link.projectId, from: day, to: day))]
-                    } catch {
-                        return [.failure(Self.failure(.revenueCat, error))]
+            if let link = project.revenueCat {
+                if project.metrics.revenue == .revenueCat {
+                    group.addTask {
+                        do {
+                            let client = try await self.revenueCat(link.accountId)
+                            let day = RevenueCatClient.utcDate(clock.now)
+                            return [.values([.revenue: try await client.revenue(projectId: link.projectId, from: day, to: day)]), .revenueSource(.revenueCat)]
+                        } catch {
+                            return [.failure(Self.failure(.revenueCat, error))]
+                        }
+                    }
+                }
+                if readHourly, wanted.contains(where: { $0.source == .revenueCat }) {
+                    group.addTask {
+                        do {
+                            let overview = try await self.revenueCat(link.accountId).overview(projectId: link.projectId)
+                            var values: [Metric: Double] = [:]
+                            values[.mrr] = overview.mrr
+                            values[.activeSubscriptions] = overview.activeSubscriptions.map(Double.init)
+                            values[.activeTrials] = overview.activeTrials.map(Double.init)
+                            values[.revenueLast28Days] = overview.revenueLast28Days
+                            return [.values(values)]
+                        } catch {
+                            // A failed overview is a RevenueCat failure like any other, but the card keeps the last value.
+                            return [.failure(Self.failure(.revenueCat, error)), .hourlyFailed]
+                        }
                     }
                 }
             }
-            if let link = project.appStore {
+            if reviews, let link = project.appStore {
                 group.addTask {
                     do {
                         return [.reviews(try await self.appStore(link.accountId).reviews(appId: link.appId, projectId: project.id))]
@@ -86,7 +137,7 @@ public struct LiveProvider: DataProvider {
                     }
                 }
             }
-            if let link = project.googlePlay {
+            if reviews, let link = project.googlePlay {
                 group.addTask {
                     do {
                         return [.reviews(try await self.withGoogle(link.accountId) { try await $0.reviews(packageName: link.packageName, projectId: project.id) })]
@@ -99,28 +150,46 @@ public struct LiveProvider: DataProvider {
             for await batch in group { all += batch }
             return all
         }
-        return Self.assemble(parts, project: project, clock: clock)
     }
 
-    private func posthogPart(_ project: Project, link: PostHogLink, clock: ProjectClock) async -> [Part] {
+    /// Today's PostHog numbers: new users with their hours, people active and online, page views, event revenue and
+    /// orders, and the event metrics asked for. Two or three queries over today and yesterday, whatever is shown.
+    private func posthogPart(_ project: Project, link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock) async -> [Part] {
         do {
-            let metrics = project.metrics
+            let settings = project.metrics
+            let events = wanted.filter { if case .event = $0 { true } else { false } }.sorted { $0.id < $1.id }
             return try await withPostHog(link.accountId) { client in
+                let countsQuery = PostHogQueries.counts(settings: settings, events: events, clock: clock)
                 async let countsRow: [[JSONValue]] = {
-                    guard let sql = PostHogQueries.eventCounts(metrics: metrics, clock: clock) else { return [] }
-                    return try await client.query(projectId: link.projectId, sql, name: "snuffle_counts")
+                    guard let countsQuery else { return [] }
+                    return try await client.query(projectId: link.projectId, countsQuery.sql, name: "snuffle_counts")
                 }()
                 async let presenceRow = client.query(projectId: link.projectId, PostHogQueries.presence(clock: clock), name: "snuffle_presence")
                 async let firstSeenRow: [[JSONValue]] = {
-                    guard metrics.newUsers == .firstSeen else { return [] }
+                    guard settings.newUsers == .firstSeen else { return [] }
                     return try await client.query(projectId: link.projectId, PostHogQueries.firstSeen(clock: clock), name: "snuffle_first_seen")
                 }()
                 // Read alongside the queries, so it costs no extra wait; a failure here never fails the numbers.
                 async let zone = try? client.timeZone(projectId: link.projectId)
-                let counts = try await countsRow.first.map { PostHogParsing.counts($0, metrics: metrics) }
+
+                var values: [Metric: Double] = [:]
+                var parts: [Part] = []
+                if let countsQuery, let row = try await countsRow.first {
+                    let counts = PostHogParsing.counts(row, columns: countsQuery.columns)
+                    values.merge(counts.values) { $1 }
+                    if case .event = settings.newUsers { parts.append(.newUsersDetail(yesterday: counts.newYesterday, hourly: counts.hourly)) }
+                    if case .posthogEvent = settings.revenue { parts.append(.revenueSource(.posthog)) }
+                }
+                if let row = try await firstSeenRow.first {
+                    let firstSeen = PostHogParsing.firstSeen(row)
+                    values[.newUsers] = firstSeen.today.map(Double.init)
+                    parts.append(.newUsersDetail(yesterday: firstSeen.yesterday, hourly: firstSeen.hourly))
+                }
                 let presence = try await presenceRow.first ?? []
-                let firstSeen = try await firstSeenRow.first.map(PostHogParsing.firstSeen)
-                var parts = [Part.posthog(counts, firstSeen: firstSeen.map { ($0.today, $0.yesterday, $0.hourly) }, online: presence.first?.int, active: presence.count > 1 ? presence[1].int : nil)]
+                values[.online] = presence.first?.double
+                values[.activeToday] = presence.count > 1 ? presence[1].double : nil
+                values[.pageviews] = presence.count > 2 ? presence[2].double : nil
+                parts.append(.values(values.compactMapValues { $0 }))
                 if let identifier = await zone { parts.append(.timeZone(identifier)) }
                 return parts
             }
@@ -129,55 +198,57 @@ public struct LiveProvider: DataProvider {
         }
     }
 
-    private static func assemble(_ parts: [Part], project: Project, clock: ProjectClock) -> RefreshResult {
+    /// People active this week and month and the total: scans of 30 days and of the people table, so hourly only.
+    private func posthogHourlyPart(link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock) async -> [Part] {
+        do {
+            return try await withPostHog(link.accountId) { client in
+                let needsActivity = wanted.contains(.activeWeek) || wanted.contains(.activeMonth)
+                async let activityRow: [[JSONValue]] = {
+                    guard needsActivity else { return [] }
+                    return try await client.query(projectId: link.projectId, PostHogQueries.activity(clock: clock, month: wanted.contains(.activeMonth)), name: "snuffle_activity")
+                }()
+                async let totalRow: [[JSONValue]] = {
+                    guard wanted.contains(.totalUsers) else { return [] }
+                    return try await client.query(projectId: link.projectId, PostHogQueries.totalUsers, name: "snuffle_total_users")
+                }()
+                var values: [Metric: Double] = [:]
+                if let row = try await activityRow.first {
+                    values[.activeWeek] = row.first?.double
+                    if row.count > 1 { values[.activeMonth] = row[1].double }
+                }
+                if let row = try await totalRow.first { values[.totalUsers] = row.first?.double }
+                return [.values(values)]
+            }
+        } catch {
+            return [.hourlyFailed]
+        }
+    }
+
+    private static func assemble(_ parts: [Part], project: Project, clock: ProjectClock, readHourly: Bool) -> RefreshResult {
         var snapshot = ProjectSnapshot(projectId: project.id, fetchedAt: clock.now, dayStart: clock.todayStart)
         var reviews: [Review]?
         var storeFailed = false
+        var hourlyFailed = false
         var zone: String?
         for part in parts {
             switch part {
-            case .posthog(let counts, let firstSeen, let online, let active):
-                snapshot.online = online
-                snapshot.active = active
-                if let firstSeen {
-                    snapshot.newUsers = firstSeen.0
-                    snapshot.newUsersYesterday = firstSeen.1
-                    snapshot.hourlyNewUsers = firstSeen.2
-                } else if let counts {
-                    snapshot.newUsers = counts.newToday
-                    snapshot.newUsersYesterday = counts.newYesterday
-                    snapshot.hourlyNewUsers = counts.hourly
-                }
-                if let counts {
-                    if case .posthogEvent = project.metrics.revenue {
-                        snapshot.revenue = counts.revenue
-                        snapshot.sales = counts.sales
-                        snapshot.revenueSource = .posthog
-                    }
-                    if let extra = counts.extra {
-                        switch project.metrics.extra {
-                        case .installs: snapshot.extra = ExtraCount(value: extra, label: ExtraCount.installsLabel)
-                        case .event(_, let label): snapshot.extra = ExtraCount(value: extra, label: label)
-                        case .none: break
-                        }
-                    }
-                }
-            case .timeZone(let identifier):
-                zone = identifier
-            case .revenueCat(let value):
-                snapshot.revenue = value
-                snapshot.sales = nil
-                snapshot.revenueSource = .revenueCat
-            case .reviews(let list):
-                reviews = (reviews ?? []) + list
+            case .values(let values): snapshot.values.merge(values) { $1 }
+            case .newUsersDetail(let yesterday, let hourly):
+                snapshot.newUsersYesterday = yesterday
+                snapshot.hourlyNewUsers = hourly
+            case .revenueSource(let platform): snapshot.revenueSource = platform
+            case .timeZone(let identifier): zone = identifier
+            case .reviews(let list): reviews = (reviews ?? []) + list
+            case .hourlyFailed: hourlyFailed = true
             case .failure(let failure):
                 snapshot.failures.append(failure)
                 if failure.platform == .appStore || failure.platform == .googlePlay { storeFailed = true }
             }
         }
+        if readHourly && !hourlyFailed { snapshot.hourlyReadAt = clock.now }
         // When one store answers and the other fails, count what is known; the card names the failed store,
-        // and `fillingGaps` keeps yesterday's count only when no store answered at all.
-        snapshot.reviewsToAnswer = reviews.map { $0.filter(\.needsReply).count }
+        // and `fillingGaps` keeps the last count only when no store answered at all.
+        if let reviews { snapshot.values[.reviewsToAnswer] = Double(reviews.filter(\.needsReply).count) }
         snapshot.failures.sort { $0.platform.rawValue < $1.platform.rawValue }
         // A partial list would drop the failed store's reviews from the inbox, so only a complete one replaces it.
         return RefreshResult(snapshot: snapshot, reviews: storeFailed ? nil : reviews, posthogTimeZone: zone)

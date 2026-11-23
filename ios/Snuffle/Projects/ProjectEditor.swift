@@ -140,16 +140,7 @@ struct ProjectEditor: View {
         }
     }
 
-    private func unlink(_ platform: Platform) {
-        switch platform {
-        case .posthog: draft.posthog = nil
-        case .revenueCat:
-            draft.revenueCat = nil
-            if draft.metrics.revenue == .revenueCat { draft.metrics.revenue = .none }
-        case .appStore: draft.appStore = nil
-        case .googlePlay: draft.googlePlay = nil
-        }
-    }
+    private func unlink(_ platform: Platform) { draft.unlink(platform) }
 
     private func save() {
         // Anything beyond name, colour and picture changes what the numbers are.

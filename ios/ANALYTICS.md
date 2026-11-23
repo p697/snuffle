@@ -43,6 +43,8 @@ Business charts use `client_app = 'snuffle_ios' AND app_environment = 'release' 
 | `source_connect_resolved` | A sign-in or key check against a platform ends | `platform`, `method` (oauth, key, saved), `flow` (new_project, existing_project), `outcome` (succeeded, failed, cancelled), `error_kind` on failure |
 | `project_saved` | A project is created or edited | `is_new`, `source_count`, `has_posthog`, `has_revenuecat`, `has_app_store`, `has_google_play`, `project_count` |
 | `project_deleted` | A project is deleted | `source_count`, `project_count` |
+| `card_layout_saved` | "完成" in the card editor | `big`, `small` (metric kinds in order, e.g. `new_users`, `active_month`, `installs`; any other event is `event`, never its name), `everywhere` (applied to every project) |
+| `totals_layout_saved` | "完成" in the totals editor | `metrics` (the three metric kinds, left to right) |
 | `account_removed` | A platform account is removed | `platform` |
 | `refresh_completed` | A refresh finishes revealing every card | `trigger` (manual, open, project, connect), `projects`, `failed_projects`, `went_up`, `sale`, `duration_ms` |
 | `refresh_source_failed` | One source could not be read in a refresh (one per source per refresh) | `platform`, `error_kind` |
@@ -66,6 +68,7 @@ Business charts use `client_app = 'snuffle_ios' AND app_environment = 'release' 
 | Connect success | `source_connect_resolved` by `platform` and `method`: succeeded / (succeeded + failed); cancellations apart. |
 | Refresh health | `refresh_source_failed` per `refresh_completed`, by `platform` and `error_kind`; `unauthorized` means a person must reconnect. |
 | Engagement | `refresh_completed` per active install per day, by `trigger`; `tab_viewed` by `tab`; installs with `widget_count > 0`. |
+| Metric demand | Installs with `card_layout_saved` or `totals_layout_saved`; which kinds appear in `big`, `small` and `metrics`, to choose the defaults. |
 | Paywall conversion | Installs with `purchase_resolved` purchased / installs with `paywall_viewed`, by `reason` and `plan`. |
 | Retention | D1 / D7 / D30 return with `app_opened` after the first `app_opened`; hide periods not yet complete. |
 

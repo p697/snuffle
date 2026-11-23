@@ -13,10 +13,16 @@ struct PostHogTests {
         let seen = PostHogParsing.eventNames([[.string("Application Installed")], [.null], []])
         #expect(seen == ["Application Installed"])
 
-        // A project without signups counts first-seen people instead of sitting at zero.
-        #expect(MetricSettings.suggested(seenEvents: seen) == MetricSettings(newUsers: .firstSeen, revenue: .none, extra: .installs))
-        #expect(MetricSettings.suggested(seenEvents: []) == MetricSettings(newUsers: .firstSeen, revenue: .none, extra: .none))
-        #expect(MetricSettings.suggested(seenEvents: [MetricSettings.signupEvent, MetricSettings.installEvent]) == .standard)
+        // A project without signups counts first-seen people instead of sitting at zero, and one without installs
+        // has no install pill.
+        var project = Project(name: "p", tint: .ink, posthog: PostHogLink(accountId: UUID(), projectId: 1, projectName: "p", timeZone: "UTC"))
+        project.adoptDefaults(seenEvents: seen)
+        #expect(project.metrics == MetricSettings(newUsers: .firstSeen, revenue: .none))
+        #expect(project.card == CardLayout(big: [.newUsers], small: [.installs]))
+        project.adoptDefaults(seenEvents: [])
+        #expect(project.card == CardLayout(big: [.newUsers]))
+        project.adoptDefaults(seenEvents: [MetricSettings.signupEvent, MetricSettings.installEvent])
+        #expect(project.metrics == .standard)
     }
 
     @Test func literalsAreEscaped() {
@@ -25,24 +31,40 @@ struct PostHogTests {
         #expect(PostHogQueries.property("plan tier") == "properties['plan tier']")
     }
 
-    @Test func countsQueryHasFixedColumnsThenOneColumnPerHour() throws {
-        let metrics = MetricSettings(newUsers: .event("user_signed_up"), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), extra: .installs)
-        let sql = try #require(PostHogQueries.eventCounts(metrics: metrics, clock: clock))
+    @Test func countsQueryHasFixedColumnsThenEventsThenOneColumnPerHour() throws {
+        let settings = MetricSettings(newUsers: .event("user_signed_up"), revenue: .posthogEvent(event: "purchase", valueProperty: "value"))
+        let query = try #require(PostHogQueries.counts(settings: settings, events: [.installs, .event("paywall_viewed", people: true)], clock: clock))
+        let sql = query.sql
         // New users are people, not events: someone whose signup is sent twice still counts once.
-        #expect(sql.hasPrefix("SELECT uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795132800)) AS new_today, uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795046400)"))
-        #expect(sql.contains("uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795132800) AND timestamp < fromUnixTimestamp(1795136400)) AS h0"))
-        #expect(sql.contains("sumIf(toFloat(properties['value']), event = 'purchase'"))
-        #expect(sql.contains("AS h0"))
-        #expect(sql.contains("AS h9"))
-        #expect(!sql.contains("AS h10"))
-        #expect(sql.contains("event IN ('Application Installed', 'purchase', 'user_signed_up')"))
+        #expect(sql.hasPrefix("SELECT uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795132800)) AS c0, uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795046400)"))
+        #expect(sql.contains("sumIf(toFloat(properties['value']), event = 'purchase' AND timestamp >= fromUnixTimestamp(1795132800)) AS c2"))
+        #expect(sql.contains("countIf(event = 'Application Installed' AND timestamp >= fromUnixTimestamp(1795132800)) AS c4"))
+        #expect(sql.contains("uniqExactIf(person_id, event = 'paywall_viewed' AND timestamp >= fromUnixTimestamp(1795132800)) AS c5"))
+        #expect(sql.contains("uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795132800) AND timestamp < fromUnixTimestamp(1795136400)) AS c6"))
+        #expect(sql.contains("AS c15"))
+        #expect(!sql.contains("AS c16"))
+        #expect(sql.contains("event IN ('Application Installed', 'paywall_viewed', 'purchase', 'user_signed_up')"))
+        #expect(query.columns.prefix(6) == [.newToday, .newYesterday, .revenue, .orders, .metric(.installs), .metric(.event("paywall_viewed", people: true))])
+        #expect(query.columns.filter { $0 == .hour }.count == 10)
         // Yesterday "by now" ends at the same wall-clock time yesterday.
         #expect(sql.contains("timestamp < fromUnixTimestamp(\(Int(clock.sameTimeYesterday.timeIntervalSince1970)))"))
     }
 
     @Test func countsQueryIsSkippedWhenNothingIsEventBased() {
-        let metrics = MetricSettings(newUsers: .firstSeen, revenue: .revenueCat, extra: .none)
-        #expect(PostHogQueries.eventCounts(metrics: metrics, clock: clock) == nil)
+        let settings = MetricSettings(newUsers: .firstSeen, revenue: .revenueCat)
+        #expect(PostHogQueries.counts(settings: settings, events: [], clock: clock) == nil)
+    }
+
+    @Test func hourlyQueriesScanOnlyTheWindowAsked() {
+        let week = Int(clock.now.timeIntervalSince1970) - 7 * 86_400
+        let month = Int(clock.now.timeIntervalSince1970) - 30 * 86_400
+        #expect(PostHogQueries.activity(clock: clock, month: false) == "SELECT uniq(person_id) AS week FROM events WHERE timestamp >= fromUnixTimestamp(\(week))")
+        #expect(PostHogQueries.activity(clock: clock, month: true).hasSuffix("FROM events WHERE timestamp >= fromUnixTimestamp(\(month))"))
+        #expect(PostHogQueries.totalUsers.hasSuffix("FROM persons WHERE is_identified = 1"))
+        let stats = PostHogParsing.eventStats([[.string("$set"), .number(9), .number(9)], [.string("user_signed_up"), .number(4), .number(5)]])
+        #expect(stats == [EventStat(name: "user_signed_up", people: 4, times: 5)])
+        #expect(stats.first?.looksLikeSignup == true)
+        #expect(PostHogQueries.presence(clock: clock).contains("countIf(event = '$pageview') AS pageviews"))
     }
 
     @Test func firstSeenComesFromEventsWithinABoundedLookback() {
@@ -72,32 +94,21 @@ struct PostHogTests {
 
     @Test func historyDaysFollowTheProjectZone() {
         let shanghai = ProjectClock(now: clock.now, timeZoneIdentifier: "Asia/Shanghai")
-        let metrics = MetricSettings(newUsers: .event("user_signed_up"), revenue: .none, extra: .none)
+        let metrics = MetricSettings(newUsers: .event("user_signed_up"), revenue: .none)
         let sql = PostHogQueries.history(metrics: metrics, clock: shanghai, days: 7)
         #expect(sql.hasPrefix("SELECT toString(toDate(toTimeZone(timestamp, 'Asia/Shanghai'))) AS day"))
         #expect(sql.contains("uniqExactIf(person_id, event = 'user_signed_up') AS new_users"))
         #expect(PostHogQueries.firstSeenHistory(clock: shanghai, days: 7).hasPrefix("SELECT toString(toDate(toTimeZone(first, 'Asia/Shanghai'))) AS day"))
     }
 
-    @Test func parsesCountsInBuilderOrder() {
-        let metrics = MetricSettings(newUsers: .event("user_signed_up"), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), extra: .installs)
+    @Test func parsesCountsByColumn() throws {
+        let settings = MetricSettings(newUsers: .event("user_signed_up"), revenue: .posthogEvent(event: "purchase", valueProperty: "value"))
+        let query = try #require(PostHogQueries.counts(settings: settings, events: [.installs], clock: ProjectClock(now: ISO8601.parse("2026-11-20T02:10:00Z")!, timeZoneIdentifier: "UTC")))
         let row: [JSONValue] = [.number(3406), .number(2851), .number(940), .number(15), .number(557), .number(3), .number(0), .number(7)]
-        let counts = PostHogParsing.counts(row, metrics: metrics)
-        #expect(counts.newToday == 3406)
+        let counts = PostHogParsing.counts(row, columns: query.columns)
+        #expect(counts.values == [.newUsers: 3406, .revenue: 940, .orders: 15, .installs: 557])
         #expect(counts.newYesterday == 2851)
-        #expect(counts.revenue == 940)
-        #expect(counts.sales == 15)
-        #expect(counts.extra == 557)
         #expect(counts.hourly == [3, 0, 7])
-    }
-
-    @Test func parsesCountsWithoutRevenueOrExtra() {
-        let metrics = MetricSettings(newUsers: .event("signup"), revenue: .none, extra: .none)
-        let counts = PostHogParsing.counts([.number(5), .number(2), .number(1), .number(4)], metrics: metrics)
-        #expect(counts.newToday == 5)
-        #expect(counts.revenue == nil)
-        #expect(counts.extra == nil)
-        #expect(counts.hourly == [1, 4])
     }
 
     @Test func ordersNameTheProductFromTierAndInterval() {

@@ -146,6 +146,19 @@ enum Analytics {
         ])
     }
 
+    /// The card editor's "完成". Event metrics are named "event", never by the event the person picked.
+    static func cardLayoutSaved(_ layout: CardLayout, everywhere: Bool) {
+        capture("card_layout_saved", [
+            "big": layout.big.map(\.analyticsName),
+            "small": layout.small.map(\.analyticsName),
+            "everywhere": everywhere,
+        ])
+    }
+
+    static func totalsLayoutSaved(_ metrics: [Metric]) {
+        capture("totals_layout_saved", ["metrics": metrics.map(\.analyticsName)])
+    }
+
     static func projectDeleted(_ project: Project, projectCount: Int) {
         capture("project_deleted", ["source_count": project.sourceCount, "project_count": projectCount])
     }
