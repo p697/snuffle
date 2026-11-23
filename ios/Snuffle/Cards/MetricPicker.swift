@@ -85,7 +85,7 @@ private struct MissingSourceRow: View {
 struct CardMetricPicker: View {
     @Binding var project: Project
     /// Shared with the card editor, so its preview shows what the library read.
-    @Binding var measured: [Metric: Double]
+    @Binding var measured: MeasuredNumbers
     var slot: CardSlot
     var layout: CardLayout
     var pick: (Metric) -> Void
@@ -125,7 +125,9 @@ struct CardMetricPicker: View {
                 case .scope: ScopePage(project: $project)
                 case .events:
                     EventPicker(project: project, purpose: .metric) { metric in
-                        Task { if let values = try? await model.provider.measure(project, metrics: [metric]) { measured.merge(values) { $1 } } }
+                        Task { [project] in
+                            if let values = try? await model.provider.measure(project, metrics: [metric]) { measured.add(values, countedAs: project.metrics) }
+                        }
                         choose(metric)
                     }
                 }
@@ -272,7 +274,12 @@ struct CardMetricPicker: View {
     }
 
     private func value(_ metric: Metric) -> Double? {
-        measured[metric] ?? model.snapshot(project.id)?[metric]
+        measured.values(countedAs: project.metrics)[metric] ?? cached[metric]
+    }
+
+    /// The cache's numbers that mean the same under the counting being chosen.
+    private var cached: [Metric: Double] {
+        model.snapshot(project.id)?.values(countedAs: project.metrics) ?? [:]
     }
 
     private func choose(_ metric: Metric) {
@@ -280,20 +287,37 @@ struct CardMetricPicker: View {
         dismiss()
     }
 
-    /// Reads what the cache does not have (hourly numbers nobody showed yet, counting just changed).
+    /// Reads what neither the cache nor an earlier read has for the counting being chosen: hourly numbers nobody
+    /// showed yet, and every number that follows counting once it changed.
     private func measure() async {
         let library = Metric.fixed.filter { $0.isAvailable(in: project) }
-        let cached = model.snapshot(project.id)
-        let original = model.projects.first { $0.id == project.id }
-        let countingChanged = original?.metrics != project.metrics
+        let settings = project.metrics
+        let known = cached.merging(measured.values(countedAs: settings)) { $1 }
         let events = layout.metrics.filter { !$0.isShared }
-        let missing = Set((library + events).filter { (measured[$0] == nil && cached?[$0] == nil) || (countingChanged && $0.followsCounting) })
+        let missing = Set((library + events).filter { known[$0] == nil })
         guard !missing.isEmpty else { return }
         loading = missing
-        defer { loading = [] }
-        if let values = try? await model.provider.measure(project, metrics: missing) {
-            measured.merge(values) { $1 }
-        }
+        let values = try? await model.provider.measure(project, metrics: missing)
+        // Counting changed meanwhile: a newer read is on its way, and these numbers are for settings left behind.
+        guard !Task.isCancelled else { return }
+        loading = []
+        if let values { measured.add(values, countedAs: settings) }
+    }
+}
+
+/// Numbers the metric library read for a draft project, with the counting they were read under, so a number read
+/// before the counting or scope changed is never shown for the new one.
+struct MeasuredNumbers {
+    private var countedAs: MetricSettings?
+    private var values: [Metric: Double] = [:]
+
+    func values(countedAs settings: MetricSettings) -> [Metric: Double] {
+        countedAs == settings ? values : values.filter { !$0.key.followsCounting }
+    }
+
+    mutating func add(_ read: [Metric: Double], countedAs settings: MetricSettings) {
+        values = values(countedAs: settings).merging(read) { $1 }
+        countedAs = settings
     }
 }
 

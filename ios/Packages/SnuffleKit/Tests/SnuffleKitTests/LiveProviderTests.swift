@@ -137,6 +137,31 @@ struct LiveProviderTests {
         #expect(revenueCall.url?.query()?.contains("start_date=2026-11-20") == true)
     }
 
+    @Test func hourlyNumbersReadUnderOtherScopeAreReadAgain() async {
+        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[3,40,120,800]]}"#)])
+        var scoped = project
+        scoped.metrics.excludedSurfaces = [.visitors]
+        let now = ISO8601.parse("2026-11-20T01:30:00Z")!
+        let queries = { StubProtocol.seen.filter { $0.url?.path().contains("/query") == true }.count }
+        func previous(_ countedAs: MetricSettings?) -> ProjectSnapshot {
+            ProjectSnapshot(projectId: scoped.id, fetchedAt: now, dayStart: now, values: [.activeMonth: 1233], hourlyReadAt: now.addingTimeInterval(-600), countedAs: countedAs)
+        }
+
+        // Read ten minutes ago under the same scope: the monthly number is kept until the hour is up.
+        let kept = await provider(store: store).refresh(scoped, metrics: [.activeMonth], previous: previous(scoped.metrics.inEffect))
+        #expect(queries() == 2, "today's counts and presence only")
+        #expect(kept.snapshot.countedAs == scoped.metrics.inEffect)
+        #expect(kept.snapshot.fillingGaps(from: previous(scoped.metrics.inEffect))[.activeMonth] == 1233)
+
+        // Read under other scope, or before scopes were recorded: read again now, and never carried over.
+        for other in [nil, scoped.metrics.leaving(out: [])] {
+            StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[3,40,120,800]]}"#)])
+            let reread = await provider(store: store).refresh(scoped, metrics: [.activeMonth], previous: previous(other))
+            #expect(queries() == 3, "and the hourly activity")
+            #expect(reread.snapshot.fillingGaps(from: previous(other))[.activeMonth] != 1233)
+        }
+    }
+
     @Test func oneFailingSourceDoesNotBlankTheRest() async {
         StubProtocol.reset([
             "us.posthog.com/api/projects/42/query": (200, #"{"results":[[18,5,1,3]]}"#),

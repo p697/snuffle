@@ -98,6 +98,25 @@ struct ModelTests {
         #expect(merged.hourlyReadAt == day)
     }
 
+    @Test func numbersFollowTheCountingTheyWereReadUnder() throws {
+        let id = UUID()
+        let day = Date(timeIntervalSince1970: 1_000_000)
+        let settings = MetricSettings(newUsers: .firstSeen, revenue: .revenueCat, excludedSurfaces: [.visitors])
+        let everyone = settings.leaving(out: [])
+        let read = ProjectSnapshot(projectId: id, fetchedAt: day, dayStart: day, values: [.activeMonth: 1233, .mrr: 86, .newUsers: 4], hourlyReadAt: day, countedAs: everyone)
+        // Shown for the settings it was read under; under others only what does not follow counting.
+        #expect(read.values(countedAs: everyone) == read.values)
+        #expect(read.values(countedAs: settings) == [.mrr: 86])
+        // A refresh under the new scope keeps the hourly MRR, not the old monthly actives or their read time.
+        let next = ProjectSnapshot(projectId: id, fetchedAt: day, dayStart: day, values: [.newUsers: 3], countedAs: settings)
+        let merged = next.fillingGaps(from: read)
+        #expect(merged.values == [.newUsers: 3, .mrr: 86])
+        #expect(merged.hourlyReadAt == nil)
+        #expect(try JSONDecoder().decode(ProjectSnapshot.self, from: JSONEncoder().encode(read)) == read)
+        // Settings saved before scopes existed are in effect with visitors left out.
+        #expect(MetricSettings(newUsers: .firstSeen, revenue: .revenueCat).inEffect == settings)
+    }
+
     @Test func savedValuesRoundTripByMetricId() throws {
         let day = Date(timeIntervalSince1970: 1_000_000)
         let snapshot = ProjectSnapshot(projectId: UUID(), fetchedAt: day, dayStart: day, values: [.newUsers: 4, .event("paid wall", people: true): 2, .mrr: 87.5])
