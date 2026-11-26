@@ -3,14 +3,14 @@ import SnuffleKit
 import SwiftUI
 import WidgetKit
 
-/// Where a project card is in the refresh sequence.
+/// Where a project card is in the refresh sequence. Its numbers stay on screen throughout.
 enum CardStage: Equatable {
     case rest
-    /// Waiting its turn: dimmed.
+    /// Waiting its turn.
     case waiting
-    /// Its turn: lifted, digits spinning.
+    /// Its turn: lifted, a line sweeping along its top.
     case loading
-    /// Digits have landed on the new value.
+    /// Changed digits are rolling up to the new value.
     case landed
 }
 
@@ -51,8 +51,8 @@ final class AppModel {
     /// What went up on each card in the latest refresh; shown as the highlighter and "+N" until it fades.
     private(set) var marks: [UUID: SnapshotChange] = [:]
     private(set) var marksFading = false
-    /// Sum of this refresh's changes, for the totals strip.
-    private(set) var totalsMark: SnapshotChange?
+    /// Sum of this refresh's changes across projects, for the 收入 tab.
+    private(set) var refreshMark: SnapshotChange?
     /// Bumped when a card should shake for a failed source.
     private(set) var shakes: [UUID: Int] = [:]
     private(set) var cat = CatState()
@@ -138,7 +138,7 @@ final class AppModel {
         return cache.reviews.filter { ids.contains($0.key) }.flatMap(\.value).sorted { $0.createdAt > $1.createdAt }
     }
 
-    /// `metric` added up across projects; nil when no project has it.
+    /// `metric` added up across projects (today's revenue on the 收入 tab); nil when no project has it.
     func total(_ metric: Metric) -> Double? {
         let values = projects.compactMap { project in metric.isAvailable(in: project) ? cache.snapshots[project.id]?[metric] : nil }
         return values.isEmpty ? nil : values.reduce(0, +)
@@ -147,9 +147,9 @@ final class AppModel {
     /// What a project's card shows, leaving out numbers from sources it does not have.
     func layout(_ project: Project) -> CardLayout { project.card.visible(in: project) }
 
-    /// The numbers a refresh reads for `project`: its card, the totals strip and the placed widgets.
+    /// The numbers a refresh reads for `project`: its card, its board's four and the placed widgets.
     func metricsInUse(_ project: Project) -> Set<Metric> {
-        MetricsInUse.forProject(project, totals: settings.totals, widgets: SharedContainer.widgetMetrics())
+        MetricsInUse.forProject(project, widgets: SharedContainer.widgetMetrics())
     }
 
     var lastRefresh: Date? { cache.lastRefresh }
@@ -216,7 +216,7 @@ final class AppModel {
             let snapshot = result.snapshot.fillingGaps(from: previous)
             let layout = self.layout(project)
             // A sale is always celebrated and shown on the 收入 tab, wherever revenue is placed (or not).
-            let change = SnapshotChange(from: previous, to: snapshot, metrics: layout.metrics + settings.totals + [.revenue, .orders])
+            let change = SnapshotChange(from: previous, to: snapshot, metrics: layout.metrics + MetricsInUse.board + [.revenue, .orders])
             cache.snapshots[project.id] = snapshot
             if let reviews = result.reviews { cache.reviews[project.id] = reviews }
             stages[project.id] = .landed
@@ -229,7 +229,7 @@ final class AppModel {
             if change.isNews {
                 marks[project.id] = change
                 total.add(change)
-                totalsMark = total
+                refreshMark = total
                 // New reviews get a mark but no celebration: they are not always good news.
                 if change.isUp { react(.glee) }
                 if change.hasSale {
@@ -251,6 +251,7 @@ final class AppModel {
 
         cache.recordRefresh(at: Date())
         saveCache()
+        followDashboards(projects)
         Analytics.refreshCompleted(
             trigger: trigger, projects: projects.count, failedProjects: failedProjects,
             wentUp: total.isUp, sale: anySale, duration: ContinuousClock.now - refreshStarted
@@ -266,9 +267,9 @@ final class AppModel {
         refreshProgress = 0
     }
 
-    /// Time for every digit column to land: 420 ms each, 110 ms apart, left to right.
+    /// Time for changed digits to roll up to their new value (`Odometer`).
     static func landDuration(columns: Int) -> Duration {
-        .milliseconds(420 + max(0, columns - 1) * 110)
+        .milliseconds(600 + max(0, columns - 1) * 90)
     }
 
     private func playTicks(columns: Int) {
@@ -293,7 +294,7 @@ final class AppModel {
     private func clearMarks() {
         fadeTask?.cancel()
         marks = [:]
-        totalsMark = nil
+        refreshMark = nil
         marksFading = false
     }
 
@@ -306,7 +307,7 @@ final class AppModel {
             try? await Task.sleep(for: .milliseconds(450))
             guard !Task.isCancelled else { return }
             marks = [:]
-            totalsMark = nil
+            refreshMark = nil
             marksFading = false
         }
     }
@@ -385,7 +386,7 @@ final class AppModel {
                 target.card = layout
             } else if everywhere {
                 let own = target.card.metrics.filter { !$0.isShared }
-                target.card = CardLayout(big: layout.big.filter(\.isShared), small: layout.small.filter(\.isShared) + own)
+                target.card = CardLayout(big: layout.big.filter(\.isShared), small: layout.small.filter(\.isShared) + own, trend: layout.trend, split: layout.split)
             } else {
                 continue
             }
@@ -411,13 +412,119 @@ final class AppModel {
         if !unread.isEmpty { Task { await refresh(unread, trigger: .project) } }
     }
 
-    func saveTotals(_ metrics: [Metric]) {
-        update { $0.totals = metrics }
-        Analytics.totalsLayoutSaved(metrics)
-        let unread = refreshable.filter { project in
-            metrics.contains { $0.isAvailable(in: project) && cache.snapshots[project.id]?[$0] == nil }
+    // MARK: Boards and dashboards
+
+    /// Looks once at the dashboards of projects added before Snuffle read them, and counts the way they do when they
+    /// say so on purpose. A project whose dashboards cannot be read yet (an account without the new permission) is
+    /// looked at again after the next refresh.
+    private func followDashboards(_ refreshed: [Project]) {
+        guard !settings.demoMode else { return }
+        let unchecked = refreshed.filter { $0.posthog != nil && !$0.dashboardChecked }
+        guard !unchecked.isEmpty else { return }
+        let provider = self.provider
+        Task {
+            for project in unchecked {
+                // `try?` would fold "no counting" into "could not read"; only the second is looked at again.
+                let found: DashboardReading.Counting?
+                do { found = try await provider.dashboardCounting(for: project) } catch { continue }
+                guard let index = workspace.projects.firstIndex(where: { $0.id == project.id }), !workspace.projects[index].dashboardChecked else { continue }
+                var current = workspace.projects[index]
+                current.dashboardChecked = true
+                // Only Snuffle's own counting is replaced: one the person set up stays theirs.
+                let follow = found.flatMap { current.metrics.isStandardPeople ? $0 : nil }
+                if let follow {
+                    current.metrics = follow.applied(to: current.metrics, timeZone: current.zone)
+                    Analytics.countingChanged(.dashboard, settings: current.metrics)
+                }
+                workspace.projects[index] = current
+                SharedContainer.workspace.save(workspace)
+                guard follow != nil else { continue }
+                boards[current.id] = nil
+                while isRefreshing { try? await Task.sleep(for: .milliseconds(300)) }
+                await refresh([current], trigger: .project)
+            }
         }
-        if !unread.isEmpty { Task { await refresh(unread, trigger: .project) } }
+    }
+
+    /// Boards read while the app is open, by project and range, so going back to a project shows it at once.
+    private(set) var boards: [UUID: [Int: ProjectBoard]] = [:]
+    /// The last result of each chart placed on a board, by chart id.
+    private(set) var insightResults: [Int: InsightResult] = [:]
+
+    /// Reads a project's board for the last `days` days; today's total by platform gives the daily totals.
+    func loadBoard(_ project: Project, days: Int) async throws {
+        let total = cache.snapshots[project.id].map { Dictionary($0.platforms.map { ($0.name, $0.count) }, uniquingKeysWith: +) }
+        let board = try await provider.board(for: project, days: days, total: total?.isEmpty == false ? total : nil)
+        boards[project.id, default: [:]][days] = board
+    }
+
+    /// Runs every chart placed on a project's board, each on its own; one that fails keeps its last result.
+    func runPins(_ project: Project) async -> [Int: Error] {
+        let provider = self.provider
+        return await withTaskGroup(of: (Int, Result<InsightResult, Error>).self) { group in
+            for tile in project.pins where tile.canDraw {
+                group.addTask {
+                    do { return (tile.id, .success(try await provider.run(tile, for: project))) } catch { return (tile.id, .failure(error)) }
+                }
+            }
+            var failures: [Int: Error] = [:]
+            for await (id, result) in group {
+                switch result {
+                case .success(let value): insightResults[id] = value
+                case .failure(let error): failures[id] = error
+                }
+            }
+            return failures
+        }
+    }
+
+    /// The single numbers on a project's counting dashboard, read at most every five minutes, to set Snuffle's numbers
+    /// beside the dashboard's own.
+    private var dashboardNumbers: [Int: (read: Date, numbers: [DashboardNumber])] = [:]
+
+    func dashboardNumbers(for project: Project) async -> [DashboardNumber] {
+        guard let ref = project.metrics.dashboard else { return [] }
+        if let cached = dashboardNumbers[ref.id], Date().timeIntervalSince(cached.read) < 300 { return cached.numbers }
+        guard let detail = try? await provider.dashboard(ref, for: project) else { return [] }
+        let tiles = detail.tiles.filter { $0.canDraw && ($0.display == "BoldNumber" || $0.kind == .table) }.prefix(12)
+        let provider = self.provider
+        let numbers = await withTaskGroup(of: [DashboardNumber].self) { group in
+            for tile in tiles {
+                group.addTask {
+                    guard let result = try? await provider.run(tile, for: project) else { return [] }
+                    let found = result.numbers(for: tile)
+                    return found.map { DashboardNumber(chart: found.count > 1 ? "\(tile.name) · \($0.name)" : tile.name, value: $0.value, previous: $0.previous) }
+                }
+            }
+            var all: [DashboardNumber] = []
+            for await batch in group { all += batch }
+            return all
+        }
+        dashboardNumbers[ref.id] = (Date(), numbers)
+        return numbers
+    }
+
+    func keep(_ result: InsightResult, for tile: InsightTile) {
+        insightResults[tile.id] = result
+    }
+
+    /// Places charts on a project's board, in the order given.
+    func pin(_ tiles: [InsightTile], on project: Project) {
+        guard var current = workspace.projects.first(where: { $0.id == project.id }) else { return }
+        let added = tiles.filter { tile in !current.pins.contains { $0.id == tile.id } }
+        current.pins = tiles
+        save(project: current)
+        if !added.isEmpty { Analytics.chartsPinned(added.count, total: tiles.count) }
+    }
+
+    /// Counts a project's people another way and reads its numbers again under it.
+    func applyCounting(_ settings: MetricSettings, to project: Project, source: Analytics.CountingSource) {
+        guard var current = workspace.projects.first(where: { $0.id == project.id }), current.metrics != settings else { return }
+        current.metrics = settings
+        save(project: current)
+        boards[project.id] = nil
+        Analytics.countingChanged(source, settings: settings)
+        Task { await refresh([current], trigger: .project) }
     }
 
     func delete(project: Project) {

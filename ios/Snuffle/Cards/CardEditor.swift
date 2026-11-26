@@ -34,6 +34,20 @@ struct CardEditor: View {
                     SectionLabel(String(localized: "版式"))
                     ChoiceBar(options: [(1, "一个大数"), (2, "两个大数")], selection: bigCount)
                 }
+                if draft.posthog != nil {
+                    CardGroup {
+                        Toggle(isOn: Binding(get: { layout.trend }, set: { on in withAnimation(.snappy) { layout.trend = on } })) {
+                            toggleLabel(String(localized: "近 14 天活跃"), String(localized: "大数旁边的小柱子，今天在最右"))
+                        }
+                        .toggleStyle(InkToggleStyle())
+                        .disabled(layout.big.count > 1)
+                        RowDivider()
+                        Toggle(isOn: Binding(get: { layout.split }, set: { on in withAnimation(.snappy) { layout.split = on } })) {
+                            toggleLabel(String(localized: "平台占比"), String(localized: "累计的人里各平台各占多少"))
+                        }
+                        .toggleStyle(InkToggleStyle())
+                    }
+                }
                 if model.workspace.projects.count > 1 {
                     CardGroup {
                         Toggle("其他项目也这样显示", isOn: $everywhere)
@@ -71,6 +85,14 @@ struct CardEditor: View {
         return snapshot
     }
 
+    private func toggleLabel(_ title: String, _ detail: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: title).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink)
+            Text(verbatim: detail).font(.system(size: 12)).foregroundStyle(Palette.ink2)
+        }
+        .padding(.vertical, 8)
+    }
+
     private var header: some View {
         HStack {
             RoundIconButton(systemName: "xmark", label: String(localized: "取消")) { dismiss() }
@@ -96,9 +118,9 @@ struct CardEditor: View {
         } set: { count in
             withAnimation(.snappy) {
                 if count < layout.big.count {
-                    layout = CardLayout(big: Array(layout.big.prefix(count)), small: layout.small)
+                    layout = CardLayout(big: Array(layout.big.prefix(count)), small: layout.small, trend: layout.trend, split: layout.split)
                 } else if let second = secondBig {
-                    layout = CardLayout(big: layout.big + [second], small: layout.small.filter { $0 != second })
+                    layout = CardLayout(big: layout.big + [second], small: layout.small.filter { $0 != second }, trend: layout.trend, split: layout.split)
                 }
             }
         }
@@ -106,7 +128,7 @@ struct CardEditor: View {
 
     /// The number a second big slot starts with: the first that is not big already, preferring one the card had.
     private var secondBig: Metric? {
-        let preferred: [Metric] = layout.small + [.activeToday, .revenue, .mrr, .reviewsToAnswer, .online, .newUsers]
+        let preferred: [Metric] = layout.small + [.activeToday, .activeWeek, .revenue, .mrr, .reviewsToAnswer, .newUsers]
         return preferred.first { $0.isAvailable(in: draft) && !layout.big.contains($0) }
     }
 
@@ -114,7 +136,7 @@ struct CardEditor: View {
         withAnimation(.snappy) {
             var small = layout.small
             small.remove(at: index)
-            layout = CardLayout(big: layout.big, small: small)
+            layout = CardLayout(big: layout.big, small: small, trend: layout.trend, split: layout.split)
         }
     }
 
@@ -139,7 +161,7 @@ struct CardEditor: View {
         case .add:
             small.append(metric)
         }
-        layout = CardLayout(big: big, small: small)
+        layout = CardLayout(big: big, small: small, trend: layout.trend, split: layout.split)
     }
 
     private func save() {

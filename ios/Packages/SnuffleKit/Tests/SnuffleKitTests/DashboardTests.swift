@@ -83,8 +83,14 @@ struct DashboardTests {
             "properties['$timezone'] IN ('Asia/Shanghai', 'Asia/Taipei')",
             "toString(properties['plan']) ILIKE '%pro%'",
             "toFloat(properties['price']) > 4.5",
-            "isNotNull(properties['beta'])"
-        ], "cohorts and OR groups have no single condition")
+            "isNotNull(properties['beta'])",
+            "(properties['a'] = '1' OR properties['b'] = '2')"
+        ], "an OR stays one condition; cohorts have none")
+        // A whole-product OR group (web hosts, or the production iOS app) reads as one condition.
+        let product = json(#"{"type":"OR","values":[{"type":"OR","values":[{"key":"$host","type":"event","value":["example.com"],"operator":"exact"},{"key":"$host","type":"event","value":["ext-id"],"operator":"exact"}]},{"type":"AND","values":[{"key":"$lib","type":"event","value":["posthog-ios"],"operator":"exact"},{"key":"environment","type":"event","value":["production"],"operator":"exact"}]}]}"#)
+        #expect(DashboardReading.conditions(product) == ["((properties['$host'] = 'example.com' OR properties['$host'] = 'ext-id') OR (properties['$lib'] = 'posthog-ios' AND properties['environment'] = 'production'))"])
+        // An OR with a part that cannot be written is left out rather than widened.
+        #expect(DashboardReading.conditions(json(#"{"type":"OR","values":[{"type":"cohort","key":"id","value":3},{"key":"a","operator":"exact","type":"event","value":"1"}]}"#)).isEmpty)
     }
 
     @Test func splitsConditionsOnlyAtTheTopLevel() {

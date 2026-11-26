@@ -149,6 +149,9 @@ struct ProjectEditor: View {
         before?.tint = draft.tint
         before?.iconVersion = draft.iconVersion
         let changedNumbers = before != draft
+        if let before, before.metrics != draft.metrics {
+            Analytics.countingChanged(draft.metrics.dashboard != nil ? .dashboard : draft.metrics.isStandardPeople ? .standard : .manual, settings: draft.metrics)
+        }
         model.save(project: draft)
         dismiss()
         // New sources or counting rules: fetch this project's numbers now instead of showing stale ones.

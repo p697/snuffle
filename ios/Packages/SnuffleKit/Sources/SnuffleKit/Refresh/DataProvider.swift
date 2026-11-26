@@ -38,6 +38,8 @@ public protocol DataProvider: Sendable {
     /// The PostHog dashboards of the project.
     func dashboards(for project: Project) async throws -> [DashboardSummary]
     func dashboard(_ ref: DashboardRef, for project: Project) async throws -> DashboardDetail
+    /// The counting the project's own dashboards use (`PostHogClient.dashboardCounting`).
+    func dashboardCounting(for project: Project) async throws -> DashboardReading.Counting?
     /// Runs one dashboard chart's own query.
     func run(_ tile: InsightTile, for project: Project) async throws -> InsightResult
     /// How many of the last day's events `condition` keeps, out of all of them: checks a hand-typed condition.

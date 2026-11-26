@@ -34,6 +34,9 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
     public var card: CardLayout
     /// Charts from the project's PostHog dashboards placed on its board, in order.
     public var pins: [InsightTile]
+    /// Whether its PostHog dashboards were looked at for a counting to follow, once (when it was added, or the first
+    /// refresh after an update, as soon as the dashboards could be read).
+    public var dashboardChecked: Bool
     /// Set when the person picked a picture for the project; bumped on every change. The picture lives only on this
     /// phone (`SharedContainer.projectIcon`), so it is lost with the app, like the rest of the local data.
     public var iconVersion: Int?
@@ -50,6 +53,7 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         metrics: MetricSettings = .standard,
         card: CardLayout? = nil,
         pins: [InsightTile] = [],
+        dashboardChecked: Bool = false,
         iconVersion: Int? = nil
     ) {
         self.id = id
@@ -63,6 +67,7 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         self.metrics = metrics
         self.iconVersion = iconVersion
         self.pins = pins
+        self.dashboardChecked = dashboardChecked
         self.card = CardLayout(big: [])
         self.card = card ?? CardLayout.standard(for: self)
     }
@@ -80,6 +85,7 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         metrics = try container.decode(MetricSettings.self, forKey: .metrics)
         iconVersion = try container.decodeIfPresent(Int.self, forKey: .iconVersion)
         pins = try container.decodeIfPresent([InsightTile].self, forKey: .pins) ?? []
+        dashboardChecked = try container.decodeIfPresent(Bool.self, forKey: .dashboardChecked) ?? false
         card = CardLayout(big: [])
         // Cards from before the dashboard redesign (TestFlight builds before November 26, 2026) start over with the
         // standard card, which shows the numbers the redesign is about. Remove once those builds are out of use.
@@ -268,14 +274,6 @@ public struct MetricSettings: Hashable, Sendable {
     public func leaving(out surfaces: Set<Surface>) -> MetricSettings {
         var settings = self
         settings.excludedSurfaces = surfaces
-        return settings
-    }
-
-    /// The parts that decide who counts as a user, without new users and revenue.
-    public var people: MetricSettings {
-        var settings = self
-        settings.newUsers = .firstSeen
-        settings.revenue = .none
         return settings
     }
 

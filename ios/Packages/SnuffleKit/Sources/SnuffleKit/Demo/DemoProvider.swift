@@ -81,6 +81,8 @@ public actor DemoProvider: DataProvider {
         DashboardDetail(ref: ref, tiles: [])
     }
 
+    public func dashboardCounting(for project: Project) async throws -> DashboardReading.Counting? { nil }
+
     public func run(_ tile: InsightTile, for project: Project) async throws -> InsightResult {
         InsightResult(fetchedAt: Date())
     }

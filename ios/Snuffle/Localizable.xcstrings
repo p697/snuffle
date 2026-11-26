@@ -1,119 +1,6 @@
 {
   "sourceLanguage" : "zh-Hans",
   "strings" : {
-    "%@ / 天" : {
-      "comment" : "Average daily active people.",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / يوم"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / Tag"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / day"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / día"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / día"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / jour"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / दिन"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / giorno"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / 日"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / 일"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / dia"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / dia"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / день"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / วัน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / gün"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / день"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / ngày"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ / 天"
-          }
-        }
-      }
-    },
     "%@ · 刚刚读到" : {
       "localizations" : {
         "ar" : {
@@ -568,6 +455,16 @@
         }
       }
     },
+    "%@ 到 %@，今天还没过完" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ 到 %2$@，今天还没过完"
+          }
+        }
+      }
+    },
     "%@ 已连接" : {
       "localizations" : {
         "ar" : {
@@ -1016,6 +913,7 @@
         }
       }
     },
+    "%@ 的累计、活跃和新增都按这里算。" : {},
     "%@ 等 %lld 个 App" : {
       "localizations" : {
         "ar" : {
@@ -1134,6 +1032,8 @@
         }
       }
     },
+    "%@ 起出现过的所有人" : {},
+    "%@ 起打开过的所有安装" : {},
     "%@ 连上了" : {
       "localizations" : {
         "ar" : {
@@ -1246,6 +1146,7 @@
         }
       }
     },
+    "%@ 零点到现在" : {},
     "%@/年，自动续期，到期前 24 小时取消就不再续费。" : {
       "localizations" : {
         "ar" : {
@@ -2994,118 +2895,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld 個專案有收入來源"
-          }
-        }
-      }
-    },
-    "%lld 个项目有这个数" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المشاريع التي لديها هذا الرقم: %lld"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Projekte mit diesem Wert: %lld"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Projects with this number: %lld"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Proyectos con este dato: %lld"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Proyectos con este dato: %lld"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Projets avec ce chiffre : %lld"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "इस आंकड़े वाले प्रोजेक्ट: %lld"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Progetti con questo dato: %lld"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "この数があるプロジェクト：%lld"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이 값이 있는 프로젝트: %lld개"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Projetos com este número: %lld"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Projetos com este número: %lld"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Проектов с этим показателем: %lld"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "โปรเจกต์ที่มีค่านี้: %lld"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bu değere sahip proje: %lld"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Проєктів із цим показником: %lld"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Số dự án có số này: %lld"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld 個專案有這個數"
           }
         }
       }
@@ -6295,6 +6084,7 @@
         }
       }
     },
+    "PostHog 自带" : {},
     "RevenueCat" : {
       "localizations" : {
         "ar" : {
@@ -7303,6 +7093,8 @@
         }
       }
     },
+    "Snuffle 默认：任何事件，按人算" : {},
+    "Snuffle 默认：任何事件，按人算，不含网站访客" : {},
     "phx_ 开头的个人 API 密钥" : {
       "localizations" : {
         "ar" : {
@@ -7527,118 +7319,10 @@
         }
       }
     },
-    "一个 PostHog 项目里常常既有 App，又有网站和官网访客。选哪些来源的人算进活跃、累计、在线和页面浏览。" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "غالبًا ما يضم مشروع PostHog الواحد تطبيقًا وموقعًا وزوار الموقع التعريفي. اختر المصادر التي يُحسب أشخاصها في النشطين والإجمالي والمتصلين ومشاهدات الصفحات."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ein PostHog-Projekt enthält oft eine App, eine Website und Besucher der Marketingseite. Wähle, wessen Aktivität bei Aktiv, Gesamt, Online und Seitenaufrufen zählt."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "One PostHog project often holds an app, a website and visitors to the marketing site. Choose whose activity counts toward active, total, online and page views."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un proyecto de PostHog suele incluir una app, un sitio web y visitantes de la web comercial. Elige de qué orígenes cuentan las personas en activos, total, en línea y páginas vistas."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un proyecto de PostHog suele incluir una app, un sitio web y visitantes del sitio comercial. Elige de qué orígenes cuentan las personas en activos, total, en línea y vistas de página."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un projet PostHog réunit souvent une app, un site web et les visiteurs du site vitrine. Choisissez quelles sources comptent dans les actifs, le total, en ligne et pages vues."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "एक PostHog प्रोजेक्ट में अक्सर ऐप, वेबसाइट और मार्केटिंग साइट के विज़िटर साथ होते हैं। चुनें कि सक्रिय, कुल, ऑनलाइन और पेज व्यू में किन स्रोतों के लोग गिने जाएँ।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Un progetto PostHog spesso contiene un'app, un sito web e i visitatori del sito vetrina. Scegli quali fonti contano per attivi, totale, online e visualizzazioni di pagina."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "1 つの PostHog プロジェクトには、アプリ、Web サイト、公式サイトの訪問者が混在していることがよくあります。アクティブ、累計、オンライン、ページビューに含めるソースを選んでください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "하나의 PostHog 프로젝트에는 앱, 웹사이트, 홈페이지 방문자가 함께 있는 경우가 많습니다. 활성, 누적, 온라인, 페이지 조회에 포함할 출처를 선택하세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Um projeto do PostHog costuma ter um app, um site e visitantes do site institucional. Escolha de quais origens as pessoas contam em ativos, total, online e visualizações de página."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Um projeto do PostHog tem muitas vezes uma app, um site e visitantes do site institucional. Escolha de que origens as pessoas contam em ativos, total, online e visualizações de página."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В одном проекте PostHog часто есть приложение, веб-сайт и посетители промосайта. Выберите, чью активность учитывать в активных, всего, онлайн и просмотрах страниц."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "โปรเจกต์ PostHog เดียวมักมีทั้งแอป เว็บไซต์ และผู้เข้าชมเว็บไซต์หลัก เลือกว่าจะนับผู้คนจากแหล่งใดในผู้ใช้งาน ผู้ใช้ทั้งหมด ออนไลน์ และการดูหน้า"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bir PostHog projesinde çoğu zaman uygulama, web sitesi ve tanıtım sitesi ziyaretçileri birlikte bulunur. Aktif, toplam, çevrimiçi ve sayfa görüntülemeye hangi kaynakların sayılacağını seçin."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В одному проєкті PostHog часто є застосунок, вебсайт і відвідувачі промосайту. Виберіть, чию активність враховувати в активних, всього, онлайн і переглядах сторінок."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Một dự án PostHog thường có cả ứng dụng, trang web và khách truy cập trang giới thiệu. Chọn nguồn nào được tính vào hoạt động, tổng, trực tuyến và lượt xem trang."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "一個 PostHog 專案裡常常同時有 App、網站和官網訪客。選擇哪些來源的人算進活躍、累計、線上和頁面瀏覽。"
-          }
-        }
-      }
-    },
+    "「%@」里数人的图都用这套条件，这里照搬过来，算出来的数和看板一样。" : {},
+    "「%@」里没有数人的图，换一个看板试试。" : {},
+    "一个人" : {},
+    "一个人（PostHog 的人）" : {},
     "一个大数" : {
       "localizations" : {
         "ar" : {
@@ -7751,6 +7435,7 @@
         }
       }
     },
+    "一个是" : {},
     "一个来源连不上" : {
       "localizations" : {
         "ar" : {
@@ -7863,6 +7548,8 @@
         }
       }
     },
+    "一个算" : {},
+    "一句话" : {},
     "一次付清" : {
       "localizations" : {
         "ar" : {
@@ -7975,6 +7662,8 @@
         }
       }
     },
+    "一次安装" : {},
+    "一次安装（distinct_id）" : {},
     "一笔订单" : {
       "localizations" : {
         "ar" : {
@@ -8311,6 +8000,7 @@
         }
       }
     },
+    "上一个 7 天是 %@" : {},
     "下一次刷新带来" : {
       "localizations" : {
         "ar" : {
@@ -9992,6 +9682,7 @@
         }
       }
     },
+    "之前的人不算进累计，也不算新增" : {},
     "也可以先连别的" : {
       "localizations" : {
         "ar" : {
@@ -10664,118 +10355,7 @@
         }
       }
     },
-    "今天" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اليوم"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heute"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Today"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoy"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoy"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aujourd'hui"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आज"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oggi"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoje"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoje"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сегодня"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "วันนี้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bugün"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сьогодні"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hôm nay"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今天"
-          }
-        }
-      }
-    },
+    "今天 %@" : {},
     "今天 %@ 发生的次数" : {
       "localizations" : {
         "ar" : {
@@ -11336,118 +10916,6 @@
         }
       }
     },
-    "今天 · 按开始使用的人算" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اليوم · من بدأوا الاستخدام"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heute · Personen, die neu dabei sind"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Today · people who started using"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoy · personas que empezaron a usar"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoy · personas que empezaron a usar"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aujourd'hui · nouveaux actifs"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आज · इस्तेमाल शुरू करने वाले"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oggi · persone che hanno iniziato"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日 · 利用開始したユーザー"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘 · 사용을 시작한 사람"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoje · pessoas que começaram a usar"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoje · pessoas que começaram a usar"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сегодня · начали пользоваться"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "วันนี้ · ผู้ที่เริ่มใช้งาน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bugün · kullanmaya başlayanlar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сьогодні · почали користуватися"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hôm nay · người bắt đầu dùng"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今天 · 按開始使用的人算"
-          }
-        }
-      }
-    },
     "今天 · 按注册事件算" : {
       "localizations" : {
         "ar" : {
@@ -11790,230 +11258,8 @@
         }
       }
     },
-    "今天有过任何动作的人" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "الأشخاص الذين لديهم أي حدث اليوم"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personen mit einem Event heute"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "People with any event today"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personas con algún evento hoy"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personas con algún evento hoy"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personnes ayant un événement aujourd'hui"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आज किसी भी इवेंट वाले लोग"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Persone con almeno un evento oggi"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日イベントがあったユーザー"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘 이벤트가 있었던 사람"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pessoas com algum evento hoje"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pessoas com algum evento hoje"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Все, у кого сегодня были события"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ผู้ที่มีอีเวนต์ใดๆ วันนี้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bugün herhangi bir olayı olan kişiler"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Усі, хто мав події сьогодні"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Người có sự kiện bất kỳ hôm nay"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今天有過任何動作的人"
-          }
-        }
-      }
-    },
-    "今天每小时新增用户" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المستخدمون الجدد كل ساعة اليوم"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neue Nutzer pro Stunde heute"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New users per hour today"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Usuarios nuevos por hora hoy"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Usuarios nuevos por hora hoy"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nouveaux utilisateurs par heure aujourd'hui"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आज हर घंटे के नए यूज़र"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nuovi utenti all'ora oggi"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日の1時間ごとの新規ユーザー"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘 시간별 신규 사용자"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novos usuários por hora hoje"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novos utilizadores por hora hoje"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Новые пользователи сегодня по часам"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ผู้ใช้ใหม่รายชั่วโมงวันนี้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bugün saatlik yeni kullanıcılar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нові користувачі сьогодні по годинах"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Người dùng mới mỗi giờ hôm nay"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今天每小時新增使用者"
-          }
-        }
-      }
-    },
+    "今天打开过的安装" : {},
+    "今天用过的人" : {},
     "今天的付费笔数" : {
       "localizations" : {
         "ar" : {
@@ -12350,6 +11596,8 @@
         }
       }
     },
+    "今天第一次出现的人" : {},
+    "今天第一次打开的安装" : {},
     "今天网页浏览和 App 页面切换的次数" : {
       "localizations" : {
         "ar" : {
@@ -12574,342 +11822,8 @@
         }
       }
     },
-    "今日" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اليوم"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Heute"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Today"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoy"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoy"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aujourd'hui"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आज"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Oggi"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoje"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoje"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сегодня"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "วันนี้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bugün"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сьогодні"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hôm nay"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日"
-          }
-        }
-      }
-    },
-    "今日收入" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إيرادات اليوم"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Umsatz heute"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revenue today"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingresos de hoy"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingresos de hoy"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Revenus du jour"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आज की आय"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrate di oggi"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日の収益"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘 수익"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Receita de hoje"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Receitas de hoje"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Доход сегодня"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "รายได้วันนี้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bugünkü gelir"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Дохід сьогодні"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Doanh thu hôm nay"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日收入"
-          }
-        }
-      }
-    },
-    "今日新增用户" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المستخدمون الجدد اليوم"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neue Nutzer heute"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New users today"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Usuarios nuevos hoy"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Usuarios nuevos hoy"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nouveaux utilisateurs aujourd'hui"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "आज के नए यूज़र"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nuovi utenti oggi"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日の新規ユーザー"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘 신규 사용자"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novos usuários hoje"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novos utilizadores hoje"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Новые пользователи сегодня"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ผู้ใช้ใหม่วันนี้"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bugünkü yeni kullanıcılar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нові користувачі сьогодні"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Người dùng mới hôm nay"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "今日新增使用者"
-          }
-        }
-      }
-    },
+    "从 %lld 张图里读到了口径。" : {},
+    "从哪天起" : {},
     "从相册选" : {
       "localizations" : {
         "ar" : {
@@ -13022,6 +11936,9 @@
         }
       }
     },
+    "从看板拿掉" : {},
+    "从看板添加" : {},
+    "从看板读口径" : {},
     "从项目的事件里挑一个" : {
       "localizations" : {
         "ar" : {
@@ -13246,118 +12163,7 @@
         }
       }
     },
-    "付费事件" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المشتريات"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Käufe"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Purchases"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compras"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compras"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Achats"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ख़रीदारी"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Acquisti"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "購入"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "구매"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compras"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Compras"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Покупки"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "การซื้อ"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Satın almalar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Покупки"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lượt mua"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "付費事件"
-          }
-        }
-      }
-    },
+    "任何事件" : {},
     "任意事件" : {
       "localizations" : {
         "ar" : {
@@ -13470,6 +12276,7 @@
         }
       }
     },
+    "你在 PostHog 里建过看板的话，Snuffle 直接照它的条件算：哪个事件、只算哪些数据、按人还是按安装。数字会和看板一样。" : {},
     "你好，谢谢你花时间告诉我们。很抱歉 %@ 在这里让你失望了。我们正在排查，会在下个版本修复。如果你写信到 support@example.com，我们可以马上帮你处理。" : {
       "localizations" : {
         "ar" : {
@@ -14366,6 +13173,7 @@
         }
       }
     },
+    "先不支持" : {},
     "先免费 %lld 天" : {
       "localizations" : {
         "ar" : {
@@ -15855,6 +14663,7 @@
         }
       }
     },
+    "全部历史" : {},
     "全部评论和回复状态，在这里直接回复" : {
       "localizations" : {
         "ar" : {
@@ -15963,118 +14772,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "所有評論和回覆狀態，在這裡直接回覆"
-          }
-        }
-      }
-    },
-    "全部项目加起来 · 右边是现在的数" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مجموع كل المشاريع · بجانب كل خيار قيمته الآن"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alle Projekte zusammen · daneben der aktuelle Wert"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All projects added up · each number is its value now"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todos los proyectos sumados · al lado, el valor actual"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todos los proyectos sumados · al lado, el valor actual"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tous les projets additionnés · à côté, la valeur actuelle"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सभी प्रोजेक्ट का जोड़ · साथ में अभी का आंकड़ा"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutti i progetti sommati · accanto il valore attuale"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全プロジェクトの合計 · 右側は現在の値"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "모든 프로젝트 합계 · 오른쪽이 지금 값"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todos os projetos somados · ao lado, o valor atual"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todos os projetos somados · ao lado, o valor atual"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Все проекты вместе · рядом текущее значение"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "รวมทุกโปรเจกต์ · ข้างๆ คือค่าปัจจุบัน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tüm projeler toplamı · yanında şu anki değer"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Усі проєкти разом · поруч поточне значення"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cộng tất cả dự án · bên cạnh là số hiện tại"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "全部專案加起來 · 右邊是現在的數"
           }
         }
       }
@@ -16303,6 +15000,7 @@
         }
       }
     },
+    "关着时算全部历史" : {},
     "关闭" : {
       "localizations" : {
         "ar" : {
@@ -16415,6 +15113,7 @@
         }
       }
     },
+    "其他" : {},
     "其他事件" : {
       "localizations" : {
         "ar" : {
@@ -16863,118 +15562,9 @@
         }
       }
     },
-    "出现过的所有人，没登录的按设备算 · 每小时更新" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "كل من ظهر من قبل، ومن لم يسجّل الدخول يُحسب لكل جهاز · يُحدَّث كل ساعة"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alle, die je aufgetaucht sind; ohne Anmeldung zählt jedes Gerät · Stündlich aktualisiert"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Everyone ever seen; people who never signed in count once per device · Updated hourly"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas las personas vistas alguna vez; quienes no iniciaron sesión cuentan por dispositivo · Se actualiza cada hora"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas las personas vistas alguna vez; quienes no iniciaron sesión cuentan por dispositivo · Se actualiza cada hora"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toutes les personnes déjà vues ; sans connexion, chaque appareil compte · Mis à jour toutes les heures"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "अब तक दिखे सभी लोग; बिना साइन इन वाले डिवाइस के हिसाब से गिने जाते हैं · हर घंटे अपडेट"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tutte le persone mai viste; chi non ha effettuato l'accesso conta per dispositivo · Aggiornato ogni ora"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "これまでに現れたすべての人。未ログインの人はデバイスごとに数えます · 1 時間ごとに更新"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "지금까지 나타난 모든 사람, 로그인하지 않은 사람은 기기별로 셈 · 매시간 업데이트"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas as pessoas já vistas; quem nunca entrou conta por dispositivo · Atualizado a cada hora"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Todas as pessoas já vistas; quem nunca iniciou sessão conta por dispositivo · Atualizado a cada hora"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Все, кто когда-либо появлялся; без входа — по устройствам · Обновляется каждый час"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ทุกคนที่เคยปรากฏ คนที่ไม่ได้ลงชื่อเข้าใช้นับตามอุปกรณ์ · อัปเดตทุกชั่วโมง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Şimdiye kadar görülen herkes; oturum açmayanlar cihaz başına sayılır · Saatlik güncellenir"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Усі, хто коли-небудь з'являвся; без входу — за пристроями · Оновлюється щогодини"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tất cả những người từng xuất hiện; ai chưa đăng nhập được tính theo thiết bị · Cập nhật mỗi giờ"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "出現過的所有人，沒登入的按裝置算 · 每小時更新"
-          }
-        }
-      }
-    },
+    "写一条 HogQL 条件，只有符合的事件才算。" : {},
+    "写法和 PostHog 的 SQL 一样，比如 properties.app_platform IN ('ios', 'android')。先试一下，确认能算出数再加上。" : {},
+    "出现过的所有人" : {},
     "列表里没有？手动填包名" : {
       "localizations" : {
         "ar" : {
@@ -17535,6 +16125,7 @@
         }
       }
     },
+    "刷新后显示各平台占比" : {},
     "刷新永远免费。上面三样，开了 Pro 就有。" : {
       "localizations" : {
         "ar" : {
@@ -17647,118 +16238,9 @@
         }
       }
     },
-    "加一个小数" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أضف رقمًا صغيرًا"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kleine Zahl hinzufügen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Add a small number"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Añadir un número pequeño"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Agregar un número pequeño"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ajouter un petit chiffre"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "छोटा आंकड़ा जोड़ें"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aggiungi un numero piccolo"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "小さな数字を追加"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "작은 숫자 추가"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adicionar um número pequeno"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Adicionar um número pequeno"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Добавить маленькое число"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เพิ่มตัวเลขเล็ก"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Küçük sayı ekle"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Додати мале число"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Thêm một số nhỏ"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "加一個小數"
-          }
-        }
-      }
-    },
+    "加一个数" : {},
+    "加一个条件" : {},
+    "加上" : {},
     "包名，例如 com.example.app" : {
       "localizations" : {
         "ar" : {
@@ -17871,6 +16353,9 @@
         }
       }
     },
+    "占比" : {},
+    "原样跑你在 PostHog 里写的查询" : {},
+    "去掉这个条件" : {},
     "去连接" : {
       "localizations" : {
         "ar" : {
@@ -18319,6 +16804,9 @@
         }
       }
     },
+    "发过任何事件就算，后台事件也算" : {},
+    "发过这个事件才算，比如打开 App" : {},
+    "发过这个事件，才算用过一次。右边是近 7 天的人数。" : {},
     "发送中…" : {
       "localizations" : {
         "ar" : {
@@ -18543,6 +17031,7 @@
         }
       }
     },
+    "口径" : {},
     "只付一次 %@，一直能用，不会续费。" : {
       "localizations" : {
         "ar" : {
@@ -18991,6 +17480,8 @@
         }
       }
     },
+    "只算" : {},
+    "只算这些" : {},
     "只能读到近 7 天的评论" : {
       "localizations" : {
         "ar" : {
@@ -19327,118 +17818,8 @@
         }
       }
     },
-    "和昨天此时一样" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مثل هذا الوقت أمس"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wie gestern um diese Zeit"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Same as this time yesterday"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Igual que ayer a esta hora"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Igual que ayer a esta hora"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Comme hier à la même heure"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कल इसी समय जितना"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Come ieri a quest'ora"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "昨日の同時刻と同じ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "어제 이 시간과 같음"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Igual a ontem neste horário"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Igual a ontem a esta hora"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Как вчера в это же время"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เท่ากับเวลานี้เมื่อวาน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dün bu saattekiyle aynı"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Як учора в цей час"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bằng giờ này hôm qua"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "和昨天此時一樣"
-          }
-        }
-      }
-    },
+    "和你的看板一致 · %@" : {},
+    "和你的看板差不多 · 看板是 %@" : {},
     "商店" : {
       "localizations" : {
         "ar" : {
@@ -20335,118 +18716,8 @@
         }
       }
     },
-    "在 PostHog 的 **设置 → 个人 API 密钥** 新建一把，权限勾选 project:read、query:read、user:read。" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أنشئ مفتاحًا في PostHog من **Settings → Personal API keys** بالصلاحيات project:read و query:read و user:read."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erstelle in PostHog unter **Settings → Personal API keys** einen neuen Schlüssel mit den Scopes project:read, query:read und user:read."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Create one in PostHog under **Settings → Personal API keys** with the project:read, query:read and user:read scopes."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crea una en PostHog en **Settings → Personal API keys** con los permisos project:read, query:read y user:read."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crea una en PostHog en **Settings → Personal API keys** con los permisos project:read, query:read y user:read."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Créez-en une dans PostHog sous **Settings → Personal API keys** avec les scopes project:read, query:read et user:read."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHog में **Settings → Personal API keys** में project:read, query:read और user:read स्कोप के साथ एक नई कुंजी बनाएँ।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Creane una in PostHog in **Settings → Personal API keys** con gli scope project:read, query:read e user:read."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHogの**Settings → Personal API keys**で新規作成し、project:read、query:read、user:readのスコープを選択します。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHog의 **Settings → Personal API keys**에서 새로 만들고 project:read, query:read, user:read 권한을 선택하세요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crie uma no PostHog em **Settings → Personal API keys** com as permissões project:read, query:read e user:read."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cria uma no PostHog em **Settings → Personal API keys** com as permissões project:read, query:read e user:read."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Создайте ключ в PostHog: **Settings → Personal API keys**, с правами project:read, query:read и user:read."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "สร้างคีย์ใน PostHog ที่ **Settings → Personal API keys** โดยเลือกขอบเขต project:read, query:read และ user:read"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostHog’da **Settings → Personal API keys** altında project:read, query:read ve user:read kapsamlarıyla bir anahtar oluşturun."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Створіть ключ у PostHog: **Settings → Personal API keys**, з дозволами project:read, query:read і user:read."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tạo một khóa trong PostHog tại **Settings → Personal API keys** với các phạm vi project:read, query:read và user:read."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在 PostHog 的 **Settings → Personal API keys** 建立一組，權限勾選 project:read、query:read、user:read。"
-          }
-        }
-      }
-    },
+    "在 PostHog 打开" : {},
+    "在 PostHog 的 **设置 → 个人 API 密钥** 新建一把，权限勾选 project:read、query:read、user:read、dashboard:read、insight:read。" : {},
     "在 RevenueCat 打开 **项目设置 → API keys**，新建一把 **V2 密钥**。" : {
       "localizations" : {
         "ar" : {
@@ -20555,118 +18826,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 RevenueCat 開啟 **Project settings → API keys**，建立一組 **V2 密鑰**。"
-          }
-        }
-      }
-    },
-    "在线人数" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "متصل الآن"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Online"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Online now"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En línea"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En línea"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En ligne"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "अभी ऑनलाइन"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Online"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "オンライン"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "온라인"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Online"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Online"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В сети"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ออนไลน์"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Çevrim içi"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Онлайн"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Trực tuyến"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "在線人數"
           }
         }
       }
@@ -21455,6 +19614,7 @@
         }
       }
     },
+    "大数旁边的小柱子，今天在最右" : {},
     "天走势" : {
       "comment" : "Paywall row after a big 30: 30 days of history charts.",
       "localizations" : {
@@ -22816,6 +20976,7 @@
         }
       }
     },
+    "对照的是「%@」。两边隔几秒读，正在涨的数可能差一两个。" : {},
     "导入并读取 App 列表" : {
       "localizations" : {
         "ar" : {
@@ -22928,118 +21089,7 @@
         }
       }
     },
-    "小数" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "صغير"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Klein"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Small"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pequeño"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pequeño"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Petit"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "छोटा"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Piccolo"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "小さな数字"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "작은 숫자"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pequeno"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pequeno"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Малое"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ตัวเลขเล็ก"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Küçük"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Мале"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Số nhỏ"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "小數"
-          }
-        }
-      }
-    },
+    "属性名" : {},
     "已买断" : {
       "localizations" : {
         "ar" : {
@@ -23260,118 +21310,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已在卡片上"
-          }
-        }
-      }
-    },
-    "已在合计里" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "موجود في الإجماليات"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schon in der Summe"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Already in the totals"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ya está en los totales"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ya está en los totales"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Déjà dans les totaux"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कुल में पहले से है"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Già nei totali"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合計に表示中"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이미 합계에 있음"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Já está nos totais"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Já está nos totais"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Уже в итогах"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "อยู่ในยอดรวมแล้ว"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zaten toplamda"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Уже в підсумках"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Đã có trong tổng"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已在合計裡"
           }
         }
       }
@@ -24624,6 +22562,10 @@
         }
       }
     },
+    "平台占比" : {},
+    "平台占比和各平台的图按这里分。" : {},
+    "平台和起始日" : {},
+    "平台按什么分" : {},
     "建议先连" : {
       "localizations" : {
         "ar" : {
@@ -25184,6 +23126,7 @@
         }
       }
     },
+    "总览" : {},
     "恢复购买" : {
       "localizations" : {
         "ar" : {
@@ -25408,6 +23351,8 @@
         }
       }
     },
+    "想和 PostHog 看板对上？" : {},
+    "或者按一个事件属性" : {},
     "或者直接粘贴 .p8 文件内容" : {
       "localizations" : {
         "ar" : {
@@ -25968,6 +23913,8 @@
         }
       }
     },
+    "打开过的所有安装" : {},
+    "把 PostHog 看板里的图放到这里" : {},
     "把下载的文件发到这台 iPhone（隔空投送最快），选 **用 Snuffle 打开**；或者在下面选择文件。" : {
       "localizations" : {
         "ar" : {
@@ -26080,6 +24027,7 @@
         }
       }
     },
+    "折线" : {},
     "拍一张" : {
       "localizations" : {
         "ar" : {
@@ -26192,6 +24140,13 @@
         }
       }
     },
+    "拷贝" : {},
+    "持平" : {},
+    "按 %@ 分天" : {},
+    "按 %@ 计日" : {},
+    "按 PostHog 的人算：登录后同一个人的几台设备算一个。" : {},
+    "按 SDK 分出 iOS、Android、网页" : {},
+    "按 distinct_id 算：每台设备、每个浏览器各算一个，卸载重装算新的。" : {},
     "按一下，\n看看今天涨了多少" : {
       "localizations" : {
         "ar" : {
@@ -26304,6 +24259,7 @@
         }
       }
     },
+    "按你的看板算" : {},
     "按年" : {
       "localizations" : {
         "ar" : {
@@ -26752,6 +24708,7 @@
         }
       }
     },
+    "按看板「%@」算" : {},
     "按真实速率" : {
       "localizations" : {
         "ar" : {
@@ -26864,6 +24821,7 @@
         }
       }
     },
+    "按这个事件属性的值分平台" : {},
     "按这样算" : {
       "localizations" : {
         "ar" : {
@@ -26976,6 +24934,7 @@
         }
       }
     },
+    "按这样算，现在是" : {},
     "按项目" : {
       "localizations" : {
         "ar" : {
@@ -27200,6 +25159,8 @@
         }
       }
     },
+    "挑中的图在手机上原样跑你写的查询，刷新时一起更新。" : {},
+    "换一个看板" : {},
     "换成别的数" : {
       "localizations" : {
         "ar" : {
@@ -28208,6 +26169,8 @@
         }
       }
     },
+    "改回 Snuffle 默认" : {},
+    "改回任何事件" : {},
     "改用 API 密钥" : {
       "localizations" : {
         "ar" : {
@@ -28544,118 +26507,7 @@
         }
       }
     },
-    "改范围" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "غيّر النطاق"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bereich ändern"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Change scope"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cambiar alcance"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cambiar alcance"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modifier la portée"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "दायरा बदलें"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Cambia ambito"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "範囲を変更"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "범위 변경"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mudar escopo"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alterar âmbito"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Изменить охват"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เปลี่ยนขอบเขต"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kapsamı değiştir"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Змінити охоплення"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Đổi phạm vi"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "改範圍"
-          }
-        }
-      }
-    },
+    "数" : {},
     "数不对？调整怎么算" : {
       "localizations" : {
         "ar" : {
@@ -28880,6 +26732,9 @@
         }
       }
     },
+    "数什么" : {},
+    "数字" : {},
+    "数字怎么算" : {},
     "数据在" : {
       "localizations" : {
         "ar" : {
@@ -29440,118 +27295,7 @@
         }
       }
     },
-    "新增" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "الجدد"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neu"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "New"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nuevos"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nuevos"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nouveaux"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "नए"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nuovi"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新規"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "신규"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novos"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novos"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Новые"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ใหม่"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yeni"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нові"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mới"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "新增"
-          }
-        }
-      }
-    },
+    "新" : {},
     "新增用户" : {
       "localizations" : {
         "ar" : {
@@ -30448,118 +28192,7 @@
         }
       }
     },
-    "日期" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "التاريخ"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Datum"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Date"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fecha"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Fecha"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Date"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "तारीख़"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日付"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "날짜"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Data"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Дата"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "วันที่"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tarih"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Дата"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ngày"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日期"
-          }
-        }
-      }
-    },
+    "日" : {},
     "昨天此时 %@" : {
       "localizations" : {
         "ar" : {
@@ -31008,6 +28641,7 @@
         }
       }
     },
+    "更多" : {},
     "更换项目图标" : {
       "localizations" : {
         "ar" : {
@@ -31568,226 +29202,20 @@
         }
       }
     },
-    "最近 30 天有过动作的人 · 每小时更新" : {
+    "最近 30 天打开过的安装，含今天 · 每小时更新" : {},
+    "最近 30 天用过的人，含今天 · 每小时更新" : {},
+    "最近 7 天发过 %@ 的人，含今天" : {},
+    "最近 7 天打开过的安装，含今天" : {},
+    "最近 7 天注册的人，含今天" : {},
+    "最近 7 天用过的人，含今天" : {},
+    "最近 7 天第一次出现的人，含今天" : {},
+    "最近 7 天第一次打开的安装，含今天" : {},
+    "最近一天 %@ 个事件里，符合的有 %@ 个。" : {
       "localizations" : {
-        "ar" : {
+        "zh-Hans" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "النشطون خلال آخر 30 يومًا · يُحدَّث كل ساعة"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In den letzten 30 Tagen aktive Personen · stündlich aktualisiert"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "People active in the last 30 days · updates hourly"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personas activas en los últimos 30 días · se actualiza cada hora"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personas activas en los últimos 30 días · se actualiza cada hora"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personnes actives ces 30 derniers jours · mis à jour toutes les heures"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "पिछले 30 दिनों में सक्रिय लोग · हर घंटे अपडेट"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Persone attive negli ultimi 30 giorni · aggiornato ogni ora"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "直近30日間にアクティブだったユーザー · 1時間ごとに更新"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "최근 30일 동안 활동한 사람 · 매시간 업데이트"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pessoas ativas nos últimos 30 dias · atualiza a cada hora"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pessoas ativas nos últimos 30 dias · atualizado de hora a hora"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Активные за последние 30 дней · обновляется раз в час"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ผู้ที่ใช้งานใน 30 วันล่าสุด · อัปเดตทุกชั่วโมง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Son 30 günde aktif olan kişiler · saatte bir güncellenir"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Активні за останні 30 днів · оновлюється щогодини"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Người hoạt động trong 30 ngày qua · cập nhật mỗi giờ"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近 30 天有過動作的人 · 每小時更新"
-          }
-        }
-      }
-    },
-    "最近 7 天有过动作的人 · 每小时更新" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "النشطون خلال آخر 7 أيام · يُحدَّث كل ساعة"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "In den letzten 7 Tagen aktive Personen · stündlich aktualisiert"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "People active in the last 7 days · updates hourly"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personas activas en los últimos 7 días · se actualiza cada hora"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personas activas en los últimos 7 días · se actualiza cada hora"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Personnes actives ces 7 derniers jours · mis à jour toutes les heures"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "पिछले 7 दिनों में सक्रिय लोग · हर घंटे अपडेट"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Persone attive negli ultimi 7 giorni · aggiornato ogni ora"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "直近7日間にアクティブだったユーザー · 1時間ごとに更新"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "최근 7일 동안 활동한 사람 · 매시간 업데이트"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pessoas ativas nos últimos 7 dias · atualiza a cada hora"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pessoas ativas nos últimos 7 dias · atualizado de hora a hora"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Активные за последние 7 дней · обновляется раз в час"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ผู้ที่ใช้งานใน 7 วันล่าสุด · อัปเดตทุกชั่วโมง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Son 7 günde aktif olan kişiler · saatte bir güncellenir"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Активні за останні 7 днів · оновлюється щогодини"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Người hoạt động trong 7 ngày qua · cập nhật mỗi giờ"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "最近 7 天有過動作的人 · 每小時更新"
+            "state" : "new",
+            "value" : "最近一天 %1$@ 个事件里，符合的有 %2$@ 个。"
           }
         }
       }
@@ -32256,6 +29684,7 @@
         }
       }
     },
+    "未知" : {},
     "权限只开 **Charts metrics: overview** 和 **Project configuration: projects** 的读取，其他保持关闭。" : {
       "localizations" : {
         "ar" : {
@@ -32368,6 +29797,7 @@
         }
       }
     },
+    "条件" : {},
     "条评论待回复" : {
       "comment" : "Follows the big number of reviews to answer on a store-only project card.",
       "localizations" : {
@@ -32705,6 +30135,7 @@
         }
       }
     },
+    "来自你的看板" : {},
     "柠檬黄" : {
       "localizations" : {
         "ar" : {
@@ -32817,6 +30248,7 @@
         }
       }
     },
+    "柱状图" : {},
     "桌面、锁屏各 2 款，免费版没有" : {
       "localizations" : {
         "ar" : {
@@ -33378,6 +30810,7 @@
         }
       }
     },
+    "正在和看板「%@」对数…" : {},
     "正在看示例数据，退出并回到我的项目" : {
       "localizations" : {
         "ar" : {
@@ -33938,6 +31371,10 @@
         }
       }
     },
+    "正在闻…" : {},
+    "每周活跃 · 新 / 老" : {},
+    "每周用过的里面，第一次来的和回来的；这周还没过完" : {},
+    "每天结束时一共有多少，今天到现在为止" : {},
     "每年" : {
       "localizations" : {
         "ar" : {
@@ -34274,230 +31711,8 @@
         }
       }
     },
-    "每日新增用户" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المستخدمون الجدد يوميًا"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Neue Nutzer pro Tag"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Daily new users"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Usuarios nuevos al día"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Usuarios nuevos al día"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nouveaux utilisateurs par jour"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "रोज़ के नए यूज़र"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nuovi utenti al giorno"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日別新規ユーザー"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일일 신규 사용자"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novos usuários por dia"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Novos utilizadores por dia"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Новые пользователи по дням"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ผู้ใช้ใหม่รายวัน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Günlük yeni kullanıcılar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нові користувачі за днями"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Người dùng mới mỗi ngày"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每日新增使用者"
-          }
-        }
-      }
-    },
-    "每日活跃" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "النشطون يوميًا"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Täglich aktiv"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Daily active"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activos al día"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Activos al día"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Actifs par jour"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "रोज़ सक्रिय"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Attivi al giorno"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "日別アクティブ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "일일 활성"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ativos por dia"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ativos por dia"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Активные по дням"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ใช้งานรายวัน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Günlük aktif"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Активні за днями"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hoạt động mỗi ngày"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "每日活躍"
-          }
-        }
-      }
-    },
+    "每日新增 · 按平台" : {},
+    "每日活跃 · 按平台" : {},
     "每月" : {
       "localizations" : {
         "ar" : {
@@ -34722,230 +31937,7 @@
         }
       }
     },
-    "比昨天此时多 %@" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أكثر بـ %@ من هذا الوقت أمس"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ mehr als gestern um diese Zeit"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ more than this time yesterday"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ más que ayer a esta hora"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ más que ayer a esta hora"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ de plus qu'hier à la même heure"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कल इसी समय से %@ ज़्यादा"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ in più rispetto a ieri a quest'ora"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "昨日の同時刻より%@多い"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "어제 이 시간보다 %@ 많음"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ a mais que ontem neste horário"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ a mais do que ontem a esta hora"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "На %@ больше, чем вчера в это время"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "มากกว่าเวลานี้เมื่อวาน %@"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dün bu saate göre %@ fazla"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "На %@ більше, ніж учора в цей час"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nhiều hơn %@ so với giờ này hôm qua"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "比昨天此時多 %@"
-          }
-        }
-      }
-    },
-    "比昨天此时少 %@" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "أقل بـ %@ من هذا الوقت أمس"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ weniger als gestern um diese Zeit"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ fewer than this time yesterday"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ menos que ayer a esta hora"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ menos que ayer a esta hora"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ de moins qu'hier à la même heure"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कल इसी समय से %@ कम"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ in meno rispetto a ieri a quest'ora"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "昨日の同時刻より%@少ない"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "어제 이 시간보다 %@ 적음"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ a menos que ontem neste horário"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ a menos do que ontem a esta hora"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "На %@ меньше, чем вчера в это время"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "น้อยกว่าเวลานี้เมื่อวาน %@"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dün bu saate göre %@ az"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "На %@ менше, ніж учора в цей час"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ít hơn %@ so với giờ này hôm qua"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "比昨天此時少 %@"
-          }
-        }
-      }
-    },
+    "比如付费转化、崩溃率这些只有你的项目才有的图" : {},
     "没能完成购买：%@" : {
       "localizations" : {
         "ar" : {
@@ -36850,118 +33842,7 @@
         }
       }
     },
-    "点一个数换掉它。每个数是所有项目加起来的。" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اضغط على رقم لاستبداله. كل رقم هو مجموع كل المشاريع."
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tippe auf eine Zahl, um sie zu ersetzen. Jede ist die Summe aller Projekte."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tap a number to swap it. Each one adds up every project."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca un número para cambiarlo. Cada uno suma todos los proyectos."
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toca un número para cambiarlo. Cada uno suma todos los proyectos."
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touchez un chiffre pour le remplacer. Chacun additionne tous les projets."
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "बदलने के लिए किसी आंकड़े पर टैप करें। हर आंकड़ा सभी प्रोजेक्ट का जोड़ है।"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tocca un numero per cambiarlo. Ognuno somma tutti i progetti."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "数字をタップして変更。どれも全プロジェクトの合計です。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "숫자를 눌러 바꾸세요. 모두 전체 프로젝트 합계예요."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque em um número para trocá-lo. Cada um soma todos os projetos."
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque num número para o trocar. Cada um soma todos os projetos."
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нажмите на число, чтобы заменить. Каждое — сумма по всем проектам."
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "แตะตัวเลขเพื่อเปลี่ยน แต่ละตัวคือผลรวมของทุกโปรเจกต์"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Değiştirmek için bir sayıya dokun. Her biri tüm projelerin toplamıdır."
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Торкніться числа, щоб замінити. Кожне — сума за всіма проєктами."
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chạm vào một số để đổi. Mỗi số là tổng của mọi dự án."
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "點一個數換掉它。每個數是所有專案加起來的。"
-          }
-        }
-      }
-    },
+    "漏斗、留存、路径这几种图先不在手机上画，可以在 PostHog 里看。" : {},
     "点卡片上的任何一个数，换成你想看的。" : {
       "localizations" : {
         "ar" : {
@@ -38418,6 +35299,7 @@
         }
       }
     },
+    "用户" : {},
     "用户 · PostHog" : {
       "localizations" : {
         "ar" : {
@@ -38754,6 +35636,8 @@
         }
       }
     },
+    "用过一次是指" : {},
+    "用这个属性" : {},
     "用这把密钥连接" : {
       "localizations" : {
         "ar" : {
@@ -38978,6 +35862,11 @@
         }
       }
     },
+    "看 HogQL" : {},
+    "看板" : {},
+    "看板 %@ ✓" : {},
+    "看板 ≈ %@" : {},
+    "看板「%@」里没有单独显示这个数，没法直接对照。条件是照着看板读的。" : {},
     "看看 Pro" : {
       "localizations" : {
         "ar" : {
@@ -39090,6 +35979,7 @@
         }
       }
     },
+    "看这个数怎么算" : {},
     "示例" : {
       "localizations" : {
         "ar" : {
@@ -40322,118 +37212,12 @@
         }
       }
     },
-    "算哪些人" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "من يُحسب"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wer zählt"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Whose activity counts"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quién cuenta"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quién cuenta"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Qui compte"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "किसे गिनें"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chi conta"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "集計する人"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "집계 대상"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quem conta"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Quem conta"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Кого считать"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "นับใครบ้าง"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kimler sayılır"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Кого рахувати"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tính những ai"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "算哪些人"
-          }
-        }
-      }
-    },
+    "管理" : {},
+    "累计" : {},
+    "累计 · 按平台" : {},
+    "累计从某天算起" : {},
+    "累计用户" : {},
+    "累计的人里各平台各占多少" : {},
     "继续" : {
       "localizations" : {
         "ar" : {
@@ -40882,6 +37666,8 @@
         }
       }
     },
+    "网站访客" : {},
+    "网页" : {},
     "署名，例如：Mia，Lumen Notes 开发者" : {
       "localizations" : {
         "ar" : {
@@ -40994,6 +37780,7 @@
         }
       }
     },
+    "老" : {},
     "自定义事件" : {
       "localizations" : {
         "ar" : {
@@ -41106,6 +37893,7 @@
         }
       }
     },
+    "自定义口径" : {},
     "至少要算一个来源" : {
       "localizations" : {
         "ar" : {
@@ -41778,6 +38566,7 @@
         }
       }
     },
+    "表格" : {},
     "触感反馈" : {
       "localizations" : {
         "ar" : {
@@ -42338,6 +39127,7 @@
         }
       }
     },
+    "让 Snuffle 从你的看板读口径，数字就按看板的条件算。" : {},
     "设置" : {
       "localizations" : {
         "ar" : {
@@ -42786,6 +39576,7 @@
         }
       }
     },
+    "试一下" : {},
     "试用中" : {
       "localizations" : {
         "ar" : {
@@ -43586,6 +40377,7 @@
         }
       }
     },
+    "读看板需要新的权限，重新连一次 PostHog 就好。" : {},
     "调整卡片" : {
       "localizations" : {
         "ar" : {
@@ -43694,118 +40486,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "調整卡片"
-          }
-        }
-      }
-    },
-    "调整合计" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تعديل الإجماليات"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Summen anpassen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Edit totals"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Editar totales"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Editar totales"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modifier les totaux"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "कुल बदलें"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Modifica totali"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "合計を編集"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "합계 편집"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Editar totais"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Editar totais"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Настроить итоги"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "แก้ไขยอดรวม"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toplamları düzenle"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Налаштувати підсумки"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chỉnh tổng"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "調整合計"
           }
         }
       }
@@ -43922,6 +40602,7 @@
         }
       }
     },
+    "起始日" : {},
     "起草中…" : {
       "localizations" : {
         "ar" : {
@@ -44824,6 +41505,7 @@
         }
       }
     },
+    "近 14 天活跃" : {},
     "近 28 天收入" : {
       "localizations" : {
         "ar" : {
@@ -45736,6 +42418,7 @@
         }
       }
     },
+    "还有 %lld 行，在 PostHog 里看全部" : {},
     "还没刷新过" : {
       "localizations" : {
         "ar" : {
@@ -46744,6 +43427,7 @@
         }
       }
     },
+    "这个 PostHog 项目里还没有看板。" : {},
     "这个登录还没有读取 App 列表的权限，重新登录一次就能直接选。" : {
       "localizations" : {
         "ar" : {
@@ -47080,6 +43764,7 @@
         }
       }
     },
+    "这个项目的全部事件" : {},
     "这个项目还没连 %@" : {
       "localizations" : {
         "ar" : {
@@ -47304,6 +43989,7 @@
         }
       }
     },
+    "这张图现在没有数据" : {},
     "这把密钥只能读，不能改任何东西。它只存在这台 iPhone 上，手机直接向 RevenueCat 请求。" : {
       "localizations" : {
         "ar" : {
@@ -47528,6 +44214,10 @@
         }
       }
     },
+    "这次没读到，显示的是上次的结果：%@" : {},
+    "这种图先不在手机上画，点右上角在 PostHog 里看。" : {},
+    "进行中" : {},
+    "连上 PostHog 后才能算新增用户。" : {},
     "连上 PostHog 或商店后台，每次刷新都能看到新增用户、收入和评论。" : {
       "localizations" : {
         "ar" : {
@@ -49320,6 +46010,8 @@
         }
       }
     },
+    "选一个看板" : {},
+    "选平时最常看的那个，Snuffle 会读里面数人的图。" : {},
     "选择团队密钥的 **.p8 文件**。" : {
       "localizations" : {
         "ar" : {
@@ -49544,6 +46236,7 @@
         }
       }
     },
+    "部分" : {},
     "都回复完了" : {
       "localizations" : {
         "ar" : {
@@ -49768,6 +46461,7 @@
         }
       }
     },
+    "重新连 PostHog" : {},
     "重试" : {
       "localizations" : {
         "ar" : {
@@ -49992,118 +46686,6 @@
         }
       }
     },
-    "长按可以换成别的数" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المس مطولًا لاختيار أرقام أخرى"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Lange drücken, um andere Zahlen zu wählen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Touch and hold to choose other numbers"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mantén pulsado para elegir otros números"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mantén presionado para elegir otros números"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Maintenez appuyé pour choisir d'autres chiffres"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "दूसरे आंकड़े चुनने के लिए दबाकर रखें"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tieni premuto per scegliere altri numeri"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "長押しで別の数字に変更できます"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "길게 눌러 다른 숫자로 바꿀 수 있어요"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Toque e segure para escolher outros números"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mantenha premido para escolher outros números"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нажмите и удерживайте, чтобы выбрать другие числа"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "แตะค้างไว้เพื่อเลือกตัวเลขอื่น"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Başka sayılar seçmek için basılı tut"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Натисніть і утримуйте, щоб вибрати інші числа"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chạm và giữ để chọn số khác"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "長按可以換成別的數"
-          }
-        }
-      }
-    },
     "长按拖动可以调整顺序。" : {
       "localizations" : {
         "ar" : {
@@ -50324,118 +46906,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隱私權政策"
-          }
-        }
-      }
-    },
-    "顶部合计" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "الإجماليات في الأعلى"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Summen oben"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Totals at the top"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Totales arriba"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Totales arriba"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Totaux en haut"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ऊपर का कुल"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Totali in alto"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上部の合計"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "상단 합계"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Totais no topo"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Totais no topo"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Итоги сверху"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ยอดรวมด้านบน"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Üstteki toplamlar"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Підсумки вгорі"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Tổng ở trên cùng"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "頂部合計"
           }
         }
       }

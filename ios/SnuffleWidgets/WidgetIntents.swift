@@ -7,14 +7,17 @@ enum WidgetMetric: String, AppEnum {
     case newUsers, activeToday, activeWeek, activeMonth, totalUsers, online, pageviews
     case revenue, orders, mrr, activeSubscriptions, activeTrials, revenueLast28Days
     case reviewsToAnswer
+    /// Added after the others: saved widget configurations keep their raw values.
+    case newWeek
 
     static let typeDisplayRepresentation: TypeDisplayRepresentation = "数字"
 
     static let caseDisplayRepresentations: [WidgetMetric: DisplayRepresentation] = [
         .newUsers: "新增用户",
         .activeToday: "今日活跃",
-        .activeWeek: "周活跃",
-        .activeMonth: "月活跃",
+        .activeWeek: "7 日活跃",
+        .activeMonth: "30 日活跃",
+        .newWeek: "7 日新增",
         .totalUsers: "累计用户",
         .online: "此刻在线",
         .pageviews: "页面浏览",
@@ -43,6 +46,7 @@ enum WidgetMetric: String, AppEnum {
         case .activeTrials: .activeTrials
         case .revenueLast28Days: .revenueLast28Days
         case .reviewsToAnswer: .reviewsToAnswer
+        case .newWeek: .newWeek
         }
     }
 }

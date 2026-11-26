@@ -106,7 +106,7 @@ private struct TabBar: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
-            item(.today, String(localized: "今日"), "waveform.path.ecg")
+            item(.today, String(localized: "总览"), "waveform.path.ecg")
             item(.money, String(localized: "收入"), "dollarsign.circle")
             Color.clear.frame(width: 104, height: 46)
             item(.reviews, String(localized: "评论"), "text.bubble", badge: Int(model.total(.reviewsToAnswer) ?? 0))

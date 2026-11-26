@@ -2,7 +2,7 @@ import Foundation
 
 /// A number a project card, the totals strip or a widget can show. Every one is read from a connected source; none
 /// is computed from another.
-public enum Metric: Hashable, Sendable {
+public enum Metric: Hashable, Sendable, Identifiable {
     /// Counted the way the project's `MetricSettings.newUsers` says.
     case newUsers
     /// People who used the product today, and over the last 7 and 30 days counting today (whole days in the

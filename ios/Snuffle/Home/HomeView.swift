@@ -1,24 +1,19 @@
 import SnuffleKit
 import SwiftUI
 
-/// 今日: the totals strip and one card per project. The refresh button lives in the tab bar.
+/// 总览: one card per project, every number the way the project counts it. The refresh button lives in the tab bar.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.openPaywall) private var openPaywall
     @State private var showSettings = false
     @State private var adding = false
     @State private var editingCard: Project?
-    @State private var editingTotals = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 12) {
                     header
-                    TotalsStrip()
-                        .contextMenu {
-                            Button("调整合计", systemImage: "slider.horizontal.3") { editingTotals = true }
-                        }
                     ForEach(model.projects) { project in
                         NavigationLink(value: project.id) {
                             ProjectCard(project: project)
@@ -49,12 +44,11 @@ struct HomeView: View {
             .sheet(isPresented: $showSettings) { SettingsView() }
             .sheet(isPresented: $adding) { AddProjectFlow() }
             .sheet(item: $editingCard) { project in CardEditor(project: project) }
-            .sheet(isPresented: $editingTotals) { TotalsEditor() }
             .toolbar(.hidden, for: .navigationBar)
         }
     }
 
-    /// 今日, the way out of demo mode, then a short muted line with when the last refresh was. Where the title and
+    /// 总览, the way out of demo mode, then a short muted line with when the last refresh was. Where the title and
     /// the status do not fit on one line (long languages), the status sits under the title instead of shrinking away.
     private var header: some View {
         HStack(spacing: 8) {
@@ -117,7 +111,7 @@ struct HomeView: View {
     }
 
     private var title: some View {
-        Text("今日")
+        Text("总览")
             .font(Typeface.title(40))
             .foregroundStyle(Palette.ink)
             .fixedSize()
@@ -181,57 +175,6 @@ private struct LeaveDemoButton: View {
         .fixedSize()
         .accessibilityLabel(model.workspace.projects.isEmpty ? "正在看示例数据，退出并连接真实项目" : "正在看示例数据，退出并回到我的项目")
         .accessibilityIdentifier("leaveDemo")
-    }
-}
-
-/// Three totals across every project, chosen by the person. A delta pops in beside its label, so the strip never
-/// changes height.
-struct TotalsStrip: View {
-    @Environment(AppModel.self) private var model
-
-    var body: some View {
-        let mark = model.marksFading ? nil : model.totalsMark
-        HStack(alignment: .top, spacing: 12) {
-            ForEach(Array(model.settings.totals.enumerated()), id: \.offset) { _, metric in
-                TotalTile(metric: metric, value: model.total(metric), rise: mark?[metric])
-            }
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
-        .background(Palette.strip, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityHint("长按可以换成别的数")
-        .accessibilityIdentifier("totalsStrip")
-    }
-}
-
-/// One total: its label (with the rise beside it), then the number.
-struct TotalTile: View {
-    var metric: Metric
-    var value: Double?
-    var rise: Double?
-
-    var body: some View {
-        // Money is whole dollars here: the strip is a glance, the 收入 tab has the cents.
-        let text = metric.text(metric.isMoney ? value?.rounded() : value)
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 6) {
-                Text(metric.title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Palette.stripMuted)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-                // A wide delta (rare) squeezes the label rather than spilling into the next tile.
-                DeltaChip(text: rise.map(metric.delta), visible: rise != nil, size: 12)
-                    .lineLimit(1)
-                    .fixedSize()
-                    .layoutPriority(1)
-            }
-            .frame(height: 20, alignment: .leading)
-            Odometer(text: text, size: NumberSize.fit(text, base: 30), color: Palette.stripText)
-                .frame(height: 30, alignment: .bottomLeading)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

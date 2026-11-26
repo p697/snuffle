@@ -36,7 +36,7 @@ struct MoneyView: View {
     }
 
     private var hero: some View {
-        let rise = model.marksFading ? nil : model.totalsMark?[.revenue]
+        let rise = model.marksFading ? nil : model.refreshMark?[.revenue]
         return VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Odometer(text: Metric.revenue.text(model.total(.revenue)), size: 64)

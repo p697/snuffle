@@ -402,6 +402,11 @@ public struct LiveProvider: DataProvider {
         return try await withPostHog(link.accountId) { try await $0.dashboard(projectId: link.projectId, ref: ref) }
     }
 
+    public func dashboardCounting(for project: Project) async throws -> DashboardReading.Counting? {
+        guard let link = project.posthog else { return nil }
+        return try await withPostHog(link.accountId) { try await $0.dashboardCounting(projectId: link.projectId) }
+    }
+
     public func run(_ tile: InsightTile, for project: Project) async throws -> InsightResult {
         guard let link = project.posthog, let query = tile.query else { return InsightResult(fetchedAt: now()) }
         let date = now()

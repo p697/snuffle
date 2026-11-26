@@ -89,11 +89,12 @@ public struct PostHogClient: Sendable {
         let organizations: [Organization]?
     }
 
-    /// The project's time zone and first day of the week, read fresh in case they were changed in PostHog.
-    public func settings(projectId: Int) async throws -> (timeZone: String?, weekStartsMonday: Bool) {
-        struct Row: Decodable { let timezone: String?; let week_start_day: Int? }
+    /// The project's time zone, first day of the week and home dashboard, read fresh in case they were changed in
+    /// PostHog.
+    public func settings(projectId: Int) async throws -> (timeZone: String?, weekStartsMonday: Bool, primaryDashboard: Int?) {
+        struct Row: Decodable { let timezone: String?; let week_start_day: Int?; let primary_dashboard: Int? }
         let row: Row = try await http.decode(Row.self, try await request("api/projects/\(projectId)/"), platform: .posthog)
-        return (row.timezone, row.week_start_day == 1)
+        return (row.timezone, row.week_start_day == 1, row.primary_dashboard)
     }
 
     // MARK: Dashboards
@@ -106,6 +107,30 @@ public struct PostHogClient: Sendable {
     /// One dashboard with the queries of its charts. Needs `dashboard:read` and `insight:read`.
     public func dashboard(projectId: Int, ref: DashboardRef) async throws -> DashboardDetail {
         DashboardReading.detail(try await http.decode(JSONValue.self, try await request("api/projects/\(projectId)/dashboards/\(ref.id)/"), platform: .posthog), ref: ref)
+    }
+
+    /// The counting the project's own dashboards use, to count that way from the start. The project's home dashboard
+    /// says it best; without one, a project with a few dashboards takes the one with the most people charts. One with
+    /// many (often one per feature or page) is left for the person to choose. Only a counting chosen on purpose is
+    /// taken (`Counting.isDeliberate`). Nil when there is none; throws when the dashboards cannot be listed (an account
+    /// connected before Snuffle read dashboards has no `dashboard:read`).
+    public func dashboardCounting(projectId: Int) async throws -> DashboardReading.Counting? {
+        let list = try await dashboards(projectId: projectId)
+        func counting(_ summary: DashboardSummary) async -> DashboardReading.Counting? {
+            guard let detail = try? await dashboard(projectId: projectId, ref: summary.ref),
+                  let counting = DashboardReading.counting(detail), counting.isDeliberate else { return nil }
+            return counting
+        }
+        if let home = try? await settings(projectId: projectId).primaryDashboard, let summary = list.first(where: { $0.id == home }),
+           let found = await counting(summary) {
+            return found
+        }
+        guard list.count <= 3 else { return nil }
+        var best: DashboardReading.Counting?
+        for summary in list {
+            if let found = await counting(summary), found.sources.count > (best?.sources.count ?? 0) { best = found }
+        }
+        return best
     }
 
     /// Runs a saved insight's query as it is.

@@ -61,6 +61,12 @@ public enum DashboardReading {
         /// The charts it was read from.
         public var sources: [String]
 
+        /// Chosen on purpose: a custom activity event, or conditions. PostHog's own starter charts count `$pageview`
+        /// with neither.
+        public var isDeliberate: Bool {
+            !conditions.isEmpty || (activityEvent.map { !$0.hasPrefix("$") } ?? false)
+        }
+
         /// `settings` counting people this way. Website visitors are no longer left out by surface: the dashboard's
         /// conditions say who counts.
         public func applied(to settings: MetricSettings, timeZone: TimeZone) -> MetricSettings {
@@ -175,20 +181,24 @@ public enum DashboardReading {
 
     // MARK: Property filters
 
-    /// HogQL conditions from a query's `properties`: a list of filters, or AND groups of them (OR groups are left
-    /// out: they say "either", which no single condition can keep).
+    /// HogQL conditions from a query's `properties`: a list of filters or a group of them. The parts of an AND are
+    /// conditions of their own, so each can be switched off; an OR stays one condition in brackets, since its parts
+    /// only mean something together.
     static func conditions(_ properties: JSONValue?) -> [String] {
         guard let properties else { return [] }
         var found: [String] = []
+        func add(_ condition: String) {
+            for part in splitAnd(condition) where !found.contains(part) { found.append(part) }
+        }
         func walk(_ node: JSONValue) {
             switch node {
             case .array(let items):
                 items.forEach(walk)
             case .object:
-                if let type = node["type"]?.string, type == "AND" || type == "OR", case .array = node["values"] {
-                    if type == "AND" || isSingle(node) { walk(node["values"]!) }
-                } else if let condition = condition(node) {
-                    for part in splitAnd(condition) where !found.contains(part) { found.append(part) }
+                if node["type"]?.string == "AND", let values = node["values"] {
+                    walk(values)
+                } else if let condition = expression(node) {
+                    add(condition)
                 }
             default:
                 break
@@ -198,9 +208,15 @@ public enum DashboardReading {
         return found
     }
 
-    private static func isSingle(_ group: JSONValue) -> Bool {
-        if case .array(let values)? = group["values"] { return values.count == 1 }
-        return false
+    /// A filter or a group of them as one HogQL expression; nil when nothing in it has a plain condition.
+    static func expression(_ node: JSONValue) -> String? {
+        guard let type = node["type"]?.string, type == "AND" || type == "OR", case .array(let values)? = node["values"] else {
+            return condition(node)
+        }
+        let parts = values.compactMap(expression)
+        // A part that cannot be written would change what an OR keeps: leave the whole group out.
+        guard !parts.isEmpty, type == "AND" || parts.count == values.count else { return nil }
+        return parts.count == 1 ? parts[0] : "(" + parts.joined(separator: type == "AND" ? " AND " : " OR ") + ")"
     }
 
     /// One property filter as a HogQL condition; nil for kinds that have no plain condition (cohorts, elements).

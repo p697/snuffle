@@ -39,7 +39,7 @@ struct TodayProvider: AppIntentTimelineProvider {
 /// The widget's refresh button: reads every included project in the background and saves the result.
 struct RefreshAllIntent: AppIntent {
     static let title: LocalizedStringResource = "刷新全部项目"
-    static let description = IntentDescription("拉取每个项目卡片、合计和小组件上的数，以及评论。")
+    static let description = IntentDescription("拉取每个项目卡片、项目看板和小组件上的数，以及评论。")
 
     func perform() async throws -> some IntentResult {
         let settings = SharedContainer.settings.load() ?? AppSettings()
@@ -60,7 +60,7 @@ struct RefreshAllIntent: AppIntent {
         }
         let widgets = SharedContainer.widgetMetrics()
         for project in projects where project.includeInRefresh {
-            let metrics = MetricsInUse.forProject(project, totals: settings.totals, widgets: widgets)
+            let metrics = MetricsInUse.forProject(project, widgets: widgets)
             let result = await provider.refresh(project, metrics: metrics, previous: cache.snapshots[project.id])
             cache.snapshots[project.id] = result.snapshot.fillingGaps(from: cache.snapshots[project.id])
             if let reviews = result.reviews { cache.reviews[project.id] = reviews }

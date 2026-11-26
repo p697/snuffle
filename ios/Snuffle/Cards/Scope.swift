@@ -10,26 +10,6 @@ extension Project {
     }
 }
 
-/// "算哪些人", pushed from the metric library.
-struct ScopePage: View {
-    @Binding var project: Project
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                BackButton()
-                PageTitle(
-                    title: String(localized: "算哪些人"),
-                    subtitle: String(localized: "一个 PostHog 项目里常常既有 App，又有网站和官网访客。选哪些来源的人算进活跃、累计、在线和页面浏览。")
-                )
-                ScopeOptions(project: $project)
-            }
-            .padding(16)
-        }
-        .sheetPage()
-    }
-}
-
 /// The surfaces a project's PostHog events come from, each with its people in the last 30 days and a switch, and
 /// what today's actives, the month's and the total would be with the switches as they are.
 struct ScopeOptions: View {

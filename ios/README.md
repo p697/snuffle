@@ -6,12 +6,16 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
 
 - `Packages/SnuffleKit` — models, the PostHog / RevenueCat / App Store Connect / Google Play clients, OAuth (PKCE),
   Keychain storage, the demo world and the refresh logic. Builds for macOS too, so its tests run with `swift test`.
-- `Snuffle/` — the app. `App/AppModel.swift` owns state and the refresh choreography; `Design/` holds the odometer,
-  the cat and the refresh button; `Cards/` the card and totals editors, the metric library, how new users and
-  revenue are counted, and whose activity counts (`Scope.swift`: people numbers count only the `Surface`s a project
-  includes, told apart by PostHog's `$lib`, `$os` and `$is_identified`; signed-out website visitors are left out
-  unless they are all a project has; total users reads the whole history once and then adds each day's new people,
-  `UserTally`); one folder per tab.
+- `Snuffle/` — the app. `App/AppModel.swift` owns state and the refresh choreography (numbers stay on screen; the
+  digits that change roll up and the rise is marked); `Design/` holds the odometer, the cat and the refresh button;
+  `Cards/` the card editor, the metric library and how numbers are counted (`Definition.swift`). A project's people
+  numbers follow its counting (`MetricSettings`): read from its own PostHog dashboard when it has one (automatically
+  when the project is added, `DashboardReading`), or Snuffle's own — any event, people, and the `Surface`s it
+  includes, told apart by PostHog's `$lib`, `$os` and `$is_identified` (signed-out website visitors are left out when
+  the product also has signed-in or app users). Weeks and months are whole days counting today, as PostHog's charts
+  count them; the total reads the whole history once by platform and then adds each day's new people (`UserTally`).
+  `Projects/` holds the board (charts by platform, each number's definition, charts pinned from PostHog
+  dashboards, run with their own queries); one folder per tab.
 - `SnuffleWidgets/` — home and lock screen widgets with an in-widget refresh button.
 - `SnuffleUITests/` — end-to-end tests in demo mode.
 - `ANALYTICS.md` — the PostHog events, their properties and the metrics built on them.
