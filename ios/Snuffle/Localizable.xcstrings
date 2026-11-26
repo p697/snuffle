@@ -19908,6 +19908,118 @@
         }
       }
     },
+    "再加一行数" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة صف"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zeile hinzufügen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add a row"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Añadir una fila"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Agregar una fila"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajouter une ligne"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "एक पंक्ति जोड़ें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aggiungi una riga"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行を追加"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "줄 추가"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar uma linha"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adicionar uma linha"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить строку"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เพิ่มแถว"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Satır ekle"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Додати рядок"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thêm một hàng"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "再加一行數"
+          }
+        }
+      }
+    },
     "再改改" : {
       "localizations" : {
         "ar" : {
@@ -24388,6 +24500,230 @@
         }
       }
     },
+    "和前一个数换位置" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تبديل مع الرقم السابق"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit der vorherigen Zahl tauschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap with the previous number"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intercambiar con el número anterior"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intercambiar con el número anterior"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échanger avec le chiffre précédent"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पिछले नंबर से जगह बदलें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scambia con il numero precedente"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "前の数字と入れ替え"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앞 숫자와 자리 바꾸기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trocar com o número anterior"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trocar com o número anterior"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поменять с предыдущим числом"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สลับกับตัวเลขก่อนหน้า"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Önceki sayıyla yer değiştir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поміняти з попереднім числом"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi chỗ với số liệu trước"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和前一個數換位置"
+          }
+        }
+      }
+    },
+    "和后一个数换位置" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تبديل مع الرقم التالي"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit der nächsten Zahl tauschen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Swap with the next number"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intercambiar con el número siguiente"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Intercambiar con el número siguiente"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Échanger avec le chiffre suivant"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "अगले नंबर से जगह बदलें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Scambia con il numero successivo"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次の数字と入れ替え"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음 숫자와 자리 바꾸기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trocar com o próximo número"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trocar com o número seguinte"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поменять со следующим числом"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "สลับกับตัวเลขถัดไป"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sonraki sayıyla yer değiştir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поміняти з наступним числом"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đổi chỗ với số liệu sau"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "和後一個數換位置"
+          }
+        }
+      }
+    },
     "商店" : {
       "localizations" : {
         "ar" : {
@@ -28325,114 +28661,226 @@
         }
       }
     },
-    "已在卡片上" : {
+    "已在卡片上，选它就和这个数换位置" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "موجود في البطاقة"
+            "value" : "موجود على البطاقة بالفعل. اختره لتبديل مكانه مع هذا الرقم"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schon auf der Karte"
+            "value" : "Schon auf der Karte. Auswählen tauscht sie mit dieser Zahl"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Already on the card"
+            "value" : "Already on the card. Choose it to swap places with this one"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ya está en la tarjeta"
+            "value" : "Ya está en la tarjeta. Elígelo para intercambiarlo con este"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ya está en la tarjeta"
+            "value" : "Ya está en la tarjeta. Elígelo para intercambiarlo con este"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Déjà sur la carte"
+            "value" : "Déjà sur la carte. Choisissez-le pour l’échanger avec celui-ci"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "कार्ड पर पहले से है"
+            "value" : "पहले से कार्ड पर है। चुनने पर इस नंबर से जगह बदल जाएगी"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Già nella scheda"
+            "value" : "Già sulla scheda. Sceglilo per scambiarlo con questo"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "カードに表示中"
+            "value" : "すでにカードにあります。選ぶとこの数字と入れ替わります"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "이미 카드에 있음"
+            "value" : "이미 카드에 있습니다. 선택하면 이 숫자와 자리를 바꿉니다"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Já está no cartão"
+            "value" : "Já está no cartão. Escolha para trocar de lugar com este"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Já está no cartão"
+            "value" : "Já está no cartão. Escolha-o para trocar de lugar com este"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Уже на карточке"
+            "value" : "Уже на карточке. Выберите, чтобы поменять местами с этим числом"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "อยู่ในการ์ดแล้ว"
+            "value" : "อยู่บนการ์ดแล้ว เลือกเพื่อสลับที่กับตัวนี้"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zaten kartta"
+            "value" : "Zaten kartta. Seçerseniz bununla yer değiştirir"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Уже на картці"
+            "value" : "Уже на картці. Виберіть, щоб поміняти місцями з цим числом"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Đã có trên thẻ"
+            "value" : "Đã có trên thẻ. Chọn để đổi chỗ với số liệu này"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "已在卡片上"
+            "value" : "已在卡片上，選它就和這個數換位置"
+          }
+        }
+      }
+    },
+    "已在卡片上，选它就挪到这里" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "موجود على البطاقة بالفعل. اختره لنقله إلى هنا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schon auf der Karte. Auswählen verschiebt sie hierher"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Already on the card. Choose it to move it here"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya está en la tarjeta. Elígelo para moverlo aquí"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya está en la tarjeta. Elígelo para moverlo aquí"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déjà sur la carte. Choisissez-le pour le déplacer ici"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "पहले से कार्ड पर है। चुनने पर यह यहाँ आ जाएगा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Già sulla scheda. Sceglilo per spostarlo qui"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "すでにカードにあります。選ぶとここへ移動します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 카드에 있습니다. 선택하면 여기로 옮깁니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já está no cartão. Escolha para movê-lo para cá"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já está no cartão. Escolha-o para o mover para aqui"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже на карточке. Выберите, чтобы переместить сюда"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อยู่บนการ์ดแล้ว เลือกเพื่อย้ายมาที่นี่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zaten kartta. Seçerseniz buraya taşınır"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже на картці. Виберіть, щоб перемістити сюди"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Đã có trên thẻ. Chọn để chuyển sang đây"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已在卡片上，選它就挪到這裡"
           }
         }
       }
@@ -33269,6 +33717,118 @@
         }
       }
     },
+    "按住一个数拖到另一个数上，两个换位置；拖到空位就挪过去" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المس رقمًا مطولًا واسحبه فوق رقم آخر لتبديل مكانيهما، أو إلى مكان فارغ لنقله إليه"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Halte eine Zahl gedrückt und zieh sie auf eine andere, um beide zu tauschen, oder auf einen freien Platz, um sie dorthin zu verschieben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hold a number and drag it onto another to swap them, or onto an empty spot to move it there"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén pulsado un número y arrástralo sobre otro para intercambiarlos, o a un hueco libre para moverlo allí"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén presionado un número y arrástralo sobre otro para intercambiarlos, o a un espacio vacío para moverlo ahí"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maintenez un chiffre et faites-le glisser sur un autre pour les échanger, ou sur une place libre pour l’y déplacer"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "किसी नंबर को दबाकर रखें और दूसरे नंबर पर खींचें ताकि दोनों की जगह बदल जाए, या खाली जगह पर खींचकर उसे वहाँ ले जाएँ"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni premuto un numero e trascinalo su un altro per scambiarli, o su uno spazio libero per spostarlo lì"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "数字を長押しして別の数字にドラッグすると入れ替わり、空き枠にドラッグするとそこへ移動します"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "숫자를 길게 눌러 다른 숫자 위로 끌면 자리를 바꾸고, 빈칸으로 끌면 그곳으로 옮깁니다"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toque e segure um número e arraste-o sobre outro para trocá-los, ou para um espaço vazio para movê-lo"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantenha premido um número e arraste-o para outro para os trocar, ou para um espaço vazio para o mover"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удерживайте число и перетащите его на другое, чтобы поменять их местами, или на пустое место, чтобы переместить"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แตะค้างที่ตัวเลขแล้วลากไปวางบนอีกตัวเพื่อสลับที่ หรือลากไปช่องว่างเพื่อย้ายไปที่นั่น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bir sayıyı basılı tutup başka bir sayının üzerine sürükleyerek yerlerini değiştirin ya da boş bir yere sürükleyerek oraya taşıyın"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Утримуйте число й перетягніть його на інше, щоб поміняти їх місцями, або на вільне місце, щоб перемістити"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nhấn giữ một số liệu rồi kéo lên số liệu khác để đổi chỗ, hoặc kéo vào ô trống để chuyển sang đó"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "按住一個數拖到另一個數上，兩個換位置；拖到空位就挪過去"
+          }
+        }
+      }
+    },
     "按你的看板算" : {
       "localizations" : {
         "ar" : {
@@ -34837,114 +35397,114 @@
         }
       }
     },
-    "换成别的数" : {
+    "换成别的数；按住拖到别的数上，两个数换位置" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "استبدله برقم آخر"
+            "value" : "يعرض رقمًا آخر. المس مطولًا واسحب فوق رقم آخر لتبديل مكانيهما."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Durch andere Zahl ersetzen"
+            "value" : "Zeigt eine andere Zahl. Gedrückt halten und auf eine andere Zahl ziehen, um beide zu tauschen."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Swap for another number"
+            "value" : "Shows a different number. Hold and drag onto another number to swap them."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cambiar por otro número"
+            "value" : "Muestra otro número. Mantén pulsado y arrastra sobre otro número para intercambiarlos."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Cambiar por otro número"
+            "value" : "Muestra otro número. Mantén presionado y arrastra sobre otro número para intercambiarlos."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Remplacer par un autre chiffre"
+            "value" : "Affiche un autre chiffre. Maintenez et faites glisser sur un autre chiffre pour les échanger."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "दूसरे आंकड़े से बदलें"
+            "value" : "दूसरा नंबर दिखाता है। दबाकर रखें और दूसरे नंबर पर खींचें ताकि दोनों की जगह बदल जाए।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sostituisci con un altro numero"
+            "value" : "Mostra un altro numero. Tieni premuto e trascina su un altro numero per scambiarli."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "別の数字に変更"
+            "value" : "別の数字に変更します。長押しして別の数字にドラッグすると入れ替わります。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "다른 숫자로 바꾸기"
+            "value" : "다른 숫자로 바꿉니다. 길게 눌러 다른 숫자 위로 끌면 자리를 바꿉니다."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trocar por outro número"
+            "value" : "Mostra outro número. Toque e segure e arraste sobre outro número para trocá-los."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trocar por outro número"
+            "value" : "Mostra outro número. Mantenha premido e arraste para outro número para os trocar."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Заменить другим числом"
+            "value" : "Показывает другое число. Удерживайте и перетащите на другое число, чтобы поменять их местами."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "เปลี่ยนเป็นตัวเลขอื่น"
+            "value" : "เปลี่ยนเป็นตัวเลขอื่น แตะค้างแล้วลากไปบนอีกตัวเพื่อสลับที่"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Başka bir sayıyla değiştir"
+            "value" : "Başka bir sayı gösterir. Basılı tutup başka bir sayının üzerine sürükleyerek yerlerini değiştirin."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Замінити іншим числом"
+            "value" : "Показує інше число. Утримуйте й перетягніть на інше число, щоб поміняти їх місцями."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Đổi sang số khác"
+            "value" : "Đổi sang số liệu khác. Nhấn giữ rồi kéo lên số liệu khác để đổi chỗ."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "換成別的數"
+            "value" : "換成別的數；按住拖到別的數上，兩個數換位置"
           }
         }
       }
@@ -36401,6 +36961,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "改用帳號登入"
+          }
+        }
+      }
+    },
+    "放到这里" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أفلِت هنا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hier ablegen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drop here"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suelta aquí"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Suelta aquí"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Déposer ici"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "यहाँ छोड़ें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rilascia qui"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ここに置く"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "여기에 놓기"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Solte aqui"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Largue aqui"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отпустите здесь"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "วางที่นี่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Buraya bırak"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Відпустіть тут"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thả vào đây"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "放到這裡"
           }
         }
       }
@@ -47069,114 +47741,114 @@
         }
       }
     },
-    "点卡片上的任何一个数，换成你想看的。" : {
+    "点一个数，换成别的" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "اضغط على أي رقم في البطاقة لتعرض الرقم الذي تريده."
+            "value" : "اضغط على رقم لعرض رقم آخر"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tippe auf eine Zahl der Karte und wähle, was du sehen willst."
+            "value" : "Tippe auf eine Zahl, um eine andere zu zeigen"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tap any number on the card to show the one you want."
+            "value" : "Tap a number to show a different one"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toca cualquier número de la tarjeta y elige el que quieras ver."
+            "value" : "Toca un número para mostrar otro"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toca cualquier número de la tarjeta y elige el que quieras ver."
+            "value" : "Toca un número para mostrar otro"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Touchez un chiffre de la carte pour afficher celui que vous voulez."
+            "value" : "Touchez un chiffre pour en afficher un autre"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "कार्ड के किसी भी आंकड़े पर टैप करके मनचाहा आंकड़ा चुनें।"
+            "value" : "दूसरा नंबर दिखाने के लिए किसी नंबर पर टैप करें"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tocca un numero della scheda per mostrare quello che vuoi."
+            "value" : "Tocca un numero per mostrarne un altro"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "カードの数字をタップして、見たい数字に変えましょう。"
+            "value" : "数字をタップして別の数字に変更"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "카드의 숫자를 눌러 보고 싶은 숫자로 바꾸세요."
+            "value" : "숫자를 탭해 다른 숫자로 바꾸기"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toque em qualquer número do cartão para mostrar o que você quer."
+            "value" : "Toque em um número para mostrar outro"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Toque em qualquer número do cartão para mostrar o que quer."
+            "value" : "Toque num número para mostrar outro"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Нажмите на любое число на карточке и выберите нужное."
+            "value" : "Нажмите на число, чтобы показать другое"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "แตะตัวเลขใดก็ได้บนการ์ดเพื่อเปลี่ยนเป็นตัวที่อยากดู"
+            "value" : "แตะตัวเลขเพื่อเปลี่ยนเป็นตัวอื่น"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Karttaki herhangi bir sayıya dokun, görmek istediğini seç."
+            "value" : "Başka bir sayı göstermek için bir sayıya dokunun"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Торкніться будь-якого числа на картці й виберіть потрібне."
+            "value" : "Торкніться числа, щоб показати інше"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chạm vào số bất kỳ trên thẻ để đổi sang số bạn muốn xem."
+            "value" : "Chạm vào một số liệu để đổi sang số liệu khác"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "點卡片上的任何一個數，換成你想看的。"
+            "value" : "點一個數，換成別的"
           }
         }
       }

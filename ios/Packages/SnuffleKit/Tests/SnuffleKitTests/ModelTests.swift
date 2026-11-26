@@ -133,7 +133,7 @@ struct ModelTests {
     @Test func cardsFromBeforeTheRedesignStartWithTheStandardCard() throws {
         let account = UUID()
         var base = Project(name: "Old", tint: .ink, posthog: PostHogLink(accountId: account, projectId: 1, projectName: "x", timeZone: "UTC"), appStore: AppStoreLink(accountId: account, appId: "1", appName: "x", bundleId: "b"))
-        base.card = CardLayout(big: [.mrr], small: [.online], trend: false, split: true)
+        base.card = CardLayout(big: [.mrr], rows: [[.online]], trend: false, split: true)
         var json = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(base)) as? [String: Any])
         // A card this version saved keeps everything, the switches included.
         #expect(try JSONDecoder().decode(Project.self, from: JSONSerialization.data(withJSONObject: json)) == base)
@@ -141,14 +141,52 @@ struct ModelTests {
         json["card"] = ["big": ["new_users"], "small": ["revenue", "event_count:Application Installed"]]
         #expect(try JSONDecoder().decode(Project.self, from: JSONSerialization.data(withJSONObject: json)).card == CardLayout.standard(for: base))
         json["card"] = nil
-        #expect(try JSONDecoder().decode(Project.self, from: JSONSerialization.data(withJSONObject: json)).card == CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .newWeek]))
+        #expect(try JSONDecoder().decode(Project.self, from: JSONSerialization.data(withJSONObject: json)).card == CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .newWeek]]))
+    }
+
+    @Test func cardsKeepTheirRowWhenRowsArrive() throws {
+        // A card saved with one row under `small` reads as its first row; rows are saved as rows.
+        let saved = #"{"big":["total_users"],"small":["active_today","mrr"],"trend":true,"split":false,"v":2}"#
+        let layout = try JSONDecoder().decode(CardLayout.self, from: Data(saved.utf8))
+        #expect(layout == CardLayout(big: [.totalUsers], rows: [[.activeToday, .mrr]], split: false))
+        let two = CardLayout(big: [.totalUsers], rows: [[.activeToday], [.mrr, .revenue]])
+        #expect(try JSONDecoder().decode(CardLayout.self, from: JSONEncoder().encode(two)) == two)
+        // Repeats, empty rows, a fourth number in a row and a third row are dropped.
+        let crowded = CardLayout(big: [.mrr], rows: [[], [.mrr, .online, .revenue, .orders, .pageviews], [.online, .newUsers], [.activeMonth]])
+        #expect(crowded.rows == [[.online, .revenue, .orders], [.newUsers]])
+    }
+
+    @Test func numbersTradePlacesAndMoveToOpenings() throws {
+        let layout = CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .newWeek]])
+        #expect(layout.openings == [.add(row: 1)], "a full row has no room; a second row can start")
+        // A small number dropped on the big one trades places with it.
+        #expect(layout.moving(from: .small(row: 0, index: 2), to: .big(0)) == CardLayout(big: [.newWeek], rows: [[.activeToday, .activeWeek, .totalUsers]]))
+        // Dropped on the new row, it leaves its row and starts the next.
+        let moved = try #require(layout.moving(from: .small(row: 0, index: 0), to: .add(row: 1)))
+        #expect(moved.rows == [[.activeWeek, .newWeek], [.activeToday]])
+        #expect(moved.openings == [.add(row: 0), .add(row: 1)])
+        // The last number of a row leaving it closes the row.
+        #expect(moved.moving(from: .small(row: 1, index: 0), to: .add(row: 0))?.rows == [[.activeWeek, .newWeek, .activeToday]])
+        // The only big number cannot leave; one of two can.
+        #expect(moved.moving(from: .big(0), to: .add(row: 1)) == nil)
+        let twoBig = CardLayout(big: [.totalUsers, .mrr], rows: [[.activeToday]])
+        #expect(twoBig.moving(from: .big(1), to: .add(row: 0)) == CardLayout(big: [.totalUsers], rows: [[.activeToday, .mrr]]))
+        #expect(twoBig.moving(from: .big(1), to: .add(row: 2)) == nil, "only the next row can start")
+        #expect(twoBig.removing(.big(1)) == CardLayout(big: [.totalUsers], rows: [[.activeToday]]))
+        #expect(twoBig.removing(.big(0)).removing(.big(0)).big == [.mrr], "the last big number stays")
+        // From the library: a number on the card swaps or moves; a new one replaces or is added.
+        #expect(layout.placing(.totalUsers, at: .small(row: 0, index: 1)) == CardLayout(big: [.activeWeek], rows: [[.activeToday, .totalUsers, .newWeek]]))
+        #expect(layout.placing(.mrr, at: .add(row: 1)).rows == [[.activeToday, .activeWeek, .newWeek], [.mrr]])
+        #expect(layout.placing(.mrr, at: .small(row: 0, index: 0)).rows == [[.mrr, .activeWeek, .newWeek]])
+        #expect(layout.placing(.mrr, at: .add(row: 0)) == layout, "a full row takes no more")
+        #expect(moved.slots == [.big(0), .small(row: 0, index: 0), .small(row: 0, index: 1), .small(row: 1, index: 0)])
     }
 
     @Test func cardsLeaveOutNumbersTheProjectCannotRead() {
         let account = UUID()
         let storeOnly = Project(name: "Store", tint: .ink, appStore: AppStoreLink(accountId: account, appId: "1", appName: "x", bundleId: "b"))
         #expect(storeOnly.card == CardLayout(big: [.reviewsToAnswer]))
-        let layout = CardLayout(big: [.activeToday, .mrr], small: [.revenue, .reviewsToAnswer, .reviewsToAnswer])
+        let layout = CardLayout(big: [.activeToday, .mrr], rows: [[.revenue, .reviewsToAnswer, .reviewsToAnswer]])
         #expect(layout.visible(in: storeOnly) == CardLayout(big: [.reviewsToAnswer], trend: false, split: false), "a small number takes the empty big slot; bars and split need PostHog")
         #expect(Set(Metric.fixed.map(\.id)).count == Metric.fixed.count)
         #expect(Metric.fixed.allSatisfy { Metric(id: $0.id) == $0 })

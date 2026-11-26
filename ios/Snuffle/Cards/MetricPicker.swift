@@ -96,20 +96,14 @@ struct CardMetricPicker: View {
 
     private enum Route: Hashable { case counting(CountingKind), events, definition }
 
-    private var current: Metric? {
-        switch slot {
-        case .big(let index): layout.big[safe: index]
-        case .small(let index): layout.small[safe: index]
-        case .add: nil
-        }
-    }
+    private var current: Metric? { layout[slot] }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .top) {
-                        PageTitle(title: slot == .add ? String(localized: "加一个数") : String(localized: "换成哪个数"), subtitle: String(localized: "\(project.name) · 右边是现在的数，选了就是它"))
+                        PageTitle(title: current == nil ? String(localized: "加一个数") : String(localized: "换成哪个数"), subtitle: String(localized: "\(project.name) · 右边是现在的数，选了就是它"))
                         RoundIconButton(systemName: "xmark", label: String(localized: "关闭")) { dismiss() }
                     }
                     usersSection
@@ -251,23 +245,18 @@ struct CardMetricPicker: View {
     @ViewBuilder
     private func row(_ metric: Metric, counting: CountingKind? = nil) -> some View {
         let available = metric.isAvailable(in: project)
-        // A big slot takes any number (one already on the card swaps places); a pill cannot take a big number.
-        let elsewhere: Bool = {
-            guard metric != current, layout.metrics.contains(metric) else { return false }
-            switch slot {
-            case .big: return false
-            case .small: return layout.big.contains(metric)
-            case .add: return true
-            }
-        }()
+        // A number already elsewhere on the card trades places with this one; an empty place takes it only when it
+        // can move there (the only big number cannot).
+        let onCard = metric != current && layout.metrics.contains(metric)
+        let movable = !onCard || layout.placing(metric, at: slot) != layout
         VStack(alignment: .leading, spacing: 0) {
             MetricRow(
                 title: metric.title(in: project),
-                detail: elsewhere ? String(localized: "已在卡片上") : metric.explanation(in: project),
+                detail: onCard ? (current == nil ? String(localized: "已在卡片上，选它就挪到这里") : String(localized: "已在卡片上，选它就和这个数换位置")) : metric.explanation(in: project),
                 value: available ? metric.text(value(metric)) : nil,
                 loading: loading.contains(metric),
                 selected: metric == current,
-                enabled: available && !elsewhere
+                enabled: available && movable
             ) { choose(metric) }
             if let counting {
                 NavigationLink(value: Route.counting(counting)) {

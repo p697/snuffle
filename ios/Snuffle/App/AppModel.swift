@@ -380,7 +380,7 @@ final class AppModel {
     /// Saves a card layout for `project`, or for every project when `everywhere` (each project's own events stay
     /// on its own card), then reads any number that is now shown but was never read, and `project` again when its
     /// sources or counting changed (`countingChanged`).
-    func saveCard(_ layout: CardLayout, for project: Project, everywhere: Bool, countingChanged: Bool = false, measured: [Metric: Double] = [:]) {
+    func saveCard(_ layout: CardLayout, for project: Project, everywhere: Bool, dragged: Bool = false, countingChanged: Bool = false, measured: [Metric: Double] = [:]) {
         var changed: [Project] = []
         for index in workspace.projects.indices {
             var target = workspace.projects[index]
@@ -388,8 +388,12 @@ final class AppModel {
                 target = project
                 target.card = layout
             } else if everywhere {
-                let own = target.card.metrics.filter { !$0.isShared }
-                target.card = CardLayout(big: layout.big.filter(\.isShared), small: layout.small.filter(\.isShared) + own, trend: layout.trend, split: layout.split)
+                // This project's own events keep their places where the shared layout leaves room.
+                var card = CardLayout(big: layout.big.filter(\.isShared), rows: layout.rows.map { $0.filter(\.isShared) }, trend: layout.trend, split: layout.split)
+                for metric in target.card.metrics where !metric.isShared {
+                    if let opening = card.openings.first { card = card.placing(metric, at: opening) }
+                }
+                target.card = card
             } else {
                 continue
             }
@@ -405,7 +409,7 @@ final class AppModel {
             cache.snapshots[project.id] = snapshot
             saveCache()
         }
-        Analytics.cardLayoutSaved(layout, everywhere: everywhere)
+        Analytics.cardLayoutSaved(layout, everywhere: everywhere, dragged: dragged)
         WidgetCenter.shared.reloadAllTimelines()
         let unread = changed.filter { target in
             if countingChanged && target.id == project.id { return true }

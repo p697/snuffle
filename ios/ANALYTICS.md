@@ -43,7 +43,7 @@ Business charts use `client_app = 'snuffle_ios' AND app_environment = 'release' 
 | `source_connect_resolved` | A sign-in or key check against a platform ends | `platform`, `method` (oauth, key, saved), `flow` (new_project, existing_project), `outcome` (succeeded, failed, cancelled), `error_kind` on failure |
 | `project_saved` | A project is created or edited | `is_new`, `source_count`, `has_posthog`, `has_revenuecat`, `has_app_store`, `has_google_play`, `project_count`, `excluded_surfaces` (the kinds of traffic left out of people numbers: `ios`, `android`, `web`, `visitors`, `other`; empty without PostHog) |
 | `project_deleted` | A project is deleted | `source_count`, `project_count` |
-| `card_layout_saved` | "完成" in the card editor | `big`, `small` (metric kinds in order, e.g. `total_users`, `active_week`, `installs`; any other event is `event`, never its name), `trend` (14-day bars shown), `split` (platform split shown), `everywhere` (applied to every project) |
+| `card_layout_saved` | "完成" in the card editor | `big`, `small` (metric kinds in order, rows one after another, e.g. `total_users`, `active_week`, `installs`; any other event is `event`, never its name), `rows` (how many small numbers each row holds, e.g. `[3, 2]`), `trend` (14-day bars shown), `split` (platform split shown), `everywhere` (applied to every project), `dragged` (a number was moved by dragging) |
 | `counting_changed` | A project's people counting changes: read from a PostHog dashboard (also automatically when a project is added), edited by hand, or set back to Snuffle's own | `source` (dashboard, manual, standard), `has_activity_event`, `condition_count`, `unit` (person, install), `has_platform_property`, `has_since`. Never the event, the conditions, the property or the dashboard |
 | `charts_pinned` | Charts from a PostHog dashboard are placed on a project's board | `added`, `total` (counts only, never chart names) |
 | `account_removed` | A platform account is removed | `platform` |
@@ -69,7 +69,7 @@ Business charts use `client_app = 'snuffle_ios' AND app_environment = 'release' 
 | Connect success | `source_connect_resolved` by `platform` and `method`: succeeded / (succeeded + failed); cancellations apart. |
 | Refresh health | `refresh_source_failed` per `refresh_completed`, by `platform` and `error_kind`; `unauthorized` means a person must reconnect. |
 | Engagement | `refresh_completed` per active install per day, by `trigger`; `tab_viewed` by `tab`; installs with `widget_count > 0`. |
-| Metric demand | Installs with `card_layout_saved`; which kinds appear in `big` and `small`, and how often `trend` and `split` are turned off, to choose the defaults. |
+| Metric demand | Installs with `card_layout_saved`; which kinds appear in `big` and `small`, how many use a second row, how often `trend` and `split` are turned off, to choose the defaults; `dragged` shows whether dragging is found. |
 | Counting trust | Share of PostHog projects with `counting_changed` from `dashboard` (read automatically or chosen) versus left on Snuffle's own; `charts_pinned` per project with a board. |
 | Paywall conversion | Installs with `purchase_resolved` purchased / installs with `paywall_viewed`, by `reason` and `plan`. |
 | Retention | D1 / D7 / D30 return with `app_opened` after the first `app_opened`; hide periods not yet complete. |

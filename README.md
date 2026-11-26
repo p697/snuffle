@@ -6,7 +6,8 @@ An iPhone app for indie developers and founders: one big refresh button that pul
 
 - `ios/` — the iPhone app, its widgets and tests (SwiftUI, generated with XcodeGen).
 - `server/` — the Cloudflare Worker on snuffle.ai: serves `site/` and drafts review replies, with a D1 database. The app hides drafting for now (`Feature.replyDrafts` in `ios/Snuffle/App/CloudClient.swift`), so in shipped builds nothing calls the API.
-- `site/` — the static pages it serves (home, privacy policy, terms, OAuth client metadata).
+- `site/` — the static pages it serves: home, privacy policy, terms, and the PostHog OAuth client (its metadata
+  document, and the https redirect that returns to the app through `.well-known/apple-app-site-association`).
 - `marketing/app-store/` — the App Store screenshots in every language, made from the simulator.
 
 Each folder has its own README with the commands to build, test and deploy it.

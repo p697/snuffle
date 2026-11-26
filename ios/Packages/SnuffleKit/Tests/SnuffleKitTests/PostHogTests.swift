@@ -17,7 +17,7 @@ struct PostHogTests {
         var project = Project(name: "p", tint: .ink, posthog: PostHogLink(accountId: UUID(), projectId: 1, projectName: "p", timeZone: "UTC"))
         project.adoptDefaults(seenEvents: seen)
         #expect(project.metrics == MetricSettings(newUsers: .firstSeen, revenue: .none))
-        #expect(project.card == CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .newWeek]))
+        #expect(project.card == CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .newWeek]]))
         project.adoptDefaults(seenEvents: [MetricSettings.signupEvent, MetricSettings.installEvent])
         #expect(project.metrics == .standard)
     }
@@ -205,18 +205,18 @@ struct PostHogTests {
         let url = PostHogOAuth.authorizeURL(region: .eu, pkce: pkce)
         let items = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
         #expect(url.host() == "eu.posthog.com")
-        #expect(items.first { $0.name == "redirect_uri" }?.value == "ai.snuffle.app:/oauth/posthog")
+        #expect(items.first { $0.name == "redirect_uri" }?.value == "https://snuffle.ai/oauth/posthog")
         #expect(items.first { $0.name == "scope" }?.value == "user:read organization:read project:read query:read dashboard:read insight:read")
         #expect(items.first { $0.name == "code_challenge_method" }?.value == "S256")
     }
 
     @Test func callbackRejectsWrongState() throws {
         let pkce = PKCE(verifier: "v", state: "expected")
-        let good = URL(string: "ai.snuffle.app:/oauth/posthog?code=abc&state=expected")!
+        let good = URL(string: "https://snuffle.ai/oauth/posthog?code=abc&state=expected")!
         #expect(try PostHogOAuth.code(from: good, pkce: pkce) == "abc")
-        let forged = URL(string: "ai.snuffle.app:/oauth/posthog?code=abc&state=other")!
+        let forged = URL(string: "https://snuffle.ai/oauth/posthog?code=abc&state=other")!
         #expect(throws: SourceError.self) { try PostHogOAuth.code(from: forged, pkce: pkce) }
-        let denied = URL(string: "ai.snuffle.app:/oauth/posthog?error=access_denied&state=expected")!
+        let denied = URL(string: "https://snuffle.ai/oauth/posthog?error=access_denied&state=expected")!
         #expect(throws: SourceError.forbidden(.posthog, String(localized: "你取消了授权", bundle: .module))) { try PostHogOAuth.code(from: denied, pkce: pkce) }
     }
 }
