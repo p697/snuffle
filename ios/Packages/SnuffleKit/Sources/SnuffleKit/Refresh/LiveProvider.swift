@@ -62,25 +62,27 @@ public struct LiveProvider: DataProvider {
         case surfaces(Set<Surface>)
         case userTally(UserTally)
         case reviews(Platform, [Review])
+        case deletedReviews(Set<String>)
         case failure(SourceFailure)
         /// An hourly metric could not be read; the next refresh tries again, and the card keeps the last value.
         case hourlyFailed
     }
 
-    public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?) async -> RefreshResult {
+    public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?, kept: [Review]) async -> RefreshResult {
         let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone)
         let wanted = metrics.filter { $0.isAvailable(in: project) }
         // Hourly numbers read under other counting or scope are read again, not kept for the rest of the hour.
         let current = previous.flatMap { $0.countedAs == project.metrics.inEffect ? $0 : nil }
         let readHourly = current?.needsHourlyRead(wanted, at: clock.now) ?? wanted.contains(where: \.isHourly)
-        let parts = await read(project, wanted: wanted, clock: clock, readHourly: readHourly, reviews: project.hasStore, tally: current?.userTally)
+        let lookUp = project.googlePlay == nil ? [] : Review.toLookUp(kept, now: clock.now)
+        let parts = await read(project, wanted: wanted, clock: clock, readHourly: readHourly, reviews: project.hasStore, lookUp: lookUp, tally: current?.userTally)
         return Self.assemble(parts, project: project, wanted: wanted, clock: clock, readHourly: readHourly)
     }
 
     public func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double] {
         let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone)
         let wanted = metrics.filter { $0.isAvailable(in: project) }
-        let parts = await read(project, wanted: wanted, clock: clock, readHourly: true, reviews: wanted.contains(.reviewsToAnswer), tally: nil)
+        let parts = await read(project, wanted: wanted, clock: clock, readHourly: true, reviews: wanted.contains(.reviewsToAnswer), lookUp: [], tally: nil)
         let result = Self.assemble(parts, project: project, wanted: wanted, clock: clock, readHourly: true)
         let values = result.snapshot.values.filter { wanted.contains($0.key) }
         if values.isEmpty, let failure = result.snapshot.failures.first { throw failure }
@@ -105,8 +107,9 @@ public struct LiveProvider: DataProvider {
         return PostHogParsing.eventStats(rows)
     }
 
-    /// Reads every source the wanted metrics need, at once; each fails on its own.
-    private func read(_ project: Project, wanted: Set<Metric>, clock: ProjectClock, readHourly: Bool, reviews: Bool, tally: UserTally?) async -> [Part] {
+    /// Reads every source the wanted metrics need, at once; each fails on its own. `lookUp` are older Google Play
+    /// reviews to look up again by id.
+    private func read(_ project: Project, wanted: Set<Metric>, clock: ProjectClock, readHourly: Bool, reviews: Bool, lookUp: [Review], tally: UserTally?) async -> [Part] {
         // A project whose surfaces were never chosen looks at its events once, before anything is counted by them.
         var found: Set<Surface>?
         if project.posthog != nil, project.metrics.excludedSurfaces == nil,
@@ -164,7 +167,11 @@ public struct LiveProvider: DataProvider {
             if reviews, let link = project.googlePlay {
                 group.addTask {
                     do {
-                        return [.reviews(.googlePlay, try await self.withGoogle(link.accountId) { try await $0.reviews(packageName: link.packageName, projectId: project.id) })]
+                        return try await self.withGoogle(link.accountId) { client in
+                            async let listed = client.reviews(packageName: link.packageName, projectId: project.id)
+                            let found = await Self.lookUp(lookUp, with: client, packageName: link.packageName, at: clock.now)
+                            return [.reviews(.googlePlay, try await listed + found.reviews), .deletedReviews(found.deleted)]
+                        }
                     } catch {
                         return [.failure(Self.failure(.googlePlay, error))]
                     }
@@ -186,6 +193,26 @@ public struct LiveProvider: DataProvider {
             return all
         }
         return parts + (found.map { [Part.surfaces($0)] } ?? [])
+    }
+
+    /// Looks `reviews` up by id, together. One whose lookup fails is left for a later refresh.
+    private static func lookUp(_ reviews: [Review], with client: GooglePlayClient, packageName: String, at now: Date) async -> (reviews: [Review], deleted: Set<String>) {
+        await withTaskGroup(of: (String, Review??).self) { group in
+            for review in reviews {
+                group.addTask { (review.storeId, try? await client.review(packageName: packageName, reviewId: review.storeId, projectId: review.projectId)) }
+            }
+            var found: [Review] = [], deleted: Set<String> = []
+            for await (id, result) in group {
+                switch result {
+                case .some(.some(var review)):
+                    review.checkedAt = now
+                    found.append(review)
+                case .some(.none): deleted.insert(id)
+                case .none: break
+                }
+            }
+            return (found, deleted)
+        }
     }
 
     /// Every PostHog number a refresh shows, in at most six queries run together: today's people, the last 14 days of
@@ -261,6 +288,7 @@ public struct LiveProvider: DataProvider {
     private static func assemble(_ parts: [Part], project: Project, wanted: Set<Metric>, clock: ProjectClock, readHourly: Bool) -> RefreshResult {
         var snapshot = ProjectSnapshot(projectId: project.id, fetchedAt: clock.now, dayStart: clock.todayStart)
         var reviews: [Platform: [Review]] = [:]
+        var deletedReviews: Set<String> = []
         var hourlyFailed = false
         var zone: String?
         var surfaces: Set<Surface>?
@@ -276,6 +304,7 @@ public struct LiveProvider: DataProvider {
             case .surfaces(let excluded): surfaces = excluded
             case .userTally(let tally): snapshot.userTally = tally
             case .reviews(let platform, let list): reviews[platform] = list
+            case .deletedReviews(let ids): deletedReviews.formUnion(ids)
             case .hourlyFailed: hourlyFailed = true
             case .failure(let failure): snapshot.failures.append(failure)
             }
@@ -303,7 +332,7 @@ public struct LiveProvider: DataProvider {
         if !reviews.isEmpty { snapshot.values[.reviewsToAnswer] = Double(reviews.values.joined().filter(\.needsReply).count) }
         snapshot.failures.sort { $0.platform.rawValue < $1.platform.rawValue }
         snapshot.countedAs = project.metrics.leaving(out: surfaces ?? project.metrics.surfacesLeftOut)
-        return RefreshResult(snapshot: snapshot, reviews: reviews, posthogTimeZone: zone, excludedSurfaces: surfaces)
+        return RefreshResult(snapshot: snapshot, reviews: reviews, deletedReviews: deletedReviews, posthogTimeZone: zone, excludedSurfaces: surfaces)
     }
 
     static func failure(_ platform: Platform, _ error: Error) -> SourceFailure {

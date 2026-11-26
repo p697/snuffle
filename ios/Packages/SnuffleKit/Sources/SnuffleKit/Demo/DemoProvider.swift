@@ -36,7 +36,7 @@ public actor DemoProvider: DataProvider {
         persist(world)
     }
 
-    public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?) async -> RefreshResult {
+    public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?, kept: [Review]) async -> RefreshResult {
         try? await Task.sleep(for: latency + .milliseconds(Int.random(in: 0...250)))
         guard let snapshot = world.snapshot(for: project) else {
             return RefreshResult(snapshot: ProjectSnapshot(projectId: project.id, fetchedAt: Date(), dayStart: world.dayStart))

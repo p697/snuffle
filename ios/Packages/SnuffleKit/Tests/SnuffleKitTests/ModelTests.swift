@@ -249,6 +249,28 @@ struct ModelTests {
         #expect(cache.reviews[project.id] == nil)
     }
 
+    @Test func olderUnansweredPlayReviewsAreLookedUpOnceADay() {
+        let now = Date(timeIntervalSince1970: 2_000_000_000)
+        func review(_ id: String, _ platform: Platform = .googlePlay, daysAgo: Double, replied: Bool = false, checkedHoursAgo: Double? = nil) -> Review {
+            Review(storeId: id, platform: platform, projectId: UUID(), rating: 1, body: "", createdAt: now.addingTimeInterval(-daysAgo * 86_400),
+                   reply: replied ? ReviewReply(text: "Thanks", date: now, pending: false) : nil,
+                   checkedAt: checkedHoursAgo.map { now.addingTimeInterval(-$0 * 3600) })
+        }
+        let kept = [
+            review("recent", daysAgo: 2),                       // still in the week Google lists
+            review("answered", daysAgo: 20, replied: true),
+            review("store", .appStore, daysAgo: 20),
+            review("checkedToday", daysAgo: 20, checkedHoursAgo: 3),
+            review("checkedYesterday", daysAgo: 30, checkedHoursAgo: 30),
+            review("never1", daysAgo: 9),
+            review("never2", daysAgo: 40)
+        ]
+        let picked = Review.toLookUp(kept, now: now).map(\.storeId)
+        #expect(Set(picked.prefix(2)) == ["never1", "never2"], "never looked up comes first")
+        #expect(picked.last == "checkedYesterday")
+        #expect(Review.toLookUp(kept, now: now, limit: 1).count == 1)
+    }
+
     @Test func playHistoryKeepsTheNewestUpToTheLimit() {
         let project = Project(name: "Busy", tint: .ink, googlePlay: GooglePlayLink(accountId: UUID(), packageName: "com.example.busy"))
         let day = Date(timeIntervalSince1970: 1_000_000)
