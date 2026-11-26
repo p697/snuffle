@@ -30,7 +30,7 @@ public enum PostHogOAuth {
     public static let clientId = "https://snuffle.ai/oauth/posthog-client.json"
     public static let redirectURI = "ai.snuffle.app:/oauth/posthog"
     public static let callbackScheme = "ai.snuffle.app"
-    public static let scopes = ["user:read", "organization:read", "project:read", "query:read"]
+    public static let scopes = ["user:read", "organization:read", "project:read", "query:read", "dashboard:read", "insight:read"]
 
     public enum Region: String, CaseIterable, Sendable, Identifiable {
         case us, eu

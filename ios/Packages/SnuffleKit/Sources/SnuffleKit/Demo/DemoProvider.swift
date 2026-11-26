@@ -69,10 +69,23 @@ public actor DemoProvider: DataProvider {
         return SubscriptionOverview(mrr: 87, activeSubscriptions: 47, activeTrials: 3, revenueLast28Days: 96.4)
     }
 
-    public func history(for project: Project, days: Int) async throws -> [DailyPoint] {
+    public func board(for project: Project, days: Int, total: [String: Int]?) async throws -> ProjectBoard {
         try? await Task.sleep(for: latency)
-        return world.history(for: project.id, days: days)
+        return world.board(for: project.id, days: days, total: total)
     }
+
+    /// The demo projects have no PostHog dashboards.
+    public func dashboards(for project: Project) async throws -> [DashboardSummary] { [] }
+
+    public func dashboard(_ ref: DashboardRef, for project: Project) async throws -> DashboardDetail {
+        DashboardDetail(ref: ref, tiles: [])
+    }
+
+    public func run(_ tile: InsightTile, for project: Project) async throws -> InsightResult {
+        InsightResult(fetchedAt: Date())
+    }
+
+    public func check(condition: String, for project: Project) async throws -> (kept: Int, total: Int) { (0, 0) }
 
     public func reply(to review: Review, text: String, in project: Project) async throws {
         try? await Task.sleep(for: latency)

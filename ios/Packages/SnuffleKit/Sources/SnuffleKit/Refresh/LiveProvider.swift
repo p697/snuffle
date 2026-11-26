@@ -54,7 +54,9 @@ public struct LiveProvider: DataProvider {
 
     private enum Part: Sendable {
         case values([Metric: Double])
-        case newUsersDetail(yesterday: Int?, hourly: [Int])
+        case previous([Metric: Double])
+        case dailyActive([Int])
+        case firstSeen(PostHogParsing.FirstSeen)
         case revenueSource(Platform)
         case timeZone(String)
         case surfaces(Set<Surface>)
@@ -111,14 +113,14 @@ public struct LiveProvider: DataProvider {
            let stats = try? await surfaces(for: project), !stats.isEmpty {
             found = Surface.defaultExcluded(seen: stats.filter { $0.people > 0 }.map(\.surface))
         }
-        let excluded = found ?? project.metrics.surfacesLeftOut
+        let scope = PeopleScope(project.metrics, excluding: found ?? project.metrics.surfacesLeftOut)
+        // A tally read under other surfaces than this refresh found counts other people.
+        let tally = found == nil ? tally : nil
         let parts = await withTaskGroup(of: [Part].self) { group in
             if let link = project.posthog {
-                group.addTask { await self.posthogPart(project, link: link, wanted: wanted, clock: clock, excluded: excluded) }
-                if readHourly, wanted.contains(where: { $0.isHourly && $0.source == .posthog }) {
-                    // A tally read under other surfaces than this refresh found counts other people.
-                    let tally = found == nil ? tally : nil
-                    group.addTask { await self.posthogHourlyPart(link: link, wanted: wanted, clock: clock, excluded: excluded, tally: tally) }
+                group.addTask { await self.posthogPart(project, link: link, wanted: wanted, clock: clock, scope: scope, tally: tally) }
+                if readHourly, wanted.contains(.activeMonth) {
+                    group.addTask { await self.posthogMonth(link: link, clock: clock, scope: scope) }
                 }
             }
             if let link = project.revenueCat {
@@ -175,45 +177,57 @@ public struct LiveProvider: DataProvider {
         return parts + (found.map { [Part.surfaces($0)] } ?? [])
     }
 
-    /// Today's PostHog numbers: new users with their hours, people active and online, page views, event revenue and
-    /// orders, and the event metrics asked for. Two or three queries over today and yesterday, whatever is shown.
-    private func posthogPart(_ project: Project, link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock, excluded: Set<Surface>) async -> [Part] {
+    /// Every PostHog number a refresh shows, in at most six queries run together: today's people, the last 14 days of
+    /// activity, first use (new users and today's part of the total), event-based counts, and the total's tally when
+    /// it is missing or a day behind. A failure fails them all, so the card never mixes old and new numbers.
+    private func posthogPart(_ project: Project, link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock, scope: PeopleScope, tally: UserTally?) async -> [Part] {
         do {
             let settings = project.metrics
             let events = wanted.filter { if case .event = $0 { true } else { false } }.sorted { $0.id < $1.id }
+            let eventNewUsers: Bool = if case .event = settings.newUsers { true } else { false }
+            let wantsTotal = wanted.contains(.totalUsers)
+            let needsFirstSeen = wantsTotal || (!eventNewUsers && (wanted.contains(.newUsers) || wanted.contains(.newWeek)))
+            // The tally is for the counting in effect; one older than a year is read from the start again.
+            let yearAgo = clock.todayStart.addingTimeInterval(-Double(PostHogQueries.tallyLookbackDays) * 86_400)
+            let tally = tally.flatMap { $0.before >= yearAgo && $0.before <= clock.todayStart ? $0 : nil }
             return try await withPostHog(link.accountId) { client in
-                let countsQuery = PostHogQueries.counts(settings: settings, events: events, clock: clock)
-                async let countsRow: [[JSONValue]] = {
+                let countsQuery = PostHogQueries.counts(settings: settings, events: events, week: eventNewUsers && wanted.contains(.newWeek), clock: clock)
+                async let countsRows: [[JSONValue]] = {
                     guard let countsQuery else { return [] }
                     return try await client.query(projectId: link.projectId, countsQuery.sql, name: "snuffle_counts")
                 }()
-                async let presenceRow = client.query(projectId: link.projectId, PostHogQueries.presence(clock: clock, excluding: excluded), name: "snuffle_presence")
-                async let firstSeenRow: [[JSONValue]] = {
-                    guard settings.newUsers == .firstSeen else { return [] }
-                    return try await client.query(projectId: link.projectId, PostHogQueries.firstSeen(clock: clock, excluding: excluded), name: "snuffle_first_seen")
+                async let todayRows = client.query(projectId: link.projectId, PostHogQueries.peopleToday(scope, clock: clock), name: "snuffle_people_today")
+                async let daysRows = client.query(projectId: link.projectId, PostHogQueries.peopleDays(scope, clock: clock), name: "snuffle_people_days")
+                async let firstSeenRows: [[JSONValue]]? = {
+                    guard needsFirstSeen else { return nil }
+                    return try await client.query(projectId: link.projectId, PostHogQueries.firstSeen(scope, clock: clock), name: "snuffle_first_seen")
+                }()
+                async let tallyRows: [[JSONValue]]? = {
+                    guard wantsTotal, tally?.before != clock.todayStart else { return nil }
+                    if let tally {
+                        return try await client.query(projectId: link.projectId, PostHogQueries.tallyMove(since: tally.before, scope, clock: clock), name: "snuffle_tally_move")
+                    }
+                    return try await client.query(projectId: link.projectId, PostHogQueries.tally(before: clock.todayStart, scope), name: "snuffle_tally")
                 }()
                 // Read alongside the queries, so it costs no extra wait; a failure here never fails the numbers.
-                async let zone = try? client.timeZone(projectId: link.projectId)
+                async let settingsRead = try? client.settings(projectId: link.projectId)
 
-                var values: [Metric: Double] = [:]
                 var parts: [Part] = []
-                if let countsQuery, let row = try await countsRow.first {
+                if let countsQuery, let row = try await countsRows.first {
                     let counts = PostHogParsing.counts(row, columns: countsQuery.columns)
-                    values.merge(counts.values) { $1 }
-                    if case .event = settings.newUsers { parts.append(.newUsersDetail(yesterday: counts.newYesterday, hourly: counts.hourly)) }
+                    parts += [.values(counts.values), .previous(counts.previous)]
                     if case .posthogEvent = settings.revenue { parts.append(.revenueSource(.posthog)) }
                 }
-                if let row = try await firstSeenRow.first {
-                    let firstSeen = PostHogParsing.firstSeen(row)
-                    values[.newUsers] = firstSeen.today.map(Double.init)
-                    parts.append(.newUsersDetail(yesterday: firstSeen.yesterday, hourly: firstSeen.hourly))
+                let people = PostHogParsing.people(today: try await todayRows.first ?? [], days: try await daysRows.first ?? [])
+                parts += [.values(people.values), .previous(people.previous), .dailyActive(people.daily)]
+                if let rows = try await firstSeenRows { parts.append(.firstSeen(PostHogParsing.firstSeen(rows))) }
+                if let rows = try await tallyRows {
+                    let counts = PostHogParsing.platformCounts(rows)
+                    parts.append(.userTally(tally.map { $0.moved(adding: counts, to: clock.todayStart) } ?? UserTally(byPlatform: counts, before: clock.todayStart)))
+                } else if let tally {
+                    parts.append(.userTally(tally))
                 }
-                let presence = try await presenceRow.first ?? []
-                values[.online] = presence.first?.double
-                values[.activeToday] = presence.count > 1 ? presence[1].double : nil
-                values[.pageviews] = presence.count > 2 ? presence[2].double : nil
-                parts.append(.values(values.compactMapValues { $0 }))
-                if let identifier = await zone { parts.append(.timeZone(identifier)) }
+                if let zone = await settingsRead?.timeZone { parts.append(.timeZone(zone)) }
                 return parts
             }
         } catch {
@@ -221,42 +235,13 @@ public struct LiveProvider: DataProvider {
         }
     }
 
-    /// People active this week and month, and total users: scans of up to a year, so hourly only. Total users reads the
-    /// whole history once (no `tally` yet, or one more than a year old) and afterwards only the people new since.
-    private func posthogHourlyPart(link: PostHogLink, wanted: Set<Metric>, clock: ProjectClock, excluded: Set<Surface>, tally: UserTally?) async -> [Part] {
+    /// People active over the last 30 days: a month's scan, so hourly only.
+    private func posthogMonth(link: PostHogLink, clock: ProjectClock, scope: PeopleScope) async -> [Part] {
         do {
-            return try await withPostHog(link.accountId) { client in
-                let needsActivity = wanted.contains(.activeWeek) || wanted.contains(.activeMonth)
-                async let activityRow: [[JSONValue]] = {
-                    guard needsActivity else { return [] }
-                    return try await client.query(projectId: link.projectId, PostHogQueries.activity(clock: clock, month: wanted.contains(.activeMonth), excluding: excluded), name: "snuffle_activity")
-                }()
-                let yearAgo = clock.todayStart.addingTimeInterval(-Double(PostHogQueries.tallyLookbackDays) * 86_400)
-                let tally = tally.flatMap { $0.before >= yearAgo && $0.before <= clock.todayStart ? $0 : nil }
-                let wantsTotal = wanted.contains(.totalUsers)
-                async let baseRow: [[JSONValue]] = {
-                    guard wantsTotal, tally == nil else { return [] }
-                    return try await client.query(projectId: link.projectId, PostHogQueries.peopleBefore(clock.todayStart, excluding: excluded), name: "snuffle_people_before")
-                }()
-                async let newRow: [[JSONValue]] = {
-                    guard wantsTotal else { return [] }
-                    return try await client.query(projectId: link.projectId, PostHogQueries.newPeople(since: tally?.before ?? clock.todayStart, clock: clock, excluding: excluded), name: "snuffle_new_people")
-                }()
-                var values: [Metric: Double] = [:]
-                var parts: [Part] = []
-                if let row = try await activityRow.first {
-                    values[.activeWeek] = row.first?.double
-                    if row.count > 1 { values[.activeMonth] = row[1].double }
-                }
-                let base = try await baseRow.first?.first?.int
-                if let row = try await newRow.first, row.count == 2, let settled = row[0].int, let today = row[1].int,
-                   let before = base ?? tally?.people {
-                    let moved = UserTally(people: before + settled, before: clock.todayStart)
-                    values[.totalUsers] = Double(moved.people + today)
-                    parts.append(.userTally(moved))
-                }
-                return parts + [.values(values)]
+            let rows = try await withPostHog(link.accountId) {
+                try await $0.query(projectId: link.projectId, PostHogQueries.month(scope, clock: clock), name: "snuffle_month")
             }
+            return [.values([.activeMonth: rows.first?.first?.double ?? 0])]
         } catch {
             return [.hourlyFailed]
         }
@@ -269,12 +254,13 @@ public struct LiveProvider: DataProvider {
         var hourlyFailed = false
         var zone: String?
         var surfaces: Set<Surface>?
+        var firstSeen: PostHogParsing.FirstSeen?
         for part in parts {
             switch part {
             case .values(let values): snapshot.values.merge(values) { $1 }
-            case .newUsersDetail(let yesterday, let hourly):
-                snapshot.newUsersYesterday = yesterday
-                snapshot.hourlyNewUsers = hourly
+            case .previous(let values): snapshot.previous.merge(values) { $1 }
+            case .dailyActive(let days): snapshot.dailyActive = days
+            case .firstSeen(let seen): firstSeen = seen
             case .revenueSource(let platform): snapshot.revenueSource = platform
             case .timeZone(let identifier): zone = identifier
             case .surfaces(let excluded): surfaces = excluded
@@ -284,6 +270,20 @@ public struct LiveProvider: DataProvider {
             case .failure(let failure):
                 snapshot.failures.append(failure)
                 if failure.platform == .appStore || failure.platform == .googlePlay { storeFailed = true }
+            }
+        }
+        if let firstSeen {
+            if project.metrics.newUsers == .firstSeen {
+                snapshot.values[.newUsers] = Double(firstSeen.today)
+                snapshot.previous[.newUsers] = Double(firstSeen.yesterday)
+                snapshot.values[.newWeek] = Double(firstSeen.week)
+                snapshot.previous[.newWeek] = Double(firstSeen.weekBefore)
+            }
+            // Everyone counted before today, plus today's first-timers.
+            if let tally = snapshot.userTally {
+                snapshot.values[.totalUsers] = Double(tally.people + firstSeen.today)
+                snapshot.previous[.totalUsers] = Double(tally.people)
+                snapshot.platforms = PlatformCount.sorted(tally.byPlatform.merging(firstSeen.todayByPlatform, uniquingKeysWith: +))
             }
         }
         if readHourly && !hourlyFailed { snapshot.hourlyReadAt = clock.now }
@@ -316,47 +316,106 @@ public struct LiveProvider: DataProvider {
         return try await revenueCat(link.accountId).overview(projectId: link.projectId)
     }
 
-    public func history(for project: Project, days: Int) async throws -> [DailyPoint] {
-        async let posthogPoints = posthogHistory(for: project, days: days)
-        async let revenueByDay = revenueCatHistory(for: project, days: days)
-        let revenue = await revenueByDay
-        var points = try await posthogPoints
-        guard let revenue else { return points }
-        // RevenueCat reports by UTC date; days are matched by calendar date, as the 收入 tile says "(UTC)".
+    public func board(for project: Project, days: Int, total: [String: Int]?) async throws -> ProjectBoard {
         let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone ?? "UTC")
-        if points.isEmpty {
-            points = clock.dayStarts(days: days).map { DailyPoint(day: $0, newUsers: nil, revenue: nil, active: nil) }
+        async let revenueByDay = revenueCatHistory(for: project, days: days)
+        var board = try await posthogBoard(for: project, days: days, total: total, clock: clock)
+            ?? ProjectBoard(days: clock.dayStarts(days: days).map { ProjectBoard.Day(day: $0) }, weeks: [], platforms: [])
+        // RevenueCat reports by UTC date; days are matched by calendar date, as the 收入 tile says "(UTC)".
+        if let revenue = await revenueByDay {
+            for index in board.days.indices { board.days[index].revenue = revenue[clock.dayKey(board.days[index].day)] ?? 0 }
         }
-        return points.map { point in
-            var point = point
-            point.revenue = revenue[clock.dayKey(point.day)] ?? 0
-            return point
+        return board
+    }
+
+    private func posthogBoard(for project: Project, days: Int, total: [String: Int]?, clock: ProjectClock) async throws -> ProjectBoard? {
+        guard let link = project.posthog else { return nil }
+        let settings = project.metrics
+        let scope = PeopleScope(settings, excluding: settings.surfacesLeftOut)
+        return try await withPostHog(link.accountId) { client in
+            let weekStartsMonday = (try? await client.settings(projectId: link.projectId))?.weekStartsMonday ?? false
+            let firstWeek = Self.weekStart(of: clock.todayStart.addingTimeInterval(-11 * 7 * 86_400), mondays: weekStartsMonday, zone: clock.timeZone)
+            async let active = client.query(projectId: link.projectId, PostHogQueries.boardActive(scope, clock: clock, days: days), name: "snuffle_board_active")
+            async let firstSeen = client.query(projectId: link.projectId, PostHogQueries.boardFirstSeen(scope, clock: clock, days: days), name: "snuffle_board_first_seen")
+            async let signups: [[JSONValue]]? = {
+                guard case .event(let event) = settings.newUsers else { return nil }
+                return try await client.query(projectId: link.projectId, PostHogQueries.boardSignups(event: event, platform: scope.platform, clock: clock, days: days), name: "snuffle_board_signups")
+            }()
+            async let revenue: [[JSONValue]]? = {
+                guard case .posthogEvent(let event, let property) = settings.revenue else { return nil }
+                return try await client.query(projectId: link.projectId, PostHogQueries.boardRevenue(event: event, valueProperty: property, clock: clock, days: days), name: "snuffle_board_revenue")
+            }()
+            async let weeks = client.query(projectId: link.projectId, PostHogQueries.weeks(scope, clock: clock, firstWeek: firstWeek, mode: weekStartsMonday ? 1 : 0), name: "snuffle_board_weeks")
+
+            let activeByDay = PostHogParsing.dailyByPlatform(try await active)
+            let firstByDay = PostHogParsing.dailyByPlatform(try await firstSeen)
+            let signupsByDay = try await signups.map(PostHogParsing.dailyByPlatform)
+            let revenueByDay = try await revenue.map(PostHogParsing.dailyAmounts)
+            let starts = clock.dayStarts(days: days)
+            let firstSeenDays = starts.map { firstByDay[clock.dayKey($0)] ?? [:] }
+            let totals = total.map { ProjectBoard.totals(now: $0, firstSeen: firstSeenDays) }
+            let boardDays = starts.enumerated().map { index, day in
+                let key = clock.dayKey(day)
+                return ProjectBoard.Day(
+                    day: day,
+                    active: activeByDay[key] ?? [:],
+                    new: signupsByDay.map { $0[key] ?? [:] } ?? firstSeenDays[index],
+                    total: totals?[index] ?? [:],
+                    revenue: revenueByDay.map { $0[key] ?? 0 }
+                )
+            }
+            let boardWeeks = try await weeks.compactMap { row -> ProjectBoard.Week? in
+                guard row.count >= 3, let key = row[0].string, let start = DashboardReading.Counting.dayStart(String(key.prefix(10)), in: clock.timeZone) else { return nil }
+                return ProjectBoard.Week(start: start, new: row[1].int ?? 0, returning: row[2].int ?? 0)
+            }
+            let mix = total ?? boardDays.reduce(into: [String: Int]()) { sum, day in sum.merge(day.active, uniquingKeysWith: +) }
+            return ProjectBoard(days: boardDays, weeks: boardWeeks, platforms: ProjectBoard.order(mix))
         }
     }
 
-    private func posthogHistory(for project: Project, days: Int) async throws -> [DailyPoint] {
-        guard let link = project.posthog else { return [] }
-        let clock = ProjectClock(now: now(), timeZoneIdentifier: link.timeZone)
-        let metrics = project.metrics
-        let (rows, firstSeen) = try await withPostHog(link.accountId) { client in
-            async let rows = client.query(projectId: link.projectId, PostHogQueries.history(metrics: metrics, clock: clock, days: days), name: "snuffle_history")
-            async let firstSeen: [[JSONValue]]? = {
-                guard metrics.newUsers == .firstSeen else { return nil }
-                return try await client.query(projectId: link.projectId, PostHogQueries.firstSeenHistory(clock: clock, days: days, excluding: metrics.surfacesLeftOut), name: "snuffle_first_seen_history")
-            }()
-            return try await (rows, firstSeen)
-        }
-        let hasEventRevenue: Bool = if case .posthogEvent = metrics.revenue { true } else { false }
-        return PostHogParsing.history(rows, firstSeen: firstSeen, clock: clock, days: days, hasRevenue: hasEventRevenue)
+    /// The start of the week holding `date`, weeks starting on Monday or Sunday.
+    static func weekStart(of date: Date, mondays: Bool, zone: TimeZone) -> Date {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
+        calendar.firstWeekday = mondays ? 2 : 1
+        return calendar.dateInterval(of: .weekOfYear, for: date)?.start ?? calendar.startOfDay(for: date)
     }
 
     /// Daily RevenueCat revenue for projects that take revenue from it; nil when not used or unavailable, so the
-    /// chart simply leaves revenue out rather than failing the whole history.
+    /// chart simply leaves revenue out rather than failing the whole board.
     private func revenueCatHistory(for project: Project, days: Int) async -> [String: Double]? {
         guard let link = project.revenueCat, project.metrics.revenue == .revenueCat else { return nil }
         let today = now()
         let from = RevenueCatClient.utcDate(today.addingTimeInterval(-Double(days + 1) * 86_400))
         return try? await revenueCat(link.accountId).dailyRevenue(projectId: link.projectId, from: from, to: RevenueCatClient.utcDate(today))
+    }
+
+    // MARK: Dashboards
+
+    public func dashboards(for project: Project) async throws -> [DashboardSummary] {
+        guard let link = project.posthog else { return [] }
+        return try await withPostHog(link.accountId) { try await $0.dashboards(projectId: link.projectId) }
+    }
+
+    public func dashboard(_ ref: DashboardRef, for project: Project) async throws -> DashboardDetail {
+        guard let link = project.posthog else { return DashboardDetail(ref: ref, tiles: []) }
+        return try await withPostHog(link.accountId) { try await $0.dashboard(projectId: link.projectId, ref: ref) }
+    }
+
+    public func run(_ tile: InsightTile, for project: Project) async throws -> InsightResult {
+        guard let link = project.posthog, let query = tile.query else { return InsightResult(fetchedAt: now()) }
+        let date = now()
+        return try await withPostHog(link.accountId) { try await $0.run(projectId: link.projectId, query: query, now: date) }
+    }
+
+    public func check(condition: String, for project: Project) async throws -> (kept: Int, total: Int) {
+        guard let link = project.posthog else { return (0, 0) }
+        let clock = ProjectClock(now: now(), timeZoneIdentifier: link.timeZone)
+        let rows = try await withPostHog(link.accountId) {
+            try await $0.query(projectId: link.projectId, PostHogQueries.conditionCheck(condition, clock: clock), name: "snuffle_condition_check")
+        }
+        let row = rows.first ?? []
+        return (row.first?.int ?? 0, row.count > 1 ? row[1].int ?? 0 : 0)
     }
 
     public func reply(to review: Review, text: String, in project: Project) async throws {

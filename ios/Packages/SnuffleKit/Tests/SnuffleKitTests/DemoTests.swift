@@ -21,8 +21,12 @@ struct DemoTests {
         let lumen = world.snapshot(for: self.lumen)!
         // 15:00 is 62.5% of the day: about 4120 × 1.18 × 0.625 new users.
         #expect((2900...3200).contains(lumen.newUsers!))
-        #expect(lumen.hourlyNewUsers.count == 16)
-        #expect(lumen.hourlyNewUsers.reduce(0, +) == lumen.newUsers)
+        // Every number is set against something, and the card's bars end with today.
+        #expect(lumen.previous[.activeToday] != nil && lumen.previous[.activeWeek] != nil && lumen.previous[.newWeek] != nil)
+        #expect(lumen.dailyActive.count == PostHogQueries.recentDays)
+        #expect(lumen.dailyActive.last == lumen[.activeToday].map(Int.init))
+        #expect(lumen.platforms.map(\.count).reduce(0, +) - Int(lumen[.totalUsers]!) <= lumen.platforms.count)
+        #expect(lumen.platforms.first?.name == Surface.web.rawValue)
         #expect(lumen.revenueSource == .posthog)
         #expect(lumen.reviewsToAnswer == 5)
         let ferry = world.snapshot(for: self.ferry)!
@@ -42,7 +46,7 @@ struct DemoTests {
         let night = ISO8601.parse("2026-11-20T01:30:00Z")!
         let world = DemoWorld.make(now: night, calendar: calendar, lateInDay: true, random: &random)
         #expect(world.simulatedNow == ISO8601.parse("2026-11-20T21:30:00Z")!)
-        #expect(world.snapshot(for: lumen)!.hourlyNewUsers.count == 22)
+        #expect(world.snapshot(for: lumen)!.dailyActive.count == PostHogQueries.recentDays)
         #expect(world.reviews.allSatisfy { $0.createdAt < night })
     }
 
@@ -98,15 +102,18 @@ struct DemoTests {
         #expect(world.snapshot(for: DemoWorld.projects.first { $0.id == review.projectId }!)!.reviewsToAnswer == world.reviews.filter { $0.projectId == review.projectId && $0.needsReply }.count)
     }
 
-    @Test func historyIsStableAndEndsWithToday() {
+    @Test func boardIsStableAndEndsWithToday() {
         var random = SplitMix64(seed: 6)
         let world = DemoWorld.make(now: afternoon, calendar: calendar, random: &random)
-        let first = world.history(for: DemoWorld.lumenId, days: 30, calendar: calendar)
-        let second = world.history(for: DemoWorld.lumenId, days: 30, calendar: calendar)
+        let first = world.board(for: DemoWorld.lumenId, days: 30, total: ["web": 900, "ios": 400], calendar: calendar)
+        let second = world.board(for: DemoWorld.lumenId, days: 30, total: ["web": 900, "ios": 400], calendar: calendar)
         #expect(first == second)
-        #expect(first.count == 30)
-        #expect(first.last?.newUsers == world.snapshot(for: lumen)!.newUsers)
-        #expect(world.history(for: DemoWorld.atlasId, days: 7, calendar: calendar).allSatisfy { $0.revenue == nil })
+        #expect(first.days.count == 30)
+        #expect(first.weeks.count == 11)
+        // The last day's total is today's; earlier ones take away the people new after them.
+        #expect(first.days.last?.total == ["web": 900, "ios": 400])
+        #expect((first.days[28].total["web"] ?? 0) == 900 - (first.days[29].new["web"] ?? 0))
+        #expect(world.board(for: DemoWorld.atlasId, days: 7, total: nil, calendar: calendar).days.allSatisfy { $0.revenue == nil })
     }
 
     @Test func poissonStaysNearItsMean() {
