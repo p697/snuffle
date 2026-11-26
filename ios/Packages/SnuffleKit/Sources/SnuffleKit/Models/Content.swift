@@ -15,8 +15,15 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
     public var territory: String?
     /// Google Play reviewer language (BCP 47, e.g. "uk_UA") or nil.
     public var language: String?
+    /// When Google Play last saw the review written or edited; App Store's creation date.
     public var createdAt: Date
     public var reply: ReviewReply?
+    /// Google Play only: the app version and phone it was written on ("Samsung Galaxy S23", "Android 14"), and how
+    /// many people found it helpful.
+    public var appVersion: String?
+    public var device: String?
+    public var system: String?
+    public var helpful: Int?
 
     public init(
         storeId: String,
@@ -29,7 +36,11 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
         territory: String? = nil,
         language: String? = nil,
         createdAt: Date,
-        reply: ReviewReply? = nil
+        reply: ReviewReply? = nil,
+        appVersion: String? = nil,
+        device: String? = nil,
+        system: String? = nil,
+        helpful: Int? = nil
     ) {
         self.storeId = storeId
         self.platform = platform
@@ -42,6 +53,10 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
         self.language = language
         self.createdAt = createdAt
         self.reply = reply
+        self.appVersion = appVersion
+        self.device = device
+        self.system = system
+        self.helpful = helpful
     }
 
     public var needsReply: Bool { reply == nil }

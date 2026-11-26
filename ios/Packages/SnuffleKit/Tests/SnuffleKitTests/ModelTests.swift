@@ -163,6 +163,68 @@ struct ModelTests {
         #expect(try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(settings)) == settings)
     }
 
+    @Test func rateWithNothingToShowWaitsForTheHourLikeTheRest() throws {
+        let id = UUID()
+        let day = Date(timeIntervalSince1970: 1_000_000)
+        // Google had no crash rate for a small app: read, but nothing to show.
+        let read = ProjectSnapshot(projectId: id, fetchedAt: day, dayStart: day, values: [.mrr: 87], hourlyReadAt: day, hourlyRead: [.mrr, .crashRate])
+        #expect(!read.needsHourlyRead([.mrr, .crashRate], at: day.addingTimeInterval(600)))
+        #expect(read.needsHourlyRead([.anrRate], at: day.addingTimeInterval(600)), "never read")
+        #expect(read.fillingGaps(from: nil).hourlyRead == [.mrr, .crashRate])
+
+        let decoded = try JSONDecoder().decode(ProjectSnapshot.self, from: JSONEncoder().encode(read))
+        #expect(decoded.hourlyRead == [.mrr, .crashRate])
+        // Caches from before it was recorded count the hourly numbers they hold as read.
+        let old = #"{"projectId":"\#(id)","fetchedAt":0,"dayStart":0,"values":{"active_month":900,"new_users":4},"hourlyReadAt":0}"#
+        #expect(try JSONDecoder().decode(ProjectSnapshot.self, from: Data(old.utf8)).hourlyRead == [.activeMonth])
+    }
+
+    @Test func playReviewsAreKeptAfterGoogleStopsReturningThem() {
+        let account = UUID()
+        var project = Project(name: "Atlas", tint: .ink, appStore: AppStoreLink(accountId: account, appId: "1", appName: "Atlas", bundleId: "com.example.atlas"), googlePlay: GooglePlayLink(accountId: account, packageName: "com.example.atlas"))
+        let day = Date(timeIntervalSince1970: 1_000_000)
+        func review(_ id: String, _ platform: Platform, hoursAgo: Double, replied: Bool = false) -> Review {
+            Review(storeId: id, platform: platform, projectId: project.id, rating: 3, body: id, createdAt: day.addingTimeInterval(-hoursAgo * 3600),
+                   reply: replied ? ReviewReply(text: "Thanks", date: day, pending: false) : nil)
+        }
+        func result(_ reviews: [Platform: [Review]]) -> RefreshResult {
+            RefreshResult(snapshot: ProjectSnapshot(projectId: project.id, fetchedAt: day, dayStart: day), reviews: reviews)
+        }
+        var cache = RefreshCache()
+        cache.land(result([.appStore: [review("a1", .appStore, hoursAgo: 1)], .googlePlay: [review("g1", .googlePlay, hoursAgo: 200), review("g2", .googlePlay, hoursAgo: 2)]]), for: project)
+
+        // A week on, Google returns only the new one and g2 replied; g1 stays, App Store is replaced.
+        let snapshot = cache.land(result([.appStore: [review("a2", .appStore, hoursAgo: 1)], .googlePlay: [review("g2", .googlePlay, hoursAgo: 2, replied: true), review("g3", .googlePlay, hoursAgo: 1)]]), for: project)
+        #expect(Set(cache.reviews[project.id]!.map(\.storeId)) == ["a2", "g1", "g2", "g3"])
+        #expect(cache.reviews[project.id]!.filter { $0.storeId == "g2" }.count == 1)
+        #expect(snapshot.reviewsToAnswer == 3, "a2, g1 and g3")
+        #expect(cache.snapshots[project.id]?.reviewsToAnswer == 3)
+
+        // A store that fails keeps its reviews; the count covers what is kept.
+        let failed = cache.land(result([.appStore: []]), for: project)
+        #expect(Set(cache.reviews[project.id]!.map(\.storeId)) == ["g1", "g2", "g3"])
+        #expect(failed.reviewsToAnswer == 2)
+
+        // Disconnected, its reviews go.
+        project.googlePlay = nil
+        cache.land(result([.appStore: []]), for: project)
+        #expect(cache.reviews[project.id] == nil)
+    }
+
+    @Test func playHistoryKeepsTheNewestUpToTheLimit() {
+        let project = Project(name: "Busy", tint: .ink, googlePlay: GooglePlayLink(accountId: UUID(), packageName: "com.example.busy"))
+        let day = Date(timeIntervalSince1970: 1_000_000)
+        func page(_ range: Range<Int>) -> [Review] {
+            range.map { Review(storeId: "g\($0)", platform: .googlePlay, projectId: project.id, rating: 5, body: "", createdAt: day.addingTimeInterval(Double($0))) }
+        }
+        var cache = RefreshCache()
+        cache.land(RefreshResult(snapshot: ProjectSnapshot(projectId: project.id, fetchedAt: day, dayStart: day), reviews: [.googlePlay: page(0..<400)]), for: project)
+        cache.land(RefreshResult(snapshot: ProjectSnapshot(projectId: project.id, fetchedAt: day, dayStart: day), reviews: [.googlePlay: page(400..<700)]), for: project)
+        let kept = cache.reviews[project.id]!
+        #expect(kept.count == GooglePlayClient.reviewLimit)
+        #expect(kept.map(\.storeId).contains("g699") && !kept.map(\.storeId).contains("g199"))
+    }
+
     @Test func refreshCountStartsOverEachDay() {
         var cache = RefreshCache()
         var calendar = Calendar(identifier: .gregorian)

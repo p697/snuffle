@@ -15,7 +15,9 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
   the product also has signed-in or app users). Weeks and months are whole days counting today, as PostHog's charts
   count them; the total reads the whole history once by platform and then adds each day's new people (`UserTally`).
   `Projects/` holds the board (charts by platform, each number's definition, charts pinned from PostHog
-  dashboards, run with their own queries); one folder per tab.
+  dashboards, run with their own queries); one folder per tab. Google Play only returns the last week's reviews, so
+  every refresh (app and widget) lands through `RefreshCache.land`, which keeps the ones read before (newest 500 per
+  project); its crash and ANR rates are Play Console's 28-day user-perceived ones, read at most hourly.
 - `SnuffleWidgets/` — home and lock screen widgets with an in-widget refresh button.
 - `SnuffleUITests/` — end-to-end tests in demo mode.
 - `ANALYTICS.md` — the PostHog events, their properties and the metrics built on them.
@@ -78,7 +80,7 @@ screenshot of each tab in every language.
 
 `Config/Shared.xcconfig` holds runtime values: the drafting API (`https://snuffle.ai`) and the iOS OAuth client of
 the "Snuffle" Google Cloud project, which has the Google Play Android Developer API (reviews) and the Play Developer
-Reporting API (listing the account's apps) enabled. `SNUFFLE_POSTHOG_TOKEN` is the client token of Snuffle's own
+Reporting API (listing the account's apps, Android vitals) enabled. `SNUFFLE_POSTHOG_TOKEN` is the client token of Snuffle's own
 PostHog project; leave it empty in `Local.xcconfig` to build without analytics. While its consent screen is in testing, only listed test users can
 sign in. Override values in `Config/Local.xcconfig` (git-ignored), e.g. a local server:
 

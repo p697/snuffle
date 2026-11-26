@@ -259,10 +259,25 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         if project.hasStore {
             snapshot[.reviewsToAnswer] = Double(reviews.filter { $0.projectId == project.id && $0.needsReply }.count)
         }
+        if project.googlePlay != nil {
+            // Atlas is past Google's crash threshold, so the demo shows how a card marks it.
+            let atlas = project.id == DemoWorld.atlasId
+            snapshot[.crashRate] = atlas ? 0.0127 : 0.0031
+            snapshot[.anrRate] = atlas ? 0.0021 : 0.0012
+        }
         if scenario == .failure, project.id == DemoWorld.ferryId {
             snapshot.failures = [SourceFailure(platform: .revenueCat, message: SourceError.http(.revenueCat, 503, String(localized: "服务暂时不可用", bundle: .module)).localizedDescription, kind: .serverError)]
         }
         return snapshot
+    }
+
+    /// The project's reviews in each store it connects, as a refresh reads them.
+    public func reviews(of project: Project) -> [Platform: [Review]] {
+        let own = reviews.filter { $0.projectId == project.id }
+        var byStore: [Platform: [Review]] = [:]
+        if project.appStore != nil { byStore[.appStore] = own.filter { $0.platform == .appStore } }
+        if project.googlePlay != nil { byStore[.googlePlay] = own.filter { $0.platform == .googlePlay } }
+        return byStore
     }
 
     /// The demo project's surfaces, as the surfaces page lists them.
@@ -376,7 +391,8 @@ public struct DemoWorld: Codable, Sendable, Equatable {
                    author: "quietreader", territory: "USA", createdAt: ago(3.5)),
             Review(storeId: "d3", platform: .googlePlay, projectId: lumenId, rating: 2,
                    body: "La app se cierra cuando adjunto un PDF grande. Por lo demás me gusta mucho.",
-                   author: "Diego R.", language: "es_ES", createdAt: ago(5)),
+                   author: "Diego R.", language: "es_ES", createdAt: ago(5),
+                   appVersion: "3.4.1", device: "Samsung Galaxy S23", system: "Android 14", helpful: 12),
             Review(storeId: "d4", platform: .appStore, projectId: lumenId, rating: 4, title: "良い", // l10n-ignore: a Japanese review
                    body: "シンプルで使いやすいです。ウィジェットがもっと大きいと嬉しいです。", // l10n-ignore
                    author: "haru", territory: "JPN", createdAt: ago(9)),
@@ -386,7 +402,8 @@ public struct DemoWorld: Codable, Sendable, Equatable {
                    reply: ReviewReply(text: "Thanks for telling us. We now offer 50% off for students; write to us and we will set it up.", date: ago(18), pending: false)),
             Review(storeId: "d6", platform: .googlePlay, projectId: lumenId, rating: 5,
                    body: "Найкращий застосунок для нотаток, яким я користувався. Дякую!",
-                   author: "Олена", language: "uk_UA", createdAt: ago(26)),
+                   author: "Олена", language: "uk_UA", createdAt: ago(26),
+                   appVersion: "3.4.1", device: "Google Pixel 8", system: "Android 15", helpful: 2),
             Review(storeId: "d7", platform: .appStore, projectId: ferryId, rating: 2, title: "Widget doesn't update",
                    body: "The departure widget shows yesterday's times until I open the app.",
                    author: "commuter88", territory: "CAN", createdAt: ago(4)),
@@ -399,10 +416,12 @@ public struct DemoWorld: Codable, Sendable, Equatable {
                    author: "pt_r", territory: "PRT", createdAt: ago(40)),
             Review(storeId: "d10", platform: .googlePlay, projectId: atlasId, rating: 4,
                    body: "Lovely maps and very calm design. Please add hiking trails for Scotland.",
-                   author: "Ewan", language: "en_GB", createdAt: ago(7)),
+                   author: "Ewan", language: "en_GB", createdAt: ago(7),
+                   appVersion: "2.0.3", device: "OnePlus 12", system: "Android 14"),
             Review(storeId: "d11", platform: .googlePlay, projectId: atlasId, rating: 3,
                    body: "Schöne App, aber die Offline-Karten brauchen zu viel Speicher.",
-                   author: "Jonas", language: "de_DE", createdAt: ago(31))
+                   author: "Jonas", language: "de_DE", createdAt: ago(31),
+                   appVersion: "2.0.3", device: "Samsung Galaxy A54", system: "Android 14", helpful: 5)
         ]
     }
 }

@@ -78,6 +78,9 @@ struct ReplyView: View {
                 Text(title).font(.system(size: 16, weight: .bold))
             }
             Text(review.body).font(.system(size: 15))
+            if let details = review.details {
+                Text(verbatim: details).font(.system(size: 12)).foregroundStyle(Palette.ink2)
+            }
         }
         .padding(16)
         .background(Palette.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))

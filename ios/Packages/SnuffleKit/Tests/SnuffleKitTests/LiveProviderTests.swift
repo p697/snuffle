@@ -45,12 +45,13 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
         let name = Self.queryName(request)
         let match = Self.lock.withLock { () -> (Int, String)? in
             Self.seen.append(request)
-            // "host/path#name" answers only the query sent with that name; "host/path" answers the rest.
+            // "host/path#name" answers only the query sent with that name; "host/path" answers the rest, the longest
+            // matching path first.
             let named = Self.routes.first { route in
                 let parts = route.key.split(separator: "#", maxSplits: 1).map(String.init)
                 return parts.count == 2 && key.hasPrefix(parts[0]) && name == parts[1]
             }
-            return named?.value ?? Self.routes.first { !$0.key.contains("#") && key.hasPrefix($0.key) }?.value
+            return named?.value ?? Self.routes.filter { !$0.key.contains("#") && key.hasPrefix($0.key) }.max { $0.key.count < $1.key.count }?.value
         }
         let (status, body) = match ?? (404, #"{"detail":"no stub"}"#)
         let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!
@@ -145,6 +146,48 @@ struct LiveProviderTests {
         #expect(GoogleOAuth.authorizeURL(clientId: "1-a.apps.googleusercontent.com", pkce: PKCE()).absoluteString.contains("playdeveloperreporting"))
     }
 
+    @Test func readsPlayVitalsOnceAnHourWithoutTouchingReviews() async throws {
+        let google = UUID()
+        let store = MemoryCredentialStore([google: .googleOAuth(GoogleOAuthToken(clientId: "c", accessToken: "ya29", refreshToken: "r", expiresAt: .distantFuture))])
+        let atlas = Project(name: "Atlas", tint: .ink, googlePlay: GooglePlayLink(accountId: google, packageName: "com.example.atlas"))
+        let reporting = "playdeveloperreporting.googleapis.com/v1beta1/apps/com.example.atlas/"
+        let reviews = "androidpublisher.googleapis.com/androidpublisher/v3/applications/com.example.atlas/reviews"
+        let review = #"{"reviews":[{"reviewId":"g1","comments":[{"userComment":{"text":"Crashes on start","lastModified":{"seconds":"1795100000"},"starRating":1}}]}]}"#
+        StubProtocol.reset([
+            reviews: (200, review),
+            reporting + "crashRateMetricSet": (200, #"{"freshnessInfo":{"freshnesses":[{"aggregationPeriod":"DAILY","latestEndTime":{"year":2026,"month":11,"day":19,"timeZone":{"id":"America/Los_Angeles"}}}]}}"#),
+            reporting + "crashRateMetricSet:query": (200, #"{"rows":[{"metrics":[{"metric":"userPerceivedCrashRate28dUserWeighted","decimalValue":{"value":"0.0127"}}]}]}"#),
+            // Too few people for an ANR rate: Google has posted no day.
+            reporting + "anrRateMetricSet": (200, #"{"freshnessInfo":{"freshnesses":[]}}"#)
+        ])
+        let metrics: Set<Metric> = [.crashRate, .anrRate, .reviewsToAnswer]
+        let first = await provider(store: store).refresh(atlas, metrics: metrics, previous: nil)
+        #expect(first.snapshot[.crashRate] == 0.0127)
+        #expect(first.snapshot[.anrRate] == nil)
+        #expect(first.snapshot.hourlyRead == [.crashRate, .anrRate])
+        #expect(first.reviews[.googlePlay]?.map(\.storeId) == ["g1"])
+        let query = try #require(StubProtocol.seen.first { $0.url?.path().hasSuffix(":query") == true })
+        let body = try #require(JSONSerialization.jsonObject(with: query.httpBodyStream.map(Data.init(reading:)) ?? query.httpBody ?? Data()) as? [String: Any])
+        let timeline = try #require(body["timelineSpec"] as? [String: Any])
+        #expect(body["metrics"] as? [String] == ["userPerceivedCrashRate28dUserWeighted"])
+        #expect((timeline["startTime"] as? [String: Any])?["day"] as? Int == 18 && (timeline["endTime"] as? [String: Any])?["day"] as? Int == 19)
+        #expect(query.value(forHTTPHeaderField: "Authorization") == "Bearer ya29")
+
+        // Ten minutes on: reviews again, vitals not, even the one with nothing to show.
+        StubProtocol.reset([reviews: (200, review)])
+        let second = await provider(store: store).refresh(atlas, metrics: metrics, previous: first.snapshot)
+        #expect(!StubProtocol.seen.contains { $0.url?.host() == "playdeveloperreporting.googleapis.com" })
+        #expect(second.snapshot.fillingGaps(from: first.snapshot)[.crashRate] == 0.0127)
+
+        // Vitals that fail never cost the reviews, and wait for the next hour like a read.
+        StubProtocol.reset([reviews: (200, review), reporting: (403, #"{"error":{"message":"The caller does not have permission"}}"#)])
+        let failed = await provider(store: store).refresh(atlas, metrics: metrics, previous: nil)
+        #expect(failed.reviews[.googlePlay]?.count == 1)
+        #expect(failed.snapshot.reviewsToAnswer == 1)
+        #expect(failed.snapshot.failures.map(\.platform) == [.googlePlay])
+        #expect(failed.snapshot.hourlyReadAt != nil)
+    }
+
     @Test func combinesSourcesIntoOneSnapshot() async throws {
         let days = (0..<14).map { String($0 * 10) }.joined(separator: ",")
         StubProtocol.reset([
@@ -164,7 +207,7 @@ struct LiveProviderTests {
         #expect(result.snapshot.revenue == 3.28)
         #expect(result.snapshot.revenueSource == .revenueCat)
         #expect(result.snapshot.failures.isEmpty)
-        #expect(result.reviews == nil)
+        #expect(result.reviews.isEmpty)
         let revenueCall = try #require(StubProtocol.seen.first { $0.url?.host() == "api.revenuecat.com" })
         #expect(revenueCall.value(forHTTPHeaderField: "Authorization") == "Bearer sk_test")
         #expect(revenueCall.url?.query()?.contains("start_date=2026-11-20") == true)

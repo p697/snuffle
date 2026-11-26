@@ -34,6 +34,13 @@ public enum Format {
         fraction.formatted(.percent.precision(.fractionLength(0...1)).locale(latin(locale)))
     }
 
+    /// "0.27%": a rate as Play Console writes it, always two decimals.
+    public static func rate(_ fraction: Double) -> String { rate(fraction, locale: .current) }
+
+    static func rate(_ fraction: Double, locale: Locale) -> String {
+        fraction.formatted(.percent.precision(.fractionLength(2)).locale(latin(locale)))
+    }
+
     /// "11/26" or "26.11.", a day without the year, as the person writes it.
     public static func day(_ date: Date, in zone: TimeZone = .current) -> String {
         var style = Date.FormatStyle(date: .omitted, time: .omitted).month(.defaultDigits).day().locale(latin())

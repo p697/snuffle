@@ -62,7 +62,7 @@ struct ReviewsView: View {
         let stores = Set(model.projects.flatMap { [$0.appStore != nil ? Platform.appStore : nil, $0.googlePlay != nil ? .googlePlay : nil].compactMap { $0 } })
         var parts = [String(localized: "\(toAnswer) 条待回复")]
         if stores.contains(.appStore) { parts.append(String(localized: "App Store 最近 200 条")) }
-        if stores.contains(.googlePlay) { parts.append(String(localized: "Google Play 近 7 天")) }
+        if stores.contains(.googlePlay) { parts.append(String(localized: "Google Play 连接以来")) }
         return parts.joined(separator: " · ")
     }
 
@@ -73,7 +73,7 @@ struct ReviewsView: View {
             Text(!hasStore ? "还没有连接商店" : filter == .all ? "还没有评论" : "都回复完了")
                 .font(.system(size: 17, weight: .bold))
             Text(!hasStore ? "在项目里连接 App Store Connect 或 Google Play，评论会汇总到这里，可以直接回复。"
-                 : filter == .all ? (model.projects.contains { $0.googlePlay != nil } ? "Google Play 只提供近 7 天的评论。新的评论会在刷新后出现在这里。" : "新的评论会在刷新后出现在这里。")
+                 : filter == .all ? (model.projects.contains { $0.googlePlay != nil } ? "Google Play 只提供近 7 天的评论，Snuffle 会把读到的留下来。新的评论会在刷新后出现在这里。" : "新的评论会在刷新后出现在这里。")
                  : "新的评论会在下次刷新时出现在这里。")
                 .font(.system(size: 14))
                 .foregroundStyle(Palette.ink2)
@@ -110,6 +110,11 @@ struct ReviewCard: View {
             Text(meta)
                 .font(.system(size: 12))
                 .foregroundStyle(Palette.ink2)
+            if let details = review.details {
+                Text(verbatim: details)
+                    .font(.system(size: 12))
+                    .foregroundStyle(Palette.ink2)
+            }
             if let reply = review.reply {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(reply.pending ? "你的回复 · 审核中" : "你的回复")
@@ -143,6 +148,20 @@ struct ReviewCard: View {
             Format.ago(review.createdAt),
             project?.name
         ].compactMap { $0 }.joined(separator: " · ")
+    }
+
+}
+
+extension Review {
+    /// Where a Google Play review was written: "v3.4.1 · Samsung Galaxy S23 · Android 14 · 12 人觉得有用".
+    var details: String? {
+        let parts = [
+            appVersion.map { "v" + $0 },
+            device,
+            system,
+            helpful.flatMap { $0 > 0 ? String(localized: "\($0) 人觉得有用") : nil }
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 }
 

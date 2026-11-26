@@ -75,4 +75,40 @@ struct LiveSmokeTests {
         let overview = try await client.overview(projectId: projectId)
         print("[live]   today \(revenue), mrr \(overview.mrr ?? -1), active \(overview.activeSubscriptions ?? -1)")
     }
+
+    /// A Google access token with the androidpublisher and playdeveloperreporting scopes, e.g. from
+    /// `gcloud auth application-default print-access-token`; such a token also needs `SNUFFLE_LIVE_GOOGLE_QUOTA_PROJECT`,
+    /// a Cloud project with both APIs on.
+    @Test(.enabled(if: ProcessInfo.processInfo.environment["SNUFFLE_LIVE_GOOGLE_TOKEN"] != nil))
+    func googlePlayReviewsAndVitals() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        if let project = env["SNUFFLE_LIVE_GOOGLE_QUOTA_PROJECT"] { configuration.httpAdditionalHeaders = ["x-goog-user-project": project] }
+        let http = HTTPClient(session: URLSession(configuration: configuration))
+        let token = env["SNUFFLE_LIVE_GOOGLE_TOKEN"]!
+        let client = GooglePlayClient(http: http) { token }
+        let apps = try await client.apps()
+        print("[live] Google Play apps: \(apps.count)")
+        for app in apps {
+            let reviews = try await client.reviews(packageName: app.packageName, projectId: UUID())
+            let detailed = reviews.filter { $0.appVersion != nil || $0.device != nil || $0.system != nil }.count
+            print("[live]   \(app.displayName): \(reviews.count) reviews this week, \(detailed) with version or device, \(reviews.filter(\.needsReply).count) to answer")
+            #expect(reviews.allSatisfy { (1...5).contains($0.rating) })
+            let vitals = try await client.vitals(packageName: app.packageName, metrics: [.crashRate, .anrRate])
+            print("[live]   crash \(vitals[.crashRate].map { "\($0) = \(Format.rate($0))" } ?? "no data"), ANR \(vitals[.anrRate].map { "\($0) = \(Format.rate($0))" } ?? "no data")")
+            #expect(vitals.values.allSatisfy { (0...1).contains($0) }, "a share of people, not a percent")
+        }
+        // "package/reviewId,…": whether Google still answers for a review older than a week, by its id.
+        for pair in (env["SNUFFLE_LIVE_GOOGLE_OLD_REVIEWS"] ?? "").split(separator: ",") {
+            let parts = pair.split(separator: "/", maxSplits: 1).map(String.init)
+            var request = URLRequest(url: GooglePlayClient.base.appending(path: "\(parts[0])/reviews/\(parts[1])"))
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            do {
+                let body = try await http.send(request, platform: .googlePlay)
+                let page = try GooglePlayParsing.reviews(Data(#"{"reviews":["#.utf8) + body + Data("]}".utf8), projectId: UUID())
+                print("[live]   old review by id: found, last written \(page.reviews.first.map { "\($0.createdAt)" } ?? "?"), replied \(page.reviews.first?.reply != nil)")
+            } catch {
+                print("[live]   old review by id: \(error.localizedDescription)")
+            }
+        }
+    }
 }

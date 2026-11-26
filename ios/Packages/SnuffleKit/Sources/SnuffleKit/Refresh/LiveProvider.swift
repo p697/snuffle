@@ -61,7 +61,7 @@ public struct LiveProvider: DataProvider {
         case timeZone(String)
         case surfaces(Set<Surface>)
         case userTally(UserTally)
-        case reviews([Review])
+        case reviews(Platform, [Review])
         case failure(SourceFailure)
         /// An hourly metric could not be read; the next refresh tries again, and the card keeps the last value.
         case hourlyFailed
@@ -74,14 +74,14 @@ public struct LiveProvider: DataProvider {
         let current = previous.flatMap { $0.countedAs == project.metrics.inEffect ? $0 : nil }
         let readHourly = current?.needsHourlyRead(wanted, at: clock.now) ?? wanted.contains(where: \.isHourly)
         let parts = await read(project, wanted: wanted, clock: clock, readHourly: readHourly, reviews: project.hasStore, tally: current?.userTally)
-        return Self.assemble(parts, project: project, clock: clock, readHourly: readHourly)
+        return Self.assemble(parts, project: project, wanted: wanted, clock: clock, readHourly: readHourly)
     }
 
     public func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double] {
         let clock = ProjectClock(now: now(), timeZoneIdentifier: project.posthog?.timeZone)
         let wanted = metrics.filter { $0.isAvailable(in: project) }
         let parts = await read(project, wanted: wanted, clock: clock, readHourly: true, reviews: wanted.contains(.reviewsToAnswer), tally: nil)
-        let result = Self.assemble(parts, project: project, clock: clock, readHourly: true)
+        let result = Self.assemble(parts, project: project, wanted: wanted, clock: clock, readHourly: true)
         let values = result.snapshot.values.filter { wanted.contains($0.key) }
         if values.isEmpty, let failure = result.snapshot.failures.first { throw failure }
         return values
@@ -155,7 +155,7 @@ public struct LiveProvider: DataProvider {
             if reviews, let link = project.appStore {
                 group.addTask {
                     do {
-                        return [.reviews(try await self.appStore(link.accountId).reviews(appId: link.appId, projectId: project.id))]
+                        return [.reviews(.appStore, try await self.appStore(link.accountId).reviews(appId: link.appId, projectId: project.id))]
                     } catch {
                         return [.failure(Self.failure(.appStore, error))]
                     }
@@ -164,8 +164,19 @@ public struct LiveProvider: DataProvider {
             if reviews, let link = project.googlePlay {
                 group.addTask {
                     do {
-                        return [.reviews(try await self.withGoogle(link.accountId) { try await $0.reviews(packageName: link.packageName, projectId: project.id) })]
+                        return [.reviews(.googlePlay, try await self.withGoogle(link.accountId) { try await $0.reviews(packageName: link.packageName, projectId: project.id) })]
                     } catch {
+                        return [.failure(Self.failure(.googlePlay, error))]
+                    }
+                }
+            }
+            let vitals = wanted.filter { $0.vital != nil }
+            if readHourly, !vitals.isEmpty, let link = project.googlePlay {
+                group.addTask {
+                    do {
+                        return [.values(try await self.withGoogle(link.accountId) { try await $0.vitals(packageName: link.packageName, metrics: vitals) })]
+                    } catch {
+                        // Google posts vitals once a day: the card keeps the last rates, and the next hour tries again.
                         return [.failure(Self.failure(.googlePlay, error))]
                     }
                 }
@@ -247,10 +258,9 @@ public struct LiveProvider: DataProvider {
         }
     }
 
-    private static func assemble(_ parts: [Part], project: Project, clock: ProjectClock, readHourly: Bool) -> RefreshResult {
+    private static func assemble(_ parts: [Part], project: Project, wanted: Set<Metric>, clock: ProjectClock, readHourly: Bool) -> RefreshResult {
         var snapshot = ProjectSnapshot(projectId: project.id, fetchedAt: clock.now, dayStart: clock.todayStart)
-        var reviews: [Review]?
-        var storeFailed = false
+        var reviews: [Platform: [Review]] = [:]
         var hourlyFailed = false
         var zone: String?
         var surfaces: Set<Surface>?
@@ -265,11 +275,9 @@ public struct LiveProvider: DataProvider {
             case .timeZone(let identifier): zone = identifier
             case .surfaces(let excluded): surfaces = excluded
             case .userTally(let tally): snapshot.userTally = tally
-            case .reviews(let list): reviews = (reviews ?? []) + list
+            case .reviews(let platform, let list): reviews[platform] = list
             case .hourlyFailed: hourlyFailed = true
-            case .failure(let failure):
-                snapshot.failures.append(failure)
-                if failure.platform == .appStore || failure.platform == .googlePlay { storeFailed = true }
+            case .failure(let failure): snapshot.failures.append(failure)
             }
         }
         if let firstSeen {
@@ -286,14 +294,16 @@ public struct LiveProvider: DataProvider {
                 snapshot.platforms = PlatformCount.sorted(tally.byPlatform.merging(firstSeen.todayByPlatform, uniquingKeysWith: +))
             }
         }
-        if readHourly && !hourlyFailed { snapshot.hourlyReadAt = clock.now }
-        // When one store answers and the other fails, count what is known; the card names the failed store,
-        // and `fillingGaps` keeps the last count only when no store answered at all.
-        if let reviews { snapshot.values[.reviewsToAnswer] = Double(reviews.filter(\.needsReply).count) }
+        if readHourly && !hourlyFailed {
+            snapshot.hourlyReadAt = clock.now
+            snapshot.hourlyRead = wanted.filter(\.isHourly)
+        }
+        // What the stores that answered have to answer; `RefreshCache.land` counts again with the reviews kept, and
+        // `fillingGaps` keeps the last count when no store answered at all.
+        if !reviews.isEmpty { snapshot.values[.reviewsToAnswer] = Double(reviews.values.joined().filter(\.needsReply).count) }
         snapshot.failures.sort { $0.platform.rawValue < $1.platform.rawValue }
-        // A partial list would drop the failed store's reviews from the inbox, so only a complete one replaces it.
         snapshot.countedAs = project.metrics.leaving(out: surfaces ?? project.metrics.surfacesLeftOut)
-        return RefreshResult(snapshot: snapshot, reviews: storeFailed ? nil : reviews, posthogTimeZone: zone, excludedSurfaces: surfaces)
+        return RefreshResult(snapshot: snapshot, reviews: reviews, posthogTimeZone: zone, excludedSurfaces: surfaces)
     }
 
     static func failure(_ platform: Platform, _ error: Error) -> SourceFailure {
