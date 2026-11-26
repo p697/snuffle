@@ -219,60 +219,168 @@ public enum Metric: Hashable, Sendable, Identifiable {
     }
 }
 
-/// Which numbers a project card shows: one or two big ones, up to three smaller ones beneath, and whether the last 14
-/// days of activity and the platform split are drawn.
+/// A place on a project card: a big number, a smaller one by row and position, or the empty place at the end of a
+/// row that has room, where `row == rows.count` starts a new row.
+public enum CardSlot: Hashable, Sendable {
+    case big(Int)
+    case small(row: Int, index: Int)
+    case add(row: Int)
+}
+
+/// Which numbers a project card shows: one or two big ones, up to two rows of one to three smaller ones beneath, and
+/// whether the last 14 days of activity and the platform split are drawn.
 public struct CardLayout: Codable, Hashable, Sendable {
     public var big: [Metric]
-    public var small: [Metric]
+    /// The rows of smaller numbers, top first. Never holds an empty row.
+    public var rows: [[Metric]]
     /// Bars of the last 14 days' active people beside the big number.
     public var trend: Bool
     /// The share of each platform among everyone counted.
     public var split: Bool
 
     public static let maxBig = 2
-    public static let maxSmall = 3
+    public static let maxRows = 2
+    public static let perRow = 3
     /// Saved with every layout; layouts from builds before it are replaced by the standard one.
     static let version = 2
 
-    /// A metric appears once: repeats, and small numbers that are already big, are dropped.
-    public init(big: [Metric], small: [Metric] = [], trend: Bool = true, split: Bool = true) {
+    /// A metric appears once: repeats are dropped, as are numbers past a row's room and rows past the last.
+    public init(big: [Metric], rows: [[Metric]] = [], trend: Bool = true, split: Bool = true) {
         var seen = Set<Metric>()
-        self.big = Array(big.filter { seen.insert($0).inserted }.prefix(Self.maxBig))
-        self.small = Array(small.filter { seen.insert($0).inserted }.prefix(Self.maxSmall))
+        func take(_ metrics: [Metric], upTo limit: Int) -> [Metric] {
+            var kept: [Metric] = []
+            for metric in metrics where kept.count < limit && seen.insert(metric).inserted { kept.append(metric) }
+            return kept
+        }
+        self.big = take(big, upTo: Self.maxBig)
+        self.rows = Array(rows.map { take($0, upTo: Self.perRow) }.filter { !$0.isEmpty }.prefix(Self.maxRows))
         self.trend = trend
         self.split = split
     }
 
+    /// The smaller numbers, row after row.
+    public var small: [Metric] { rows.flatMap(\.self) }
     public var metrics: [Metric] { big + small }
+
+    public subscript(slot: CardSlot) -> Metric? {
+        switch slot {
+        case .big(let index): big.indices.contains(index) ? big[index] : nil
+        case .small(let row, let index): rows.indices.contains(row) && rows[row].indices.contains(index) ? rows[row][index] : nil
+        case .add: nil
+        }
+    }
+
+    /// Every number's place, in reading order.
+    public var slots: [CardSlot] {
+        big.indices.map { .big($0) } + rows.indices.flatMap { row in rows[row].indices.map { .small(row: row, index: $0) } }
+    }
+
+    /// The empty places a number can go: the end of each row with room, then a new row while there is room for one.
+    public var openings: [CardSlot] {
+        rows.indices.filter { rows[$0].count < Self.perRow }.map { .add(row: $0) } + (rows.count < Self.maxRows ? [.add(row: rows.count)] : [])
+    }
+
+    public func slot(of metric: Metric) -> CardSlot? {
+        slots.first { self[$0] == metric }
+    }
+
+    /// `metric`, picked from the library, in `slot`. One already elsewhere on the card trades places with the number
+    /// in `slot`, or moves when `slot` is empty, so nothing shows twice.
+    public func placing(_ metric: Metric, at slot: CardSlot) -> CardLayout {
+        if let from = self.slot(of: metric) { return moving(from: from, to: slot) ?? self }
+        var copy = self
+        switch slot {
+        case .big, .small:
+            guard self[slot] != nil else { return self }
+            copy.put(metric, at: slot)
+        case .add(let row):
+            guard openings.contains(slot) else { return self }
+            if row == rows.count { copy.rows.append([metric]) } else { copy.rows[row].append(metric) }
+        }
+        return copy
+    }
+
+    /// The number in `from` dropped on `to`: two numbers trade places, and one dropped on an empty place moves to
+    /// the end of that row. Nil when nothing can move there, as when it would take the card's only big number.
+    public func moving(from: CardSlot, to: CardSlot) -> CardLayout? {
+        guard let metric = self[from] else { return nil }
+        if from == to { return self }
+        if let other = self[to] {
+            var copy = self
+            copy.put(other, at: from)
+            copy.put(metric, at: to)
+            return copy
+        }
+        guard case .add(let row) = to, openings.contains(to) else { return nil }
+        var big = big
+        var rows = rows
+        switch from {
+        case .big(let index):
+            guard big.count > 1 else { return nil }
+            big.remove(at: index)
+        case .small(let fromRow, let index):
+            rows[fromRow].remove(at: index)
+        case .add:
+            return nil
+        }
+        if row == rows.count { rows.append([metric]) } else { rows[row].append(metric) }
+        return CardLayout(big: big, rows: rows, trend: trend, split: split)
+    }
+
+    /// Without the number in `slot`. The only big number stays.
+    public func removing(_ slot: CardSlot) -> CardLayout {
+        var big = big
+        var rows = rows
+        switch slot {
+        case .big(let index) where big.count > 1 && big.indices.contains(index):
+            big.remove(at: index)
+        case .small(let row, let index) where self[slot] != nil:
+            rows[row].remove(at: index)
+        default:
+            return self
+        }
+        return CardLayout(big: big, rows: rows, trend: trend, split: split)
+    }
+
+    private mutating func put(_ metric: Metric, at slot: CardSlot) {
+        switch slot {
+        case .big(let index): big[index] = metric
+        case .small(let row, let index): rows[row][index] = metric
+        case .add: break
+        }
+    }
 
     /// The layout as drawn for `project`: numbers from sources it does not have are left out, a card with no big
     /// number left promotes its first small one, and bars and split need PostHog.
     public func visible(in project: Project) -> CardLayout {
         var big = big.filter { $0.isAvailable(in: project) }
-        var small = small.filter { $0.isAvailable(in: project) }
-        if big.isEmpty, !small.isEmpty { big = [small.removeFirst()] }
+        var rows = rows.map { $0.filter { $0.isAvailable(in: project) } }.filter { !$0.isEmpty }
+        if big.isEmpty, !rows.isEmpty { big = [rows[0].removeFirst()] }
         if big.isEmpty { big = CardLayout.standard(for: project).big }
         let people = project.posthog != nil
-        return CardLayout(big: big, small: small, trend: trend && people, split: split && people)
+        return CardLayout(big: big, rows: rows, trend: trend && people, split: split && people)
     }
 
     /// The card a project starts with. With PostHog: everyone counted, with today's, the week's and the week's new
     /// people beneath; otherwise the reviews waiting for a reply, or revenue.
     public static func standard(for project: Project) -> CardLayout {
         guard project.posthog != nil else {
-            return CardLayout(big: [project.hasStore ? .reviewsToAnswer : .revenue], small: project.revenueCat != nil && project.hasStore ? [.mrr] : [])
+            return CardLayout(big: [project.hasStore ? .reviewsToAnswer : .revenue], rows: project.revenueCat != nil && project.hasStore ? [[.mrr]] : [])
         }
-        return CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .newWeek])
+        return CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .newWeek]])
     }
 
-    // Stored as metric ids so a renamed case never breaks saved layouts; unknown ids are dropped.
-    enum CodingKeys: String, CodingKey { case big, small, trend, split, v }
+    // Stored as metric ids so a renamed case never breaks saved layouts; unknown ids are dropped. Layouts saved
+    // before rows keep their one row under `small`.
+    enum CodingKeys: String, CodingKey { case big, rows, small, trend, split, v }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        let rows = try container.decodeIfPresent([[String]].self, forKey: .rows)
+            ?? [try container.decodeIfPresent([String].self, forKey: .small) ?? []]
         self.init(
             big: try container.decode([String].self, forKey: .big).compactMap(Metric.init(id:)),
-            small: try container.decodeIfPresent([String].self, forKey: .small)?.compactMap(Metric.init(id:)) ?? [],
+            rows: rows.map { $0.compactMap(Metric.init(id:)) },
             trend: try container.decodeIfPresent(Bool.self, forKey: .trend) ?? true,
             split: try container.decodeIfPresent(Bool.self, forKey: .split) ?? true
         )
@@ -281,7 +389,7 @@ public struct CardLayout: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(big.map(\.id), forKey: .big)
-        try container.encode(small.map(\.id), forKey: .small)
+        try container.encode(rows.map { $0.map(\.id) }, forKey: .rows)
         try container.encode(trend, forKey: .trend)
         try container.encode(split, forKey: .split)
         try container.encode(Self.version, forKey: .v)

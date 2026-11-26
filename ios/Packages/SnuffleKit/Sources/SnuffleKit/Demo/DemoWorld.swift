@@ -53,7 +53,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             appStore: AppStoreLink(accountId: demoAccount, appId: "1", appName: "Lumen Notes", bundleId: "com.example.lumen"),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.lumen"),
             metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), excludedSurfaces: [.visitors]),
-            card: CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .revenue])
+            card: CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .revenue]])
         ),
         Project(
             id: ferryId, name: "Pocket Ferry", tint: .coral,
@@ -61,14 +61,14 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             revenueCat: RevenueCatLink(accountId: demoAccount, projectId: "demo", projectName: "Pocket Ferry"),
             appStore: AppStoreLink(accountId: demoAccount, appId: "2", appName: "Pocket Ferry", bundleId: "com.example.ferry"),
             metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .revenueCat, excludedSurfaces: [.visitors]),
-            card: CardLayout(big: [.totalUsers], small: [.newUsers, .mrr, .reviewsToAnswer])
+            card: CardLayout(big: [.totalUsers], rows: [[.newUsers, .mrr, .reviewsToAnswer]])
         ),
         Project(
             id: atlasId, name: "Quiet Atlas", tint: .cocoa,
             posthog: PostHogLink(accountId: demoAccount, projectId: 3, projectName: "Quiet Atlas", timeZone: TimeZone.current.identifier),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.atlas"),
             metrics: MetricSettings(newUsers: .firstSeen, revenue: .none, excludedSurfaces: [.visitors]),
-            card: CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .newWeek])
+            card: CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .newWeek]])
         )
     ]
 

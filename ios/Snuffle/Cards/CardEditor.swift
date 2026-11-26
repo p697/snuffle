@@ -1,34 +1,31 @@
 import SnuffleKit
 import SwiftUI
 
-/// "调整卡片": the card itself, where tapping any number picks another from the library.
+/// "调整卡片": the card itself, where tapping any number picks another from the library and holding one drags it onto
+/// another number or an empty place.
 struct CardEditor: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     private let original: Project
     /// The whole project: connecting a missing source from the library changes more than the card.
     @State private var draft: Project
-    @State private var layout: CardLayout
+    @State private var editing: CardEditing
     @State private var everywhere = false
-    @State private var picking: CardSlot?
     /// Numbers the library read that the cache does not have yet, so the preview shows them at once.
     @State private var measured = MeasuredNumbers()
 
     init(project: Project) {
         original = project
         _draft = State(initialValue: project)
-        _layout = State(initialValue: project.card.visible(in: project))
+        _editing = State(initialValue: CardEditing(layout: project.card.visible(in: project)))
     }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 header
-                Text("点卡片上的任何一个数，换成你想看的。")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Palette.ink2)
-                    .padding(.horizontal, 4)
-                ProjectCard(project: draft, preview: preview, editing: CardEditing(layout: layout, selected: picking, choose: { picking = $0 }, remove: remove))
+                hints
+                ProjectCard(project: draft, preview: preview, editing: editing)
                     .shadow(color: Palette.shadow.opacity(0.1), radius: 17, y: 12)
                 VStack(alignment: .leading, spacing: 8) {
                     SectionLabel(String(localized: "版式"))
@@ -36,13 +33,13 @@ struct CardEditor: View {
                 }
                 if draft.posthog != nil {
                     CardGroup {
-                        Toggle(isOn: Binding(get: { layout.trend }, set: { on in withAnimation(.snappy) { layout.trend = on } })) {
+                        Toggle(isOn: Binding(get: { editing.layout.trend }, set: { on in withAnimation(.snappy) { editing.layout.trend = on } })) {
                             toggleLabel(String(localized: "近 14 天活跃"), String(localized: "大数旁边的小柱子，今天在最右"))
                         }
                         .toggleStyle(InkToggleStyle())
-                        .disabled(layout.big.count > 1)
+                        .disabled(editing.layout.big.count > 1)
                         RowDivider()
-                        Toggle(isOn: Binding(get: { layout.split }, set: { on in withAnimation(.snappy) { layout.split = on } })) {
+                        Toggle(isOn: Binding(get: { editing.layout.split }, set: { on in withAnimation(.snappy) { editing.layout.split = on } })) {
                             toggleLabel(String(localized: "平台占比"), String(localized: "累计的人里各平台各占多少"))
                         }
                         .toggleStyle(InkToggleStyle())
@@ -62,7 +59,7 @@ struct CardEditor: View {
                     }
                 }
                 Button("恢复默认") {
-                    withAnimation(.snappy) { layout = CardLayout.standard(for: draft).visible(in: draft) }
+                    editing.reset(to: CardLayout.standard(for: draft).visible(in: draft))
                 }
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(Palette.ink2)
@@ -71,10 +68,17 @@ struct CardEditor: View {
             .padding(16)
         }
         .background(Palette.paper.ignoresSafeArea())
-        .sheet(item: $picking) { slot in
-            CardMetricPicker(project: $draft, measured: $measured, slot: slot, layout: layout) { metric in
-                withAnimation(.snappy) { apply(metric, to: slot) }
+        .sheet(item: $editing.picking) { slot in
+            CardMetricPicker(project: $draft, measured: $measured, slot: slot, layout: editing.layout) { metric in
+                editing.place(metric, at: slot)
             }
+        }
+        // A tick each time the dragged number comes over a new place it can go.
+        .sensoryFeedback(trigger: editing.drag?.over) { _, over in
+            model.settings.haptics && over != nil && over != editing.drag?.from ? .selection : nil
+        }
+        .sensoryFeedback(trigger: editing.drops) { _, _ in
+            model.settings.haptics ? .impact(weight: .medium) : nil
         }
     }
 
@@ -83,6 +87,29 @@ struct CardEditor: View {
         snapshot.values = snapshot.values(countedAs: draft.metrics).merging(measured.values(countedAs: draft.metrics)) { $1 }
         snapshot.failures = []
         return snapshot
+    }
+
+    /// The two ways to change the card, each with its gesture drawn.
+    private var hints: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            hint("hand.tap", String(localized: "点一个数，换成别的"))
+            hint("hand.draw", String(localized: "按住一个数拖到另一个数上，两个换位置；拖到空位就挪过去"))
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private func hint(_ symbol: String, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.ink2)
+                .frame(width: 18)
+                .accessibilityHidden(true)
+            Text(verbatim: text)
+                .font(.system(size: 14))
+                .foregroundStyle(Palette.ink2)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func toggleLabel(_ title: String, _ detail: String) -> some View {
@@ -114,65 +141,18 @@ struct CardEditor: View {
 
     private var bigCount: Binding<Int> {
         Binding {
-            layout.big.count
+            editing.layout.big.count
         } set: { count in
-            withAnimation(.snappy) {
-                if count < layout.big.count {
-                    layout = CardLayout(big: Array(layout.big.prefix(count)), small: layout.small, trend: layout.trend, split: layout.split)
-                } else if let second = secondBig {
-                    layout = CardLayout(big: layout.big + [second], small: layout.small.filter { $0 != second }, trend: layout.trend, split: layout.split)
-                }
-            }
+            // A second big number: one from the card's rows first, then a common one.
+            editing.setBigCount(count, candidates: (editing.layout.small + [.activeToday, .activeWeek, .revenue, .mrr, .reviewsToAnswer, .newUsers]).filter { $0.isAvailable(in: draft) })
         }
-    }
-
-    /// The number a second big slot starts with: the first that is not big already, preferring one the card had.
-    private var secondBig: Metric? {
-        let preferred: [Metric] = layout.small + [.activeToday, .activeWeek, .revenue, .mrr, .reviewsToAnswer, .newUsers]
-        return preferred.first { $0.isAvailable(in: draft) && !layout.big.contains($0) }
-    }
-
-    private func remove(_ index: Int) {
-        withAnimation(.snappy) {
-            var small = layout.small
-            small.remove(at: index)
-            layout = CardLayout(big: layout.big, small: small, trend: layout.trend, split: layout.split)
-        }
-    }
-
-    /// Puts `metric` in `slot`. A number already elsewhere on the card swaps places, so nothing shows twice.
-    private func apply(_ metric: Metric, to slot: CardSlot) {
-        var big = layout.big
-        var small = layout.small
-        switch slot {
-        case .big(let index):
-            if let other = big.firstIndex(of: metric) {
-                big.swapAt(index, other)
-            } else {
-                small.removeAll { $0 == metric }
-                big[index] = metric
-            }
-        case .small(let index):
-            if let other = small.firstIndex(of: metric) {
-                small.swapAt(index, other)
-            } else {
-                small[index] = metric
-            }
-        case .add:
-            small.append(metric)
-        }
-        layout = CardLayout(big: big, small: small, trend: layout.trend, split: layout.split)
     }
 
     private func save() {
         var before = original
         before.card = draft.card
         if before != draft { model.save(project: draft) }
-        model.saveCard(layout, for: draft, everywhere: everywhere, countingChanged: before != draft, measured: measured.values(countedAs: draft.metrics))
+        model.saveCard(editing.layout, for: draft, everywhere: everywhere, dragged: editing.drops > 0, countingChanged: before != draft, measured: measured.values(countedAs: draft.metrics))
         dismiss()
     }
-}
-
-extension CardSlot: Identifiable {
-    var id: Self { self }
 }
