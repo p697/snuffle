@@ -168,7 +168,7 @@ struct PostHogTests {
     @Test func visitorsAreLeftOutOnlyBesideSignedInOrAppUsers() {
         #expect(Surface.defaultExcluded(seen: [.ios, .visitors]) == [.visitors])
         #expect(Surface.defaultExcluded(seen: [.web, .visitors]) == [.visitors])
-        // A website without sign-in that also sends a few server events keeps its visitors (Prompix).
+        // A website without sign-in that also sends a few server events keeps its visitors.
         #expect(Surface.defaultExcluded(seen: [.visitors, .other]) == [])
         #expect(Surface.defaultExcluded(seen: [.other]) == [])
         #expect(Surface.defaultExcluded(seen: []) == [])
