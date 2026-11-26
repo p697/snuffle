@@ -32,6 +32,10 @@ struct Odometer: View {
         .alignmentGuide(.lastTextBaseline) { $0[.bottom] - size * 0.14 }
         .font(Typeface.number(size))
         .foregroundStyle(color)
+        // The hidden rows are clipped from sight but would still catch taps far above and below the number: over the
+        // header's buttons, or over the card above. Only the number's own frame takes part in hit testing.
+        .allowsHitTesting(false)
+        .contentShape(Rectangle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(text)
         .accessibilityAddTraits(.updatesFrequently)
