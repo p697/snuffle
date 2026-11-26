@@ -17,7 +17,7 @@ struct PostHogTests {
         var project = Project(name: "p", tint: .ink, posthog: PostHogLink(accountId: UUID(), projectId: 1, projectName: "p", timeZone: "UTC"))
         project.adoptDefaults(seenEvents: seen)
         #expect(project.metrics == MetricSettings(newUsers: .firstSeen, revenue: .none))
-        #expect(project.card == CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .newWeek]))
+        #expect(project.card == CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .newWeek]]))
         project.adoptDefaults(seenEvents: [MetricSettings.signupEvent, MetricSettings.installEvent])
         #expect(project.metrics == .standard)
     }
