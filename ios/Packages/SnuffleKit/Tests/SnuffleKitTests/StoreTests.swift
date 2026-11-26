@@ -79,7 +79,7 @@ struct StoreTests {
         let json = """
         {"reviews":[
           {"reviewId":"g1","authorName":"Olena","comments":[{"userComment":{"text":"\\tДякую!","lastModified":{"seconds":"1795100000"},"starRating":5,"reviewerLanguage":"uk_UA"}}]},
-          {"reviewId":"g2","authorName":"Jo","comments":[{"userComment":{"text":"Meh","lastModified":{"seconds":"1795000000"},"starRating":2}},{"developerComment":{"text":"Sorry!","lastModified":{"seconds":"1795050000"}}}]}
+          {"reviewId":"g2","authorName":"Jo","comments":[{"userComment":{"text":"Meh","lastModified":{"seconds":"1795000000"},"starRating":2,"appVersionName":"2.1.0","androidOsVersion":34,"thumbsUpCount":7,"device":"dm3q","deviceMetadata":{"manufacturer":"samsung","productName":"Galaxy S23 Ultra"}}},{"developerComment":{"text":"Sorry!","lastModified":{"seconds":"1795050000"}}}]}
         ],"tokenPagination":{"nextPageToken":"next"}}
         """
         let page = try GooglePlayParsing.reviews(Data(json.utf8), projectId: UUID())
@@ -89,6 +89,27 @@ struct StoreTests {
         #expect(page.reviews[0].needsReply)
         #expect(page.reviews[1].reply?.text == "Sorry!")
         #expect(page.reviews[1].createdAt == Date(timeIntervalSince1970: 1_795_000_000))
+        #expect(page.reviews[1].appVersion == "2.1.0")
+        #expect(page.reviews[1].device == "Samsung Galaxy S23 Ultra")
+        #expect(page.reviews[1].system == "Android 14")
+        #expect(page.reviews[1].helpful == 7)
+        #expect(page.reviews[0].appVersion == nil && page.reviews[0].device == nil && page.reviews[0].helpful == nil)
+        #expect(GooglePlayParsing.device(maker: "Google", model: "Pixel 8") == "Google Pixel 8")
+        #expect(GooglePlayParsing.device(maker: "Google", model: "google Pixel 8") == "google Pixel 8", "the maker is not named twice")
+        #expect(GooglePlayParsing.device(maker: "Xiaomi", model: nil) == "Xiaomi")
+        #expect(GooglePlayParsing.android(32) == "Android 12L" && GooglePlayParsing.android(40) == "API 40")
+    }
+
+    @Test func readsTheLatestDayOfPlayVitals() throws {
+        let set = #"{"name":"apps/com.example.atlas/crashRateMetricSet","freshnessInfo":{"freshnesses":[{"aggregationPeriod":"HOURLY","latestEndTime":{"year":2026,"month":11,"day":25,"hours":7,"timeZone":{"id":"UTC"}}},{"aggregationPeriod":"DAILY","latestEndTime":{"year":2026,"month":12,"day":1,"timeZone":{"id":"America/Los_Angeles"}}}]}}"#
+        let end = try #require(try GooglePlayParsing.latestDay(Data(set.utf8)))
+        #expect(end == GooglePlayParsing.Day(year: 2026, month: 12, day: 1))
+        #expect(end.dayBefore == GooglePlayParsing.Day(year: 2026, month: 11, day: 30), "across the month")
+        #expect(try GooglePlayParsing.latestDay(Data(#"{"name":"x"}"#.utf8)) == nil, "no data yet")
+
+        let rows = #"{"rows":[{"aggregationPeriod":"DAILY","startTime":{"year":2026,"month":11,"day":30,"timeZone":{"id":"America/Los_Angeles"}},"metrics":[{"metric":"userPerceivedCrashRate28dUserWeighted","decimalValue":{"value":"0.0127"}}]}]}"#
+        #expect(try GooglePlayParsing.rate(Data(rows.utf8), metric: "userPerceivedCrashRate28dUserWeighted") == 0.0127)
+        #expect(try GooglePlayParsing.rate(Data("{}".utf8), metric: "userPerceivedCrashRate28dUserWeighted") == nil, "too few people")
     }
 
     @Test func mapsRevenueCatOverview() {

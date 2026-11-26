@@ -26,7 +26,7 @@ public actor DemoProvider: DataProvider {
     /// Today's numbers without any wait, so demo mode opens with full cards instead of dashes.
     public func seed() -> [RefreshResult] {
         DemoWorld.projects.compactMap { project in
-            world.snapshot(for: project).map { RefreshResult(snapshot: $0, reviews: project.hasStore ? world.reviews.filter { $0.projectId == project.id } : nil) }
+            world.snapshot(for: project).map { RefreshResult(snapshot: $0, reviews: world.reviews(of: project)) }
         }
     }
 
@@ -39,10 +39,9 @@ public actor DemoProvider: DataProvider {
     public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?) async -> RefreshResult {
         try? await Task.sleep(for: latency + .milliseconds(Int.random(in: 0...250)))
         guard let snapshot = world.snapshot(for: project) else {
-            return RefreshResult(snapshot: ProjectSnapshot(projectId: project.id, fetchedAt: Date(), dayStart: world.dayStart), reviews: nil)
+            return RefreshResult(snapshot: ProjectSnapshot(projectId: project.id, fetchedAt: Date(), dayStart: world.dayStart))
         }
-        let reviews = project.hasStore ? world.reviews.filter { $0.projectId == project.id } : nil
-        return RefreshResult(snapshot: snapshot, reviews: reviews)
+        return RefreshResult(snapshot: snapshot, reviews: world.reviews(of: project))
     }
 
     public func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double] {

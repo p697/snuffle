@@ -21,4 +21,11 @@ struct FormatTests {
         let arabic = Format.money(2488, locale: Locale(identifier: "ar_SA"))
         #expect(arabic.hasPrefix("\u{2066}") && arabic.hasSuffix("\u{2069}"))
     }
+
+    @Test func ratesKeepTwoDecimalsLikePlayConsole() {
+        #expect(Format.rate(0.0109, locale: Locale(identifier: "en_US")) == "1.09%")
+        #expect(Format.rate(0.003, locale: Locale(identifier: "en_US")) == "0.30%")
+        #expect(Format.rate(0.0109, locale: Locale(identifier: "de_DE")).hasPrefix("1,09"))
+        #expect(Metric.crashRate.format(0.0027).contains("27"))
+    }
 }

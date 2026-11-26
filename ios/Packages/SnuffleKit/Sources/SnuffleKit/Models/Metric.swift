@@ -25,6 +25,9 @@ public enum Metric: Hashable, Sendable, Identifiable {
     /// RevenueCat's subscription overview.
     case mrr, activeSubscriptions, activeTrials, revenueLast28Days
     case reviewsToAnswer
+    /// Google Play's Android vitals: the share of people who met a crash, or an ANR (the app not responding), while
+    /// using the app, averaged over the last 28 days Google has posted, as Play Console shows them.
+    case crashRate, anrRate
 
     /// PostHog's install event; shown as "安装" rather than by its name.
     public static let installs = Metric.event(MetricSettings.installEvent, people: false)
@@ -54,6 +57,8 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case .activeTrials: "active_trials"
         case .revenueLast28Days: "revenue_28d"
         case .reviewsToAnswer: "reviews_to_answer"
+        case .crashRate: "crash_rate"
+        case .anrRate: "anr_rate"
         }
     }
 
@@ -74,7 +79,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
     public static let fixed: [Metric] = [
         .newUsers, .activeToday, .activeWeek, .activeMonth, .newWeek, .totalUsers, .online, .pageviews,
         .revenue, .orders, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days,
-        .reviewsToAnswer
+        .reviewsToAnswer, .crashRate, .anrRate
     ]
 
     /// What analytics may say about a choice: the kind, never an event name the person typed.
@@ -86,7 +91,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
     // MARK: Behaviour
 
     public enum Source: Sendable, Equatable {
-        case posthog, revenueCat, stores
+        case posthog, revenueCat, stores, googlePlay
         /// Today's revenue comes from whichever source the project counts it with.
         case revenueSetting
     }
@@ -97,6 +102,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case .revenue: .revenueSetting
         case .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days: .revenueCat
         case .reviewsToAnswer: .stores
+        case .crashRate, .anrRate: .googlePlay
         }
     }
 
@@ -115,21 +121,34 @@ public enum Metric: Hashable, Sendable, Identifiable {
             case .posthog: project.posthog != nil
             case .revenueCat: project.revenueCat != nil
             case .stores: project.hasStore
+            case .googlePlay: project.googlePlay != nil
             case .revenueSetting: false
             }
         }
     }
 
     /// Read at most once an hour (`hourlyInterval`): the 30-day window, and numbers the source itself only
-    /// recalculates now and then. Everything else is read on every refresh.
+    /// recalculates now and then (Google posts vitals once a day). Everything else is read on every refresh.
     public var isHourly: Bool {
         switch self {
-        case .activeMonth, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days: true
+        case .activeMonth, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days, .crashRate, .anrRate: true
         default: false
         }
     }
 
     public var isMoney: Bool { self == .revenue || self == .mrr || self == .revenueLast28Days }
+
+    /// A share of people (0.0109 is 1.09%), shown with two decimals as Play Console does.
+    public var isRate: Bool { self == .crashRate || self == .anrRate }
+
+    /// Google Play's bad behavior threshold: above it, Play may show the app to fewer people and warn on its listing.
+    public var threshold: Double? {
+        switch self {
+        case .crashRate: 0.0109
+        case .anrRate: 0.0047
+        default: nil
+        }
+    }
 
     /// Counted only on the surfaces the project includes (`MetricSettings.excludedSurfaces`). Event metrics, sign-up
     /// and revenue events are what they name, wherever they were sent from.
@@ -153,6 +172,8 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case sameTimeYesterday
         /// "▲ 20.7%": the window before this one, e.g. the 7 days before the last 7.
         case previousPeriod
+        /// "阈值 1.09%": Google Play's bad behavior threshold (`threshold`), marked once the number is past it.
+        case threshold
     }
 
     /// The reference `ProjectSnapshot.previous` holds for this metric, if any.
@@ -161,25 +182,26 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case .totalUsers: .today
         case .newUsers, .activeToday: .sameTimeYesterday
         case .activeWeek, .newWeek: .previousPeriod
+        case .crashRate, .anrRate: .threshold
         default: nil
         }
     }
 
-    /// The same everywhere, so it can be added up across projects (the totals strip and the widgets). An event is
-    /// one project's own.
+    /// The same everywhere, so a card layout can carry it to every project. An event is one project's own. The widgets
+    /// add their own list of these up across projects.
     public var isShared: Bool {
         if case .event = self { return false }
         return true
     }
 
     /// What going up means: worth celebrating, worth a mark only (a new review to answer), or nothing (people online
-    /// come and go).
+    /// come and go; a 28-day rate moves a little every day, and its threshold says whether that matters).
     public enum Rise: Sendable { case celebrate, note, ignore }
 
     public var rise: Rise {
         switch self {
         case .reviewsToAnswer: .note
-        case .online: .ignore
+        case .online, .crashRate, .anrRate: .ignore
         default: .celebrate
         }
     }
@@ -210,12 +232,16 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case .activeTrials: String(localized: "试用中", bundle: .module)
         case .revenueLast28Days: String(localized: "近 28 天收入", bundle: .module)
         case .reviewsToAnswer: String(localized: "待回复评论", bundle: .module)
+        case .crashRate: String(localized: "崩溃率", bundle: .module)
+        case .anrRate: String(localized: "ANR 率", bundle: .module)
         }
     }
 
-    /// The number as shown: dollars for money, whole counts otherwise.
+    /// The number as shown: dollars for money, "0.27%" for a rate, whole counts otherwise.
     public func format(_ value: Double) -> String {
-        isMoney ? Format.money(value) : Format.number(Int(value.rounded()))
+        if isMoney { return Format.money(value) }
+        if isRate { return Format.rate(value) }
+        return Format.number(Int(value.rounded()))
     }
 }
 

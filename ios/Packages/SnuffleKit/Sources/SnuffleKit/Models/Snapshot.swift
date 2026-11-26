@@ -16,8 +16,10 @@ public struct ProjectSnapshot: Hashable, Sendable {
     /// Everyone counted in the total, by platform, largest first.
     public var platforms: [PlatformCount]
     public var revenueSource: Platform?
-    /// When the hourly metrics (`Metric.isHourly`) were last read without a failure.
+    /// When the hourly metrics (`Metric.isHourly`) were last read without a failure, and which ones were read then,
+    /// so one with nothing to show (Google has no vitals for a small app) waits for the hour like the rest.
     public var hourlyReadAt: Date?
+    public var hourlyRead: Set<Metric>
     public var failures: [SourceFailure]
     /// The counting and scope its numbers were read under (`MetricSettings.inEffect`). Numbers that follow them
     /// (`Metric.followsCounting`) are never carried to, or shown for, other settings. Nil in caches from before.
@@ -35,6 +37,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
         platforms: [PlatformCount] = [],
         revenueSource: Platform? = nil,
         hourlyReadAt: Date? = nil,
+        hourlyRead: Set<Metric>? = nil,
         failures: [SourceFailure] = [],
         countedAs: MetricSettings? = nil,
         userTally: UserTally? = nil
@@ -48,6 +51,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
         self.platforms = platforms
         self.revenueSource = revenueSource
         self.hourlyReadAt = hourlyReadAt
+        self.hourlyRead = hourlyRead ?? Set(values.keys.filter(\.isHourly))
         self.failures = failures
         self.countedAs = countedAs
         self.userTally = userTally
@@ -80,7 +84,10 @@ public struct ProjectSnapshot: Hashable, Sendable {
         for (metric, value) in previous.values where merged.values[metric] == nil && (metric.isHourly || sameDayFailure) && (sameCounting || !metric.followsCounting) {
             merged.values[metric] = value
         }
-        if hourlyReadAt == nil && sameCounting { merged.hourlyReadAt = previous.hourlyReadAt }
+        if hourlyReadAt == nil && sameCounting {
+            merged.hourlyReadAt = previous.hourlyReadAt
+            merged.hourlyRead = previous.hourlyRead
+        }
         if userTally == nil && sameCounting { merged.userTally = previous.userTally }
         if sameDayFailure && sameCounting {
             merged.previous = self.previous.merging(previous.previous) { mine, _ in mine }
@@ -96,13 +103,13 @@ public struct ProjectSnapshot: Hashable, Sendable {
         let hourly = wanted.filter(\.isHourly)
         guard !hourly.isEmpty else { return false }
         guard let read = hourlyReadAt, now.timeIntervalSince(read) < Metric.hourlyInterval else { return true }
-        return hourly.contains { values[$0] == nil }
+        return !hourly.isSubset(of: hourlyRead)
     }
 }
 
 extension ProjectSnapshot: Codable {
     enum CodingKeys: String, CodingKey {
-        case projectId, fetchedAt, dayStart, values, previous, dailyActive, platforms, revenueSource, hourlyReadAt, failures, countedAs, userTally
+        case projectId, fetchedAt, dayStart, values, previous, dailyActive, platforms, revenueSource, hourlyReadAt, hourlyRead, failures, countedAs, userTally
     }
 
     /// Values are stored by metric id. A cache from before metrics had ids reads as empty: the next refresh fills it.
@@ -117,6 +124,9 @@ extension ProjectSnapshot: Codable {
         platforms = try container.decodeIfPresent([PlatformCount].self, forKey: .platforms) ?? []
         revenueSource = try container.decodeIfPresent(Platform.self, forKey: .revenueSource)
         hourlyReadAt = try container.decodeIfPresent(Date.self, forKey: .hourlyReadAt)
+        // Caches from before it was recorded: the hourly numbers they hold were read.
+        hourlyRead = try container.decodeIfPresent([String].self, forKey: .hourlyRead).map { Set($0.compactMap(Metric.init(id:))) }
+            ?? Set(values.keys.filter(\.isHourly))
         failures = try container.decodeIfPresent([SourceFailure].self, forKey: .failures) ?? []
         countedAs = try container.decodeIfPresent(MetricSettings.self, forKey: .countedAs)
         userTally = (try? container.decodeIfPresent(UserTally.self, forKey: .userTally)) ?? nil
@@ -137,6 +147,7 @@ extension ProjectSnapshot: Codable {
         try container.encode(platforms, forKey: .platforms)
         try container.encodeIfPresent(revenueSource, forKey: .revenueSource)
         try container.encodeIfPresent(hourlyReadAt, forKey: .hourlyReadAt)
+        try container.encode(hourlyRead.map(\.id).sorted(), forKey: .hourlyRead)
         try container.encode(failures, forKey: .failures)
         try container.encodeIfPresent(countedAs, forKey: .countedAs)
         try container.encodeIfPresent(userTally, forKey: .userTally)

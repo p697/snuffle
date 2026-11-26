@@ -137,7 +137,7 @@ struct StoreDonePage: View {
             : session.googleApps.map { ($0.packageName, $0.displayName, $0.packageName) }
     }
 
-    private var reviews: [Review] { (result?.reviews ?? []).filter { $0.platform == platform }.sorted { $0.createdAt > $1.createdAt } }
+    private var reviews: [Review] { (result?.reviews[platform] ?? []).sorted { $0.createdAt > $1.createdAt } }
 
     private var reviewsCard: some View {
         VStack(alignment: .leading, spacing: 14) {

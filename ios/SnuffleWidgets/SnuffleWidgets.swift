@@ -62,8 +62,7 @@ struct RefreshAllIntent: AppIntent {
         for project in projects where project.includeInRefresh {
             let metrics = MetricsInUse.forProject(project, widgets: widgets)
             let result = await provider.refresh(project, metrics: metrics, previous: cache.snapshots[project.id])
-            cache.snapshots[project.id] = result.snapshot.fillingGaps(from: cache.snapshots[project.id])
-            if let reviews = result.reviews { cache.reviews[project.id] = reviews }
+            cache.land(result, for: project)
         }
         cache.recordRefresh(at: Date())
         store.save(cache)

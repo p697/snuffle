@@ -110,6 +110,37 @@ public struct RefreshCache: Codable, Sendable, Equatable {
         self.lastRefresh = lastRefresh
     }
 
+    /// Keeps what a refresh of `project` read, and returns its snapshot as kept: gaps are filled from the last one
+    /// (`ProjectSnapshot.fillingGaps`), and the count to answer covers every review kept. Each store that answered
+    /// replaces its own reviews, except Google Play, which only returns the last week's: those are added to the ones
+    /// read before (an edited review replaces its old self), newest `GooglePlayClient.reviewLimit` kept. A store that
+    /// failed keeps its last reviews; one no longer connected loses them.
+    @discardableResult
+    public mutating func land(_ result: RefreshResult, for project: Project) -> ProjectSnapshot {
+        var snapshot = result.snapshot.fillingGaps(from: snapshots[project.id])
+        let connected = Set([project.appStore != nil ? Platform.appStore : nil, project.googlePlay != nil ? .googlePlay : nil].compactMap { $0 })
+        var byStore = Dictionary(grouping: (reviews[project.id] ?? []).filter { connected.contains($0.platform) }, by: \.platform)
+        for (platform, read) in result.reviews where connected.contains(platform) {
+            guard platform == .googlePlay else {
+                byStore[platform] = read
+                continue
+            }
+            let ids = Set(read.map(\.storeId))
+            let kept = read + (byStore[platform] ?? []).filter { !ids.contains($0.storeId) }
+            byStore[platform] = Array(kept.sorted { $0.createdAt > $1.createdAt }.prefix(GooglePlayClient.reviewLimit))
+        }
+        let list = byStore.values.flatMap { $0 }
+        reviews[project.id] = list.isEmpty ? nil : list
+        if !result.reviews.isEmpty { snapshot[.reviewsToAnswer] = Double(list.filter(\.needsReply).count) }
+        snapshots[project.id] = snapshot
+        return snapshot
+    }
+
+    /// Drops a project's reviews from one store, when the project is linked to another app there.
+    public mutating func forgetReviews(from platform: Platform, of projectId: UUID) {
+        reviews[projectId]?.removeAll { $0.platform == platform }
+    }
+
     /// Counts a finished refresh, starting the count over on a new local day.
     public mutating func recordRefresh(at date: Date, calendar: Calendar = .current) {
         let day = calendar.startOfDay(for: date)

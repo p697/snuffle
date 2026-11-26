@@ -23,7 +23,7 @@ extension Metric {
         }
     }
 
-    /// What a number is set against, ready to show: "今天 +6", "昨天此时 54" or "▲ 20.7%".
+    /// What a number is set against, ready to show: "今天 +6", "昨天此时 54", "▲ 20.7%" or "阈值 1.09%".
     struct ReferenceText: Equatable {
         enum Tone { case plain, up, down, muted }
         var text: String
@@ -32,7 +32,15 @@ extension Metric {
 
     /// `compact` is for a narrow column: today's numbers read as a change on yesterday by now instead of its count.
     func reference(in snapshot: ProjectSnapshot?, compact: Bool = false) -> ReferenceText? {
-        guard let reference, let snapshot, let before = snapshot.previous[self] else { return nil }
+        guard let reference, let snapshot else { return nil }
+        if reference == .threshold {
+            guard let threshold, let now = snapshot[self] else { return nil }
+            let limit = Format.rate(threshold)
+            return now > threshold
+                ? ReferenceText(text: String(localized: "超过阈值 \(limit)"), tone: .down)
+                : ReferenceText(text: String(localized: "阈值 \(limit)"), tone: .muted)
+        }
+        guard let before = snapshot.previous[self] else { return nil }
         switch reference {
         case .today:
             guard let now = snapshot[self] else { return nil }
@@ -43,6 +51,8 @@ extension Metric {
         case .previousPeriod:
             guard let now = snapshot[self] else { return nil }
             return Self.change(now, from: before)
+        case .threshold:
+            return nil
         }
     }
 
@@ -97,7 +107,9 @@ extension Metric {
         case .activeSubscriptions: return String(localized: "RevenueCat 在订人数 · 每小时更新")
         case .activeTrials: return String(localized: "RevenueCat 试用中的人 · 每小时更新")
         case .revenueLast28Days: return String(localized: "RevenueCat 近 28 天收入 · 每小时更新")
-        case .reviewsToAnswer: return String(localized: "App Store 全部 + Google Play 近 7 天")
+        case .reviewsToAnswer: return String(localized: "App Store 最近 200 条 + Google Play 连接以来")
+        case .crashRate: return String(localized: "Google Play · 近 28 天使用时遇到崩溃的人占比")
+        case .anrRate: return String(localized: "Google Play · 近 28 天使用时遇到无响应的人占比")
         }
     }
 }

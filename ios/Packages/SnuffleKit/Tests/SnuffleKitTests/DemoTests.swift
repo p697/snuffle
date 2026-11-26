@@ -133,8 +133,8 @@ struct DemoTests {
         #expect(saved.world?.scenario == .sale)
         let lumen = DemoWorld.projects[0]
         let result = await provider.refresh(lumen, metrics: Set(lumen.card.metrics), previous: nil)
-        #expect(result.reviews?.isEmpty == false)
-        let review = try #require(result.reviews?.first { $0.needsReply })
+        #expect(result.reviews.keys.sorted { $0.rawValue < $1.rawValue } == [.appStore, .googlePlay])
+        let review = try #require(result.reviews.values.joined().first { $0.needsReply })
         try await provider.reply(to: review, text: "Thank you", in: lumen)
         #expect(saved.world?.reviews.first { $0.id == review.id }?.reply?.text == "Thank you")
     }

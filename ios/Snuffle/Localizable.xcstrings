@@ -3451,6 +3451,358 @@
         }
       }
     },
+    "%lld 人觉得有用" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "وجد %lld أشخاص هذه المراجعة مفيدة"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "وجد %lld شخصًا هذه المراجعة مفيدة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "وجد %lld شخص هذه المراجعة مفيدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "وجد %lld شخص هذه المراجعة مفيدة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "وجد %lld شخص هذه المراجعة مفيدة"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "وجد %lld شخص هذه المراجعة مفيدة"
+                }
+              }
+            }
+          }
+        },
+        "de" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Person fand das hilfreich"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Personen fanden das hilfreich"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld person found this helpful"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld people found this helpful"
+                }
+              }
+            }
+          }
+        },
+        "es" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A %lld personas les resultó útil"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A %lld persona le resultó útil"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A %lld personas les resultó útil"
+                }
+              }
+            }
+          }
+        },
+        "es-419" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A %lld personas les resultó útil"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A %lld persona le resultó útil"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A %lld personas les resultó útil"
+                }
+              }
+            }
+          }
+        },
+        "fr" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld personnes ont trouvé cet avis utile"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld personne a trouvé cet avis utile"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld personnes ont trouvé cet avis utile"
+                }
+              }
+            }
+          }
+        },
+        "hi" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld व्यक्ति को यह मददगार लगा"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld लोगों को यह मददगार लगा"
+                }
+              }
+            }
+          }
+        },
+        "it" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld persone l'hanno trovata utile"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld persona l'ha trovata utile"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld persone l'hanno trovata utile"
+                }
+              }
+            }
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld人が役に立ったと評価"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld명이 유용하다고 평가"
+          }
+        },
+        "pt-BR" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pessoas acharam útil"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pessoa achou útil"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pessoas acharam útil"
+                }
+              }
+            }
+          }
+        },
+        "pt-PT" : {
+          "variations" : {
+            "plural" : {
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pessoas acharam isto útil"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pessoa achou isto útil"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pessoas acharam isto útil"
+                }
+              }
+            }
+          }
+        },
+        "ru" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Полезно для %lld человек"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Полезно для %lld человек"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Полезно для %lld человека"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Полезно для %lld человека"
+                }
+              }
+            }
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld คนพบว่ารีวิวนี้มีประโยชน์"
+          }
+        },
+        "tr" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kişi bunu faydalı buldu"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld kişi bunu faydalı buldu"
+                }
+              }
+            }
+          }
+        },
+        "uk" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Корисно для %lld людей"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Корисно для %lld людей"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Корисно для %lld людини"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Корисно для %lld людини"
+                }
+              }
+            }
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld người thấy hữu ích"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld 人覺得有用"
+          }
+        }
+      }
+    },
     "%lld 星" : {
       "localizations" : {
         "ar" : {
@@ -5180,118 +5532,6 @@
         }
       }
     },
-    "App Store 全部 + Google Play 近 7 天" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: الكل · Google Play: آخر 7 أيام"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: alle · Google Play: letzte 7 Tage"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "All on the App Store + last 7 days on Google Play"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: todas · Google Play: últimos 7 días"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: todas · Google Play: últimos 7 días"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store : toutes · Google Play : 7 derniers jours"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: सभी · Google Play: पिछले 7 दिन"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: tutte · Google Play: ultimi 7 giorni"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store はすべて＋Google Play は直近7日"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store 전체 + Google Play 최근 7일"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: todas · Google Play: últimos 7 dias"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: todas · Google Play: últimos 7 dias"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: все · Google Play: за 7 дней"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store ทั้งหมด + Google Play 7 วันล่าสุด"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: tümü · Google Play: son 7 gün"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: усі · Google Play: за 7 днів"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store: tất cả · Google Play: 7 ngày qua"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "App Store 全部 + Google Play 近 7 天"
-          }
-        }
-      }
-    },
     "App Store 最近 200 条" : {
       "localizations" : {
         "ar" : {
@@ -5400,6 +5640,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "App Store 最近 200 則"
+          }
+        }
+      }
+    },
+    "App Store 最近 200 条 + Google Play 连接以来" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: آخر 200 مراجعة + Google Play منذ الربط"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: neueste 200 + Google Play seit der Verbindung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store latest 200 + Google Play since connected"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: últimas 200 + Google Play desde la conexión"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: últimas 200 + Google Play desde la conexión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store : 200 derniers + Google Play depuis la connexion"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: नवीनतम 200 + Google Play कनेक्ट होने के बाद से"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: ultime 200 + Google Play dal collegamento"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store 最新200件 + Google Play 接続以降"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store 최근 200개 + Google Play 연결 이후"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: últimas 200 + Google Play desde a conexão"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: últimas 200 + Google Play desde a ligação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: последние 200 + Google Play с момента подключения"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: ล่าสุด 200 รายการ + Google Play ตั้งแต่เชื่อมต่อ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: son 200 + Google Play bağlandığından beri"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: останні 200 + Google Play від підключення"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store: 200 mới nhất + Google Play từ khi kết nối"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "App Store 最近 200 則 + Google Play 連接以來"
           }
         }
       }
@@ -5516,114 +5868,338 @@
         }
       }
     },
-    "Google Play 只提供近 7 天的评论。新的评论会在刷新后出现在这里。" : {
+    "Google Play · 近 28 天使用时遇到崩溃的人占比" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "لا يشارك Google Play سوى مراجعات آخر 7 أيام. تظهر المراجعات الجديدة هنا بعد التحديث."
+            "value" : "Google Play · نسبة الأشخاص الذين واجهوا تعطلًا أثناء الاستخدام، آخر 28 يومًا"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play stellt nur Bewertungen der letzten 7 Tage bereit. Neue Bewertungen erscheinen hier nach einer Aktualisierung."
+            "value" : "Google Play · Anteil der Nutzer mit Absturz während der Nutzung, letzte 28 Tage"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play only shares reviews from the last 7 days. New reviews show up here after a refresh."
+            "value" : "Google Play · share of people who hit a crash while using the app, last 28 days"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play solo comparte las reseñas de los últimos 7 días. Las nuevas aparecerán aquí tras actualizar."
+            "value" : "Google Play · porcentaje de personas que sufrieron un fallo al usar la app, últimos 28 días"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play solo comparte las reseñas de los últimos 7 días. Las nuevas aparecerán aquí después de actualizar."
+            "value" : "Google Play · porcentaje de personas que tuvieron un fallo al usar la app, últimos 28 días"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play ne fournit que les avis des 7 derniers jours. Les nouveaux avis apparaissent ici après une actualisation."
+            "value" : "Google Play · part des personnes ayant subi un plantage pendant l'utilisation, 28 derniers jours"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play सिर्फ़ पिछले 7 दिनों की समीक्षाएँ देता है। नई समीक्षाएँ रीफ़्रेश के बाद यहाँ दिखेंगी।"
+            "value" : "Google Play · पिछले 28 दिनों में इस्तेमाल के दौरान क्रैश झेलने वाले लोगों का हिस्सा"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play fornisce solo le recensioni degli ultimi 7 giorni. Le nuove recensioni appaiono qui dopo un aggiornamento."
+            "value" : "Google Play · quota di persone con un arresto anomalo durante l'uso, ultimi 28 giorni"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Playでは過去7日間のレビューのみ取得できます。新しいレビューは更新後にここに表示されます。"
+            "value" : "Google Play · 過去28日間に使用中にクラッシュが発生したユーザーの割合"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play는 최근 7일간의 리뷰만 제공해요. 새 리뷰는 새로고침하면 여기에 표시돼요."
+            "value" : "Google Play · 최근 28일 동안 사용 중 비정상 종료를 겪은 사람의 비율"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Google Play só mostra avaliações dos últimos 7 dias. As novas aparecem aqui depois de atualizar."
+            "value" : "Google Play · parcela de pessoas que tiveram uma falha durante o uso, últimos 28 dias"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "O Google Play só disponibiliza avaliações dos últimos 7 dias. As novas aparecem aqui depois de atualizares."
+            "value" : "Google Play · percentagem de pessoas com uma falha durante a utilização, últimos 28 dias"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play отдаёт отзывы только за последние 7 дней. Новые отзывы появятся здесь после обновления."
+            "value" : "Google Play · доля людей, у которых приложение вылетало во время использования, за 28 дней"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play ให้รีวิวเฉพาะ 7 วันล่าสุด รีวิวใหม่จะแสดงที่นี่หลังรีเฟรช"
+            "value" : "Google Play · สัดส่วนผู้ใช้ที่เจอแอปขัดข้องระหว่างใช้งาน ใน 28 วันล่าสุด"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play yalnızca son 7 günün yorumlarını paylaşır. Yeni yorumlar yenilemeden sonra burada görünür."
+            "value" : "Google Play · son 28 günde kullanım sırasında çökme yaşayan kişilerin oranı"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play надає відгуки лише за останні 7 днів. Нові відгуки з’являться тут після оновлення."
+            "value" : "Google Play · частка людей, у яких застосунок аварійно завершувався під час використання, за 28 днів"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play chỉ cung cấp đánh giá trong 7 ngày qua. Đánh giá mới sẽ hiện ở đây sau khi làm mới."
+            "value" : "Google Play · tỷ lệ người gặp sự cố khi dùng ứng dụng, 28 ngày qua"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play 只提供近 7 天的評論。新評論會在重新整理後出現在這裡。"
+            "value" : "Google Play · 近 28 天使用時遇到當機的人佔比"
+          }
+        }
+      }
+    },
+    "Google Play · 近 28 天使用时遇到无响应的人占比" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · نسبة الأشخاص الذين واجهوا ANR (التطبيق لا يستجيب) أثناء الاستخدام، آخر 28 يومًا"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · Anteil der Nutzer mit ANR (App reagiert nicht) während der Nutzung, letzte 28 Tage"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · share of people who hit an ANR (app not responding) while using the app, last 28 days"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · porcentaje de personas que sufrieron un ANR (la app no responde) al usarla, últimos 28 días"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · porcentaje de personas que tuvieron un ANR (la app no responde) al usarla, últimos 28 días"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · part des personnes ayant subi un ANR (l'appli ne répond pas) pendant l'utilisation, 28 derniers jours"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · पिछले 28 दिनों में इस्तेमाल के दौरान ANR (ऐप जवाब नहीं दे रहा) झेलने वाले लोगों का हिस्सा"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · quota di persone con un ANR (l'app non risponde) durante l'uso, ultimi 28 giorni"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · 過去28日間に使用中にANR（応答なし）が発生したユーザーの割合"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · 최근 28일 동안 사용 중 ANR(응답 없음)을 겪은 사람의 비율"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · parcela de pessoas que tiveram um ANR (app sem resposta) durante o uso, últimos 28 dias"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · percentagem de pessoas com um ANR (app sem resposta) durante a utilização, últimos 28 dias"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · доля людей, у которых приложение не отвечало (ANR) во время использования, за 28 дней"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · สัดส่วนผู้ใช้ที่เจอ ANR (แอปไม่ตอบสนอง) ระหว่างใช้งาน ใน 28 วันล่าสุด"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · son 28 günde kullanım sırasında ANR (uygulama yanıt vermiyor) yaşayan kişilerin oranı"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · частка людей, у яких застосунок не відповідав (ANR) під час використання, за 28 днів"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · tỷ lệ người gặp ANR (ứng dụng không phản hồi) khi dùng, 28 ngày qua"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play · 近 28 天使用時遇到無回應的人佔比"
+          }
+        }
+      }
+    },
+    "Google Play 只提供近 7 天的评论，Snuffle 会把读到的留下来。新的评论会在刷新后出现在这里。" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يشارك Google Play سوى مراجعات آخر 7 أيام، لكن Snuffle يحتفظ بكل ما يقرأه. تظهر المراجعات الجديدة هنا بعد التحديث."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play stellt nur Bewertungen der letzten 7 Tage bereit; Snuffle behält alle, die es gelesen hat. Neue Bewertungen erscheinen hier nach einer Aktualisierung."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play only shares reviews from the last 7 days; Snuffle keeps every one it reads. New reviews show up here after a refresh."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play solo comparte las reseñas de los últimos 7 días; Snuffle conserva todas las que lee. Las nuevas aparecerán aquí tras actualizar."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play solo comparte las reseñas de los últimos 7 días; Snuffle conserva todas las que lee. Las nuevas aparecerán aquí después de actualizar."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play ne fournit que les avis des 7 derniers jours ; Snuffle conserve tous ceux qu'il lit. Les nouveaux avis apparaissent ici après une actualisation."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play सिर्फ़ पिछले 7 दिनों की समीक्षाएँ देता है; Snuffle पढ़ी गई हर समीक्षा सँभालकर रखता है। नई समीक्षाएँ रीफ़्रेश के बाद यहाँ दिखेंगी।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play fornisce solo le recensioni degli ultimi 7 giorni; Snuffle conserva tutte quelle che legge. Le nuove recensioni appaiono qui dopo un aggiornamento."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Playでは過去7日間のレビューのみ取得できますが、Snuffleは取得したレビューを残しておきます。新しいレビューは更新後にここに表示されます。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play는 최근 7일간의 리뷰만 제공하지만, Snuffle은 읽어 온 리뷰를 계속 보관해요. 새 리뷰는 새로고침하면 여기에 표시돼요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Google Play só mostra avaliações dos últimos 7 dias; o Snuffle guarda todas as que lê. As novas aparecem aqui depois de atualizar."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O Google Play só disponibiliza avaliações dos últimos 7 dias; o Snuffle guarda todas as que lê. As novas aparecem aqui depois de atualizares."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play отдаёт отзывы только за последние 7 дней, но Snuffle сохраняет все прочитанные. Новые отзывы появятся здесь после обновления."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play ให้รีวิวเฉพาะ 7 วันล่าสุด แต่ Snuffle จะเก็บรีวิวที่อ่านแล้วไว้ทั้งหมด รีวิวใหม่จะแสดงที่นี่หลังรีเฟรช"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play yalnızca son 7 günün yorumlarını paylaşır; Snuffle okuduğu her yorumu saklar. Yeni yorumlar yenilemeden sonra burada görünür."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play надає відгуки лише за останні 7 днів, але Snuffle зберігає всі прочитані. Нові відгуки з’являться тут після оновлення."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play chỉ cung cấp đánh giá trong 7 ngày qua; Snuffle giữ lại mọi đánh giá đã đọc. Đánh giá mới sẽ hiện ở đây sau khi làm mới."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Google Play 只提供近 7 天的評論，Snuffle 會把讀到的留下來。新評論會在重新整理後出現在這裡。"
           }
         }
       }
@@ -5740,114 +6316,114 @@
         }
       }
     },
-    "Google Play 近 7 天" : {
+    "Google Play 连接以来" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: آخر 7 أيام"
+            "value" : "Google Play: منذ الربط"
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: letzte 7 Tage"
+            "value" : "Google Play: seit der Verbindung"
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: last 7 days"
+            "value" : "Google Play: since connected"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: últimos 7 días"
+            "value" : "Google Play: desde la conexión"
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: últimos 7 días"
+            "value" : "Google Play: desde la conexión"
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play : 7 derniers jours"
+            "value" : "Google Play : depuis la connexion"
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: पिछले 7 दिन"
+            "value" : "Google Play: कनेक्ट होने के बाद से"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: ultimi 7 giorni"
+            "value" : "Google Play: dal collegamento"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play：過去7日間"
+            "value" : "Google Play：接続以降"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play 최근 7일"
+            "value" : "Google Play 연결 이후"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: últimos 7 dias"
+            "value" : "Google Play: desde a conexão"
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: últimos 7 dias"
+            "value" : "Google Play: desde a ligação"
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: последние 7 дней"
+            "value" : "Google Play: с момента подключения"
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: 7 วันล่าสุด"
+            "value" : "Google Play: ตั้งแต่เชื่อมต่อ"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: son 7 gün"
+            "value" : "Google Play: bağlandığından beri"
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: останні 7 днів"
+            "value" : "Google Play: від підключення"
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play: 7 ngày qua"
+            "value" : "Google Play: từ khi kết nối"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Google Play 近 7 天"
+            "value" : "Google Play 連接以來"
           }
         }
       }
@@ -16499,6 +17075,118 @@
         }
       }
     },
+    "保留连接以来的评论" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحتفظ بالمراجعات منذ الربط"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Behält Bewertungen seit der Verbindung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keeps reviews since connected"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda las reseñas desde la conexión"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda las reseñas desde la conexión"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserve les avis depuis la connexion"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "कनेक्ट होने के बाद से समीक्षाएँ सहेजता है"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conserva le recensioni dal collegamento"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "接続以降のレビューを保存"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "연결 이후의 리뷰를 보관"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda as avaliações desde a conexão"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Guarda as avaliações desde a ligação"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Хранит отзывы с момента подключения"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เก็บรีวิวตั้งแต่เชื่อมต่อ"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bağlandığından beri yorumları saklar"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Зберігає відгуки від підключення"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lưu đánh giá từ khi kết nối"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保留連接以來的評論"
+          }
+        }
+      }
+    },
     "像注册的" : {
       "localizations" : {
         "ar" : {
@@ -23248,118 +23936,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "只算這些"
-          }
-        }
-      }
-    },
-    "只能读到近 7 天的评论" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المراجعات من آخر 7 أيام فقط"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Nur Bewertungen der letzten 7 Tage"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Only reviews from the last 7 days"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Solo reseñas de los últimos 7 días"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Solo reseñas de los últimos 7 días"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Uniquement les avis des 7 derniers jours"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "सिर्फ़ पिछले 7 दिनों की समीक्षाएँ"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Solo recensioni degli ultimi 7 giorni"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "過去7日間のレビューのみ"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "최근 7일간의 리뷰만"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Só avaliações dos últimos 7 dias"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Só avaliações dos últimos 7 dias"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Только отзывы за последние 7 дней"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เฉพาะรีวิวใน 7 วันล่าสุด"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Yalnızca son 7 günün yorumları"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Лише відгуки за останні 7 днів"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chỉ có đánh giá trong 7 ngày qua"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "只能讀取近 7 天的評論"
           }
         }
       }
@@ -57379,6 +57955,230 @@
         }
       }
     },
+    "超过 %@ 时，Google Play 可能减少推荐，并在商店页提醒用户" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فوق %@ قد يعرض Google Play التطبيق لعدد أقل من الأشخاص ويحذّر المستخدمين في صفحة المتجر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über %@ kann Google Play die App weniger Menschen zeigen und auf dem Store-Eintrag warnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Above %@, Google Play may show the app to fewer people and warn users on its store listing"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por encima de %@, Google Play puede mostrar la app a menos personas y avisar a los usuarios en la ficha de la tienda"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Por encima de %@, Google Play puede mostrar la app a menos personas y avisar a los usuarios en la ficha de la tienda"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au-delà de %@, Google Play peut montrer l'appli à moins de personnes et afficher un avertissement sur sa fiche"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ से ऊपर होने पर Google Play ऐप को कम लोगों को दिखा सकता है और स्टोर पेज पर उपयोगकर्ताओं को चेतावनी दे सकता है"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oltre %@, Google Play può mostrare l'app a meno persone e avvisare gli utenti nella scheda dello Store"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@を超えると、Google Playでの露出が減り、ストアの掲載情報でユーザーに警告が表示されることがあります"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@를 넘으면 Google Play가 앱 노출을 줄이고 스토어 등록정보에서 사용자에게 경고할 수 있어요"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acima de %@, o Google Play pode mostrar o app para menos pessoas e alertar os usuários na página da loja"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acima de %@, o Google Play pode mostrar a app a menos pessoas e avisar os utilizadores na página da loja"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выше %@ Google Play может реже показывать приложение и предупреждать пользователей на странице в магазине"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หากเกิน %@ Google Play อาจแสดงแอปให้คนเห็นน้อยลงและแจ้งเตือนผู้ใช้ในหน้าร้านค้า"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ üzerinde Google Play uygulamayı daha az kişiye gösterebilir ve mağaza sayfasında kullanıcıları uyarabilir"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Понад %@ Google Play може рідше показувати застосунок і попереджати користувачів на сторінці в магазині"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vượt quá %@, Google Play có thể giảm hiển thị ứng dụng và cảnh báo người dùng trên trang cửa hàng"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "超過 %@ 時，Google Play 可能減少推薦，並在商店頁面提醒使用者"
+          }
+        }
+      }
+    },
+    "超过阈值 %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فوق الحد %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über der Schwelle von %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Over the %@ threshold"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supera el umbral de %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Supera el umbral de %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Au-dessus du seuil de %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ सीमा से ऊपर"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oltre la soglia: %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "しきい値 %@ 超え"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기준치 %@ 초과"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acima do limite de %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Acima do limiar de %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выше порога %@"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เกินเกณฑ์ %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ eşiğinin üzerinde"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вище порогу %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vượt ngưỡng %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "超過門檻 %@"
+          }
+        }
+      }
+    },
     "跟随系统" : {
       "localizations" : {
         "ar" : {
@@ -64223,6 +65023,118 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "按住並拖移即可調整順序。"
+          }
+        }
+      }
+    },
+    "阈值 %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحد %@"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwelle %@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Threshold %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umbral %@"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Umbral %@"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seuil %@"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "सीमा %@"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Soglia %@"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "しきい値 %@"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "기준치 %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limite %@"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limiar %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Порог %@"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "เกณฑ์ %@"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eşik %@"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поріг %@"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ngưỡng %@"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "門檻 %@"
           }
         }
       }

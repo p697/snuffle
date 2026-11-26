@@ -213,12 +213,10 @@ final class AppModel {
             adoptTimeZone(result.posthogTimeZone, for: project.id)
             adoptSurfaces(result.excludedSurfaces, for: project.id)
             let previous = cache.snapshots[project.id]
-            let snapshot = result.snapshot.fillingGaps(from: previous)
+            let snapshot = cache.land(result, for: project)
             let layout = self.layout(project)
             // A sale is always celebrated and shown on the 收入 tab, wherever revenue is placed (or not).
             let change = SnapshotChange(from: previous, to: snapshot, metrics: layout.metrics + MetricsInUse.board + [.revenue, .orders])
-            cache.snapshots[project.id] = snapshot
-            if let reviews = result.reviews { cache.reviews[project.id] = reviews }
             stages[project.id] = .landed
 
             let headline = layout.big[0]
@@ -363,6 +361,11 @@ final class AppModel {
     func save(project: Project) {
         let index = workspace.projects.firstIndex { $0.id == project.id }
         if let index {
+            // Google Play reviews are kept across refreshes; another app's are not this one's.
+            if let before = workspace.projects[index].googlePlay?.packageName, before != project.googlePlay?.packageName {
+                cache.forgetReviews(from: .googlePlay, of: project.id)
+                saveCache()
+            }
             workspace.projects[index] = project
         } else {
             workspace.projects.append(project)
@@ -619,8 +622,8 @@ final class AppModel {
     private func seedDemoIfEmpty(_ provider: DemoProvider) async {
         guard settings.demoMode, cache.snapshots.isEmpty || cache.snapshots.values.contains(where: \.values.isEmpty) else { return }
         for result in await provider.seed() {
-            cache.snapshots[result.snapshot.projectId] = result.snapshot
-            if let reviews = result.reviews { cache.reviews[result.snapshot.projectId] = reviews }
+            guard let project = DemoWorld.projects.first(where: { $0.id == result.snapshot.projectId }) else { continue }
+            cache.land(result, for: project)
         }
         saveCache()
     }

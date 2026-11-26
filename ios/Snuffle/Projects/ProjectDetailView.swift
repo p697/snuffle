@@ -302,7 +302,7 @@ struct ProjectDetailView: View {
         case .posthog: current.posthog.map { String(localized: "项目 \($0.projectName) · 时区 \($0.timeZone)") } ?? ""
         case .revenueCat: current.revenueCat.map { String(localized: "项目 \($0.projectName)") } ?? ""
         case .appStore: current.appStore.map { "\($0.appName) · \($0.bundleId)" } ?? ""
-        case .googlePlay: current.googlePlay.map { $0.packageName + " · " + String(localized: "只能读到近 7 天的评论") } ?? ""
+        case .googlePlay: current.googlePlay.map { $0.packageName + " · " + String(localized: "保留连接以来的评论") } ?? ""
         }
     }
 }

@@ -229,6 +229,14 @@ struct CardMetricPicker: View {
                 } else {
                     MissingSourceRow(titles: Metric.reviewsToAnswer.title, platform: .appStore) { connecting = .appStore }
                 }
+                RowDivider()
+                if project.googlePlay != nil {
+                    row(.crashRate)
+                    RowDivider()
+                    row(.anrRate)
+                } else {
+                    MissingSourceRow(titles: [Metric.crashRate, .anrRate].map(\.title).joined(separator: " · "), platform: .googlePlay) { connecting = .googlePlay }
+                }
             }
         }
     }

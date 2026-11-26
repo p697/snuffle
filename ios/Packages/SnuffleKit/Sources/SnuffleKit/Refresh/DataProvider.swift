@@ -3,15 +3,16 @@ import Foundation
 /// What one refresh of one project returns. Reviews come along so the inbox never needs a second round trip.
 public struct RefreshResult: Sendable {
     public var snapshot: ProjectSnapshot
-    /// nil when the project has no store connected, or the store could not be read this time.
-    public var reviews: [Review]?
+    /// Each store's reviews as read this time; a store that is not connected, or could not be read, is absent.
+    /// `RefreshCache.land` keeps them.
+    public var reviews: [Platform: [Review]]
     /// The PostHog project's current time zone, so a zone changed in PostHog after connecting is picked up.
     public var posthogTimeZone: String?
     /// The surfaces to leave out, found from the project's events when none were chosen yet; the app saves them, so
     /// this is read once per project.
     public var excludedSurfaces: Set<Surface>?
 
-    public init(snapshot: ProjectSnapshot, reviews: [Review]?, posthogTimeZone: String? = nil, excludedSurfaces: Set<Surface>? = nil) {
+    public init(snapshot: ProjectSnapshot, reviews: [Platform: [Review]] = [:], posthogTimeZone: String? = nil, excludedSurfaces: Set<Surface>? = nil) {
         self.snapshot = snapshot
         self.reviews = reviews
         self.posthogTimeZone = posthogTimeZone

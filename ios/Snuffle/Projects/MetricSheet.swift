@@ -77,7 +77,12 @@ struct MetricSheet: View {
 
     /// The explanation, then the window it covers on a line of its own.
     private var sentence: String {
-        [metric.explanation(in: project), window].compactMap { $0 }.joined(separator: "\n")
+        [metric.explanation(in: project), window, thresholdNote].compactMap { $0 }.joined(separator: "\n")
+    }
+
+    /// What Google Play does about an Android vital past its threshold.
+    private var thresholdNote: String? {
+        metric.threshold.map { String(localized: "超过 \(Format.rate($0)) 时，Google Play 可能减少推荐，并在商店页提醒用户") }
     }
 
     /// The days the number covers, in the project's zone: "11/20 到 11/26，今天还没过完，按 UTC 分天".
