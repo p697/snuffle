@@ -188,6 +188,35 @@ struct LiveProviderTests {
         #expect(failed.snapshot.hourlyReadAt != nil)
     }
 
+    @Test func olderPlayReviewsAreLookedUpSoRepliesAndDeletionsShow() async throws {
+        let google = UUID()
+        let store = MemoryCredentialStore([google: .googleOAuth(GoogleOAuthToken(clientId: "c", accessToken: "ya29", refreshToken: "r", expiresAt: .distantFuture))])
+        let atlas = Project(name: "Atlas", tint: .ink, googlePlay: GooglePlayLink(accountId: google, packageName: "com.example.atlas"))
+        let now = ISO8601.parse("2026-11-20T01:30:00Z")!
+        func old(_ id: String, checkedHoursAgo: Double? = nil) -> Review {
+            Review(storeId: id, platform: .googlePlay, projectId: atlas.id, rating: 2, body: id, createdAt: now.addingTimeInterval(-20 * 86_400),
+                   checkedAt: checkedHoursAgo.map { now.addingTimeInterval(-$0 * 3600) })
+        }
+        let reviews = "androidpublisher.googleapis.com/androidpublisher/v3/applications/com.example.atlas/reviews"
+        StubProtocol.reset([
+            reviews: (200, #"{"reviews":[{"reviewId":"new","comments":[{"userComment":{"text":"New","lastModified":{"seconds":"1795600000"},"starRating":4}}]}]}"#),
+            // Answered in Play Console since; its writer deleted the other.
+            reviews + "/answered": (200, #"{"reviewId":"answered","comments":[{"userComment":{"text":"answered","lastModified":{"seconds":"1793900000"},"starRating":2}},{"developerComment":{"text":"Fixed","lastModified":{"seconds":"1795000000"}}}]}"#),
+            reviews + "/deleted": (404, #"{"error":{"code":404,"message":"Review not found"}}"#)
+        ])
+        let kept = [old("answered"), old("deleted"), old("checkedToday", checkedHoursAgo: 2)]
+        var cache = RefreshCache(reviews: [atlas.id: kept])
+        let result = await provider(store: store).refresh(atlas, metrics: [.reviewsToAnswer], previous: nil, kept: kept)
+        #expect(!StubProtocol.seen.contains { $0.url?.path().hasSuffix("/checkedToday") == true }, "looked up today already")
+        #expect(result.deletedReviews == ["deleted"])
+        let answered = try #require(result.reviews[.googlePlay]?.first { $0.storeId == "answered" })
+        #expect(answered.reply?.text == "Fixed" && answered.checkedAt == now)
+
+        let snapshot = cache.land(result, for: atlas)
+        #expect(Set(cache.reviews[atlas.id]!.map(\.storeId)) == ["new", "answered", "checkedToday"])
+        #expect(snapshot.reviewsToAnswer == 2, "new and checkedToday")
+    }
+
     @Test func combinesSourcesIntoOneSnapshot() async throws {
         let days = (0..<14).map { String($0 * 10) }.joined(separator: ",")
         StubProtocol.reset([

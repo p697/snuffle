@@ -1,7 +1,8 @@
 import Foundation
 
-/// Google Play Developer API with the person's own Google sign-in. Google only returns reviews written or edited in
-/// the last week, and only ones with text; `RefreshCache.land` keeps the ones read before.
+/// Google Play Developer API with the person's own Google sign-in. Google only lists reviews written or edited in
+/// the last week, and only ones with text; `RefreshCache.land` keeps the ones read before, and older ones still
+/// waiting for a reply are looked up again by id (`Review.toLookUp`).
 public struct GooglePlayApp: Codable, Hashable, Sendable, Identifiable {
     public var packageName: String
     public var displayName: String
@@ -100,6 +101,19 @@ public struct GooglePlayClient: Sendable {
         return try GooglePlayParsing.rate(try await http.send(request, platform: .googlePlay), metric: vital.metric)
     }
 
+    /// One review by its id, at any age: Google lists only the last week's, but still answers for older ones by id.
+    /// Nil once its writer deleted it.
+    public func review(packageName: String, reviewId: String, projectId: UUID) async throws -> Review? {
+        var request = URLRequest(url: Self.base.appending(path: "\(packageName)/reviews/\(reviewId)"))
+        request.setValue("Bearer \(try await accessToken())", forHTTPHeaderField: "Authorization")
+        request.timeoutInterval = 30
+        do {
+            return try GooglePlayParsing.review(try await http.send(request, platform: .googlePlay), projectId: projectId)
+        } catch SourceError.http(_, 404, _) {
+            return nil
+        }
+    }
+
     public func reply(packageName: String, reviewId: String, text: String) async throws {
         var request = URLRequest(url: Self.base.appending(path: "\(packageName)/reviews/\(reviewId):reply"))
         request.httpMethod = "POST"
@@ -126,33 +140,58 @@ extension Metric {
     }
 }
 
+/// A review as the Play Developer API writes it, in a list or alone.
+private struct PlayReview: Decodable {
+    struct Comment: Decodable {
+        struct Stamp: Decodable {
+            let seconds: String?
+            var date: Date? { seconds.flatMap(TimeInterval.init).map(Date.init(timeIntervalSince1970:)) }
+        }
+        struct User: Decodable {
+            struct Device: Decodable { let manufacturer: String?; let productName: String? }
+            let text: String?
+            let lastModified: Stamp?
+            let starRating: Int?
+            let reviewerLanguage: String?
+            let appVersionName: String?
+            let androidOsVersion: Int?
+            let thumbsUpCount: Int?
+            let deviceMetadata: Device?
+        }
+        struct Developer: Decodable { let text: String?; let lastModified: Stamp? }
+        let userComment: User?
+        let developerComment: Developer?
+    }
+    let reviewId: String
+    let authorName: String?
+    let comments: [Comment]?
+
+    func review(projectId: UUID) -> Review? {
+        guard let user = comments?.compactMap(\.userComment).first, let created = user.lastModified?.date else { return nil }
+        let developer = comments?.compactMap(\.developerComment).first
+        return Review(
+            storeId: reviewId,
+            platform: .googlePlay,
+            projectId: projectId,
+            rating: user.starRating ?? 0,
+            body: (user.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
+            author: authorName,
+            language: user.reviewerLanguage,
+            createdAt: created,
+            reply: developer?.text.map { ReviewReply(text: $0, date: developer?.lastModified?.date, pending: false) },
+            appVersion: user.appVersionName?.nonEmpty,
+            device: GooglePlayParsing.device(maker: user.deviceMetadata?.manufacturer, model: user.deviceMetadata?.productName),
+            system: user.androidOsVersion.map(GooglePlayParsing.android),
+            helpful: user.thumbsUpCount
+        )
+    }
+}
+
 public enum GooglePlayParsing {
     public static func reviews(_ data: Data, projectId: UUID) throws -> (reviews: [Review], nextPageToken: String?) {
         struct Page: Decodable {
-            struct Item: Decodable {
-                struct Comment: Decodable {
-                    struct Stamp: Decodable { let seconds: String? }
-                    struct User: Decodable {
-                        struct Device: Decodable { let manufacturer: String?; let productName: String? }
-                        let text: String?
-                        let lastModified: Stamp?
-                        let starRating: Int?
-                        let reviewerLanguage: String?
-                        let appVersionName: String?
-                        let androidOsVersion: Int?
-                        let thumbsUpCount: Int?
-                        let deviceMetadata: Device?
-                    }
-                    struct Developer: Decodable { let text: String?; let lastModified: Stamp? }
-                    let userComment: User?
-                    let developerComment: Developer?
-                }
-                let reviewId: String
-                let authorName: String?
-                let comments: [Comment]?
-            }
             struct Pagination: Decodable { let nextPageToken: String? }
-            let reviews: [Item]?
+            let reviews: [PlayReview]?
             let tokenPagination: Pagination?
         }
         let page: Page
@@ -161,29 +200,16 @@ public enum GooglePlayParsing {
         } catch {
             throw SourceError.invalidResponse(.googlePlay, "reviews")
         }
-        func date(_ stamp: Page.Item.Comment.Stamp?) -> Date? {
-            stamp?.seconds.flatMap(TimeInterval.init).map(Date.init(timeIntervalSince1970:))
+        return ((page.reviews ?? []).compactMap { $0.review(projectId: projectId) }, page.tokenPagination?.nextPageToken)
+    }
+
+    /// One review, as `reviews.get` answers.
+    public static func review(_ data: Data, projectId: UUID) throws -> Review? {
+        do {
+            return try JSONDecoder().decode(PlayReview.self, from: data).review(projectId: projectId)
+        } catch {
+            throw SourceError.invalidResponse(.googlePlay, "review")
         }
-        let reviews = (page.reviews ?? []).compactMap { item -> Review? in
-            guard let user = item.comments?.compactMap(\.userComment).first, let created = date(user.lastModified) else { return nil }
-            let developer = item.comments?.compactMap(\.developerComment).first
-            return Review(
-                storeId: item.reviewId,
-                platform: .googlePlay,
-                projectId: projectId,
-                rating: user.starRating ?? 0,
-                body: (user.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines),
-                author: item.authorName,
-                language: user.reviewerLanguage,
-                createdAt: created,
-                reply: developer?.text.map { ReviewReply(text: $0, date: date(developer?.lastModified), pending: false) },
-                appVersion: user.appVersionName?.nonEmpty,
-                device: device(maker: user.deviceMetadata?.manufacturer, model: user.deviceMetadata?.productName),
-                system: user.androidOsVersion.map(android),
-                helpful: user.thumbsUpCount
-            )
-        }
-        return (reviews, page.tokenPagination?.nextPageToken)
     }
 
     /// "Samsung Galaxy S23", without naming the maker twice ("Google Pixel 8", not "Google Google Pixel 8").

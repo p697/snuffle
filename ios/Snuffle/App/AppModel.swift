@@ -196,7 +196,8 @@ final class AppModel {
         let fetches = projects.map { project in
             let metrics = metricsInUse(project)
             let previous = cache.snapshots[project.id]
-            return (project, Task { await provider.refresh(project, metrics: metrics, previous: previous) })
+            let kept = cache.reviews[project.id] ?? []
+            return (project, Task { await provider.refresh(project, metrics: metrics, previous: previous, kept: kept) })
         }
         try? await Task.sleep(for: .milliseconds(380))
 

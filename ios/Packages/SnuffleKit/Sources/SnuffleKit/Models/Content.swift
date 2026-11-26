@@ -24,6 +24,8 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
     public var device: String?
     public var system: String?
     public var helpful: Int?
+    /// Google Play only: when the review, older than the week Google lists, was last looked up by its id.
+    public var checkedAt: Date?
 
     public init(
         storeId: String,
@@ -40,7 +42,8 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
         appVersion: String? = nil,
         device: String? = nil,
         system: String? = nil,
-        helpful: Int? = nil
+        helpful: Int? = nil,
+        checkedAt: Date? = nil
     ) {
         self.storeId = storeId
         self.platform = platform
@@ -57,9 +60,21 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
         self.device = device
         self.system = system
         self.helpful = helpful
+        self.checkedAt = checkedAt
     }
 
     public var needsReply: Bool { reply == nil }
+
+    /// Google Play reviews kept from before the week Google lists that still wait for a reply, not looked up in the
+    /// last day, least recently looked up first, at most `limit`: a reply written in Play Console, or a review its
+    /// writer deleted, shows up within a day, for a few calls per refresh.
+    public static func toLookUp(_ kept: [Review], now: Date, limit: Int = 3) -> [Review] {
+        let week = now.addingTimeInterval(-7 * 86_400), day = now.addingTimeInterval(-86_400)
+        return Array(kept
+            .filter { $0.platform == .googlePlay && $0.needsReply && $0.createdAt < week && ($0.checkedAt ?? .distantPast) < day }
+            .sorted { ($0.checkedAt ?? .distantPast) < ($1.checkedAt ?? .distantPast) }
+            .prefix(limit))
+    }
 }
 
 public struct ReviewReply: Codable, Hashable, Sendable {

@@ -100,6 +100,14 @@ struct StoreTests {
         #expect(GooglePlayParsing.android(32) == "Android 12L" && GooglePlayParsing.android(40) == "API 40")
     }
 
+    @Test func parsesOnePlayReviewByItsId() throws {
+        let json = #"{"reviewId":"1a2b","authorName":"Nick","comments":[{"userComment":{"text":"Great","lastModified":{"seconds":"1794089798"},"starRating":5,"appVersionName":"1.0.0"}},{"developerComment":{"text":"Thanks!","lastModified":{"seconds":"1794100000"}}}]}"#
+        let review = try #require(try GooglePlayParsing.review(Data(json.utf8), projectId: UUID()))
+        #expect(review.storeId == "1a2b" && review.rating == 5 && review.appVersion == "1.0.0")
+        #expect(review.reply?.text == "Thanks!")
+        #expect(try GooglePlayParsing.review(Data(#"{"reviewId":"x","comments":[]}"#.utf8), projectId: UUID()) == nil)
+    }
+
     @Test func readsTheLatestDayOfPlayVitals() throws {
         let set = #"{"name":"apps/com.example.atlas/crashRateMetricSet","freshnessInfo":{"freshnesses":[{"aggregationPeriod":"HOURLY","latestEndTime":{"year":2026,"month":11,"day":25,"hours":7,"timeZone":{"id":"UTC"}}},{"aggregationPeriod":"DAILY","latestEndTime":{"year":2026,"month":12,"day":1,"timeZone":{"id":"America/Los_Angeles"}}}]}}"#
         let end = try #require(try GooglePlayParsing.latestDay(Data(set.utf8)))

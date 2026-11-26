@@ -113,7 +113,8 @@ public struct RefreshCache: Codable, Sendable, Equatable {
     /// Keeps what a refresh of `project` read, and returns its snapshot as kept: gaps are filled from the last one
     /// (`ProjectSnapshot.fillingGaps`), and the count to answer covers every review kept. Each store that answered
     /// replaces its own reviews, except Google Play, which only returns the last week's: those are added to the ones
-    /// read before (an edited review replaces its old self), newest `GooglePlayClient.reviewLimit` kept. A store that
+    /// read before (an edited or looked-up review replaces its old self, a deleted one goes), newest
+    /// `GooglePlayClient.reviewLimit` kept. A store that
     /// failed keeps its last reviews; one no longer connected loses them.
     @discardableResult
     public mutating func land(_ result: RefreshResult, for project: Project) -> ProjectSnapshot {
@@ -125,7 +126,7 @@ public struct RefreshCache: Codable, Sendable, Equatable {
                 byStore[platform] = read
                 continue
             }
-            let ids = Set(read.map(\.storeId))
+            let ids = Set(read.map(\.storeId)).union(result.deletedReviews)
             let kept = read + (byStore[platform] ?? []).filter { !ids.contains($0.storeId) }
             byStore[platform] = Array(kept.sorted { $0.createdAt > $1.createdAt }.prefix(GooglePlayClient.reviewLimit))
         }
