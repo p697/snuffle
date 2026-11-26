@@ -48,6 +48,9 @@ targets:
           - group.ai.snuffle.app
         keychain-access-groups:
           - $(AppIdentifierPrefix)ai.snuffle.shared
+        # The PostHog sign-in returns to https://snuffle.ai/oauth/posthog (see PostHogOAuth).
+        com.apple.developer.associated-domains:
+          - webcredentials:snuffle.ai
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.snuffle.app

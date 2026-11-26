@@ -28,8 +28,11 @@ public struct PKCE: Sendable, Equatable {
 /// registers it on first use with no secret involved.
 public enum PostHogOAuth {
     public static let clientId = "https://snuffle.ai/oauth/posthog-client.json"
-    public static let redirectURI = "ai.snuffle.app:/oauth/posthog"
-    public static let callbackScheme = "ai.snuffle.app"
+    /// An https redirect on the client document's domain. It returns to the app through the webcredentials association
+    /// in snuffle.ai/.well-known/apple-app-site-association, which PostHog's app verification asks for.
+    public static let callbackHost = "snuffle.ai"
+    public static let callbackPath = "/oauth/posthog"
+    public static let redirectURI = "https://\(callbackHost)\(callbackPath)"
     public static let scopes = ["user:read", "organization:read", "project:read", "query:read", "dashboard:read", "insight:read"]
 
     public enum Region: String, CaseIterable, Sendable, Identifiable {

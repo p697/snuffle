@@ -191,8 +191,9 @@ struct PostHogSignIn: View {
             let pkce = PKCE()
             let callback = try await webAuth.authenticate(
                 using: PostHogOAuth.authorizeURL(region: region, pkce: pkce),
-                callbackURLScheme: PostHogOAuth.callbackScheme,
-                preferredBrowserSession: .shared
+                callback: .https(host: PostHogOAuth.callbackHost, path: PostHogOAuth.callbackPath),
+                preferredBrowserSession: .shared,
+                additionalHeaderFields: [:]
             )
             let code = try PostHogOAuth.code(from: callback, pkce: pkce)
             let token = try await PostHogOAuth.exchange(code: code, pkce: pkce, region: region)
