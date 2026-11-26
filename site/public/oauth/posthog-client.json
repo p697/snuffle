@@ -8,6 +8,6 @@
   "response_types": ["code"],
   "token_endpoint_auth_method": "none",
   "com.posthog": {
-    "scopes": ["user:read", "organization:read", "project:read", "query:read"]
+    "scopes": ["user:read", "organization:read", "project:read", "query:read", "dashboard:read", "insight:read"]
   }
 }
