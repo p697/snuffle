@@ -3,7 +3,7 @@
   "client_name": "Snuffle",
   "client_uri": "https://snuffle.ai",
   "logo_uri": "https://snuffle.ai/apple-touch-icon.png",
-  "redirect_uris": ["ai.snuffle.app:/oauth/posthog"],
+  "redirect_uris": ["https://snuffle.ai/oauth/posthog"],
   "grant_types": ["authorization_code", "refresh_token"],
   "response_types": ["code"],
   "token_endpoint_auth_method": "none",
