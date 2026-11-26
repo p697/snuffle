@@ -80,9 +80,12 @@ screenshot of each tab in every language.
 
 `Config/Shared.xcconfig` holds runtime values: the drafting API (`https://snuffle.ai`) and the iOS OAuth client of
 the "Snuffle" Google Cloud project, which has the Google Play Android Developer API (reviews) and the Play Developer
-Reporting API (listing the account's apps, Android vitals) enabled. `SNUFFLE_POSTHOG_TOKEN` is the client token of Snuffle's own
-PostHog project; leave it empty in `Local.xcconfig` to build without analytics. While its consent screen is in testing, only listed test users can
-sign in. Override values in `Config/Local.xcconfig` (git-ignored), e.g. a local server:
+Reporting API (listing the account's apps, Android vitals) enabled. Its consent screen is published for external users, and every
+scope the app asks for (`openid`, `email`, `androidpublisher`, `playdeveloperreporting`) is non-sensitive, so any
+Google account can sign in with no app verification and no user cap; adding a sensitive scope would bring both back.
+The brand is not verified, so the consent screen does not show Snuffle's name or logo. `SNUFFLE_POSTHOG_TOKEN` is the
+client token of Snuffle's own PostHog project; leave it empty in `Local.xcconfig` to build without analytics.
+Override values in `Config/Local.xcconfig` (git-ignored), e.g. a local server:
 
 ```
 SNUFFLE_API_URL = http:/$()/127.0.0.1:8787   // a local `wrangler dev`, see server/README.md
