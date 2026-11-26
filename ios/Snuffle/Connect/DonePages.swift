@@ -83,7 +83,8 @@ private struct Metric: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label).font(.system(size: 13)).foregroundStyle(Palette.ink2)
-            Odometer(text: value ?? (loading ? "000" : "–"), size: 40, spinning: loading)
+            Odometer(text: value ?? "–", size: 40)
+                .opacity(loading && value == nil ? 0.35 : 1)
                 .padding(.horizontal, 2)
                 .background(alignment: .bottomLeading) {
                     if highlighted && !loading && value != nil {
@@ -141,7 +142,8 @@ struct StoreDonePage: View {
     private var reviewsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Odometer(text: result?.snapshot.reviewsToAnswer.map(Format.number) ?? (loading ? "0" : "–"), size: 56, spinning: loading)
+                Odometer(text: result?.snapshot.reviewsToAnswer.map(Format.number) ?? "–", size: 56)
+                    .opacity(loading && result == nil ? 0.35 : 1)
                 Text("条评论待回复").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
                 Spacer(minLength: 4)
                 if !loading {

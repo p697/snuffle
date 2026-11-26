@@ -8,10 +8,13 @@ public struct ProjectSnapshot: Hashable, Sendable {
     /// Start of "today" in the project's time zone when this was fetched; deltas never cross it.
     public var dayStart: Date
     public var values: [Metric: Double]
-    /// New users yesterday up to the same time of day.
-    public var newUsersYesterday: Int?
-    /// New users per hour of today so far, oldest first.
-    public var hourlyNewUsers: [Int]
+    /// What each number is set against (`Metric.reference`): the total before today, the same count yesterday up to
+    /// this time of day, or the window before this one.
+    public var previous: [Metric: Double]
+    /// People active on each of the last 14 days, oldest first; the last is today so far.
+    public var dailyActive: [Int]
+    /// Everyone counted in the total, by platform, largest first.
+    public var platforms: [PlatformCount]
     public var revenueSource: Platform?
     /// When the hourly metrics (`Metric.isHourly`) were last read without a failure.
     public var hourlyReadAt: Date?
@@ -19,7 +22,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
     /// The counting and scope its numbers were read under (`MetricSettings.inEffect`). Numbers that follow them
     /// (`Metric.followsCounting`) are never carried to, or shown for, other settings. Nil in caches from before.
     public var countedAs: MetricSettings?
-    /// Total users up to the start of a day, so the total adds the days since instead of rescanning all history.
+    /// Everyone counted up to the start of a day, so the total adds the days since instead of rescanning all history.
     public var userTally: UserTally?
 
     public init(
@@ -27,8 +30,9 @@ public struct ProjectSnapshot: Hashable, Sendable {
         fetchedAt: Date,
         dayStart: Date,
         values: [Metric: Double] = [:],
-        newUsersYesterday: Int? = nil,
-        hourlyNewUsers: [Int] = [],
+        previous: [Metric: Double] = [:],
+        dailyActive: [Int] = [],
+        platforms: [PlatformCount] = [],
         revenueSource: Platform? = nil,
         hourlyReadAt: Date? = nil,
         failures: [SourceFailure] = [],
@@ -39,8 +43,9 @@ public struct ProjectSnapshot: Hashable, Sendable {
         self.fetchedAt = fetchedAt
         self.dayStart = dayStart
         self.values = values
-        self.newUsersYesterday = newUsersYesterday
-        self.hourlyNewUsers = hourlyNewUsers
+        self.previous = previous
+        self.dailyActive = dailyActive
+        self.platforms = platforms
         self.revenueSource = revenueSource
         self.hourlyReadAt = hourlyReadAt
         self.failures = failures
@@ -77,11 +82,12 @@ public struct ProjectSnapshot: Hashable, Sendable {
         }
         if hourlyReadAt == nil && sameCounting { merged.hourlyReadAt = previous.hourlyReadAt }
         if userTally == nil && sameCounting { merged.userTally = previous.userTally }
-        if sameDayFailure {
-            merged.newUsersYesterday = newUsersYesterday ?? previous.newUsersYesterday
-            if hourlyNewUsers.isEmpty { merged.hourlyNewUsers = previous.hourlyNewUsers }
-            merged.revenueSource = revenueSource ?? previous.revenueSource
+        if sameDayFailure && sameCounting {
+            merged.previous = self.previous.merging(previous.previous) { mine, _ in mine }
+            if dailyActive.isEmpty { merged.dailyActive = previous.dailyActive }
+            if platforms.isEmpty { merged.platforms = previous.platforms }
         }
+        if sameDayFailure { merged.revenueSource = revenueSource ?? previous.revenueSource }
         return merged
     }
 
@@ -96,7 +102,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
 
 extension ProjectSnapshot: Codable {
     enum CodingKeys: String, CodingKey {
-        case projectId, fetchedAt, dayStart, values, newUsersYesterday, hourlyNewUsers, revenueSource, hourlyReadAt, failures, countedAs, userTally
+        case projectId, fetchedAt, dayStart, values, previous, dailyActive, platforms, revenueSource, hourlyReadAt, failures, countedAs, userTally
     }
 
     /// Values are stored by metric id. A cache from before metrics had ids reads as empty: the next refresh fills it.
@@ -105,19 +111,19 @@ extension ProjectSnapshot: Codable {
         projectId = try container.decode(UUID.self, forKey: .projectId)
         fetchedAt = try container.decode(Date.self, forKey: .fetchedAt)
         dayStart = try container.decode(Date.self, forKey: .dayStart)
-        let stored = try container.decodeIfPresent([String: Double].self, forKey: .values) ?? [:]
-        values = Dictionary(stored.compactMap { key, value in Metric(id: key).map { ($0, value) } }, uniquingKeysWith: { first, _ in first })
-        newUsersYesterday = try container.decodeIfPresent(Int.self, forKey: .newUsersYesterday)
-        hourlyNewUsers = try container.decodeIfPresent([Int].self, forKey: .hourlyNewUsers) ?? []
+        values = Self.decodeMetrics(try container.decodeIfPresent([String: Double].self, forKey: .values))
+        previous = Self.decodeMetrics(try container.decodeIfPresent([String: Double].self, forKey: .previous))
+        dailyActive = try container.decodeIfPresent([Int].self, forKey: .dailyActive) ?? []
+        platforms = try container.decodeIfPresent([PlatformCount].self, forKey: .platforms) ?? []
         revenueSource = try container.decodeIfPresent(Platform.self, forKey: .revenueSource)
         hourlyReadAt = try container.decodeIfPresent(Date.self, forKey: .hourlyReadAt)
         failures = try container.decodeIfPresent([SourceFailure].self, forKey: .failures) ?? []
         countedAs = try container.decodeIfPresent(MetricSettings.self, forKey: .countedAs)
-        userTally = try container.decodeIfPresent(UserTally.self, forKey: .userTally)
-        // Caches from before total users was tallied hold the signed-in count (often 0) under the same scope; dropping it
-        // makes the next refresh read the real total instead of keeping it for the rest of the hour. Every total is
-        // written with its tally since, so this only touches those caches; remove it once builds before 71 are gone.
-        if userTally == nil { values[.totalUsers] = nil }
+        userTally = (try? container.decodeIfPresent(UserTally.self, forKey: .userTally)) ?? nil
+    }
+
+    private static func decodeMetrics(_ stored: [String: Double]?) -> [Metric: Double] {
+        Dictionary((stored ?? [:]).compactMap { key, value in Metric(id: key).map { ($0, value) } }, uniquingKeysWith: { first, _ in first })
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -126,8 +132,9 @@ extension ProjectSnapshot: Codable {
         try container.encode(fetchedAt, forKey: .fetchedAt)
         try container.encode(dayStart, forKey: .dayStart)
         try container.encode(Dictionary(uniqueKeysWithValues: values.map { ($0.key.id, $0.value) }), forKey: .values)
-        try container.encodeIfPresent(newUsersYesterday, forKey: .newUsersYesterday)
-        try container.encode(hourlyNewUsers, forKey: .hourlyNewUsers)
+        try container.encode(Dictionary(uniqueKeysWithValues: previous.map { ($0.key.id, $0.value) }), forKey: .previous)
+        try container.encode(dailyActive, forKey: .dailyActive)
+        try container.encode(platforms, forKey: .platforms)
         try container.encodeIfPresent(revenueSource, forKey: .revenueSource)
         try container.encodeIfPresent(hourlyReadAt, forKey: .hourlyReadAt)
         try container.encode(failures, forKey: .failures)
@@ -136,15 +143,54 @@ extension ProjectSnapshot: Codable {
     }
 }
 
-/// Everyone a project's included surfaces had seen before a day began (`before`, a day start in its time zone).
-/// Read once from the whole history, then moved forward a day at a time by the people new that day.
+/// How many of the people counted use one platform. `name` is the platform as PostHog has it: a `Surface` raw value,
+/// or the value of the project's own platform property.
+public struct PlatformCount: Codable, Hashable, Sendable {
+    public var name: String
+    public var count: Int
+
+    public init(name: String, count: Int) {
+        self.name = name
+        self.count = count
+    }
+
+    /// Platforms sorted largest first, with empty names folded into one "unknown".
+    public static func sorted(_ counts: [String: Int]) -> [PlatformCount] {
+        var merged: [String: Int] = [:]
+        for (name, count) in counts where count > 0 {
+            let key = name.isEmpty || name == "null" ? "" : name
+            merged[key, default: 0] += count
+        }
+        return merged.map { PlatformCount(name: $0.key, count: $0.value) }.sorted { ($0.count, $1.name) > ($1.count, $0.name) }
+    }
+}
+
+/// Everyone a project counts who was seen before a day began (`before`, a day start in its time zone), by the
+/// platform they were first seen on. Read once from the whole history, then moved forward a day at a time by the
+/// people new that day.
 public struct UserTally: Codable, Hashable, Sendable {
-    public var people: Int
+    public var byPlatform: [String: Int]
     public var before: Date
 
-    public init(people: Int, before: Date) {
-        self.people = people
+    public init(byPlatform: [String: Int], before: Date) {
+        self.byPlatform = byPlatform
         self.before = before
+    }
+
+    public var people: Int { byPlatform.values.reduce(0, +) }
+
+    /// Adds the people first seen since `before`, as of `day`.
+    public func moved(adding counts: [String: Int], to day: Date) -> UserTally {
+        UserTally(byPlatform: byPlatform.merging(counts, uniquingKeysWith: +), before: day)
+    }
+
+    enum CodingKeys: String, CodingKey { case byPlatform, before }
+
+    /// Tallies from before platforms were counted are dropped, so the next refresh reads them again.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        byPlatform = try container.decode([String: Int].self, forKey: .byPlatform)
+        before = try container.decode(Date.self, forKey: .before)
     }
 }
 

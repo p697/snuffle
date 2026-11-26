@@ -9,13 +9,14 @@ struct WelcomeView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var adding = false
     @State private var cat = CatState()
-    @State private var spinning = Array(repeating: false, count: Self.rows.count)
+    /// Which rows have rolled up to their number; until then they show a little less.
+    @State private var arrived = Array(repeating: false, count: 3)
 
-    private static var rows: [(value: String, label: String)] {
+    private static func rows(_ arrived: [Bool]) -> [(value: String, label: String)] {
         [
-            (Format.delta(users: 48), String(localized: "新用户")),
-            (Format.delta(money: 300), String(localized: "收入")),
-            (Format.number(7), String(localized: "条评论待回复", comment: "Follows the big number of reviews to answer on a store-only project card."))
+            (Format.delta(users: arrived[0] ? 48 : 41), String(localized: "新用户")),
+            (Format.delta(money: arrived[1] ? 300 : 260), String(localized: "收入")),
+            (Format.number(arrived[2] ? 7 : 5), String(localized: "条评论待回复", comment: "Follows the big number of reviews to answer on a store-only project card."))
         ]
     }
 
@@ -65,15 +66,16 @@ struct WelcomeView: View {
 
     /// Three ruled rows of giant numbers, as large as the screen allows (96 pt on a 6.1" phone).
     private func poster(height: CGFloat) -> some View {
-        let size = min(96, max(44, (height - 2) / CGFloat(Self.rows.count) - 12))
+        let rows = Self.rows(arrived)
+        let size = min(96, max(44, (height - 2) / CGFloat(rows.count) - 12))
         return VStack(spacing: 0) {
-            ForEach(Self.rows.indices, id: \.self) { index in
-                let row = Self.rows[index]
+            ForEach(rows.indices, id: \.self) { index in
+                let row = rows[index]
                 VStack(spacing: 0) {
                     Rectangle().fill(colors.ink).frame(height: 2)
                     // First baseline: an odometer's last baseline is the bottom of its hidden digit strip.
                     HStack(alignment: .firstTextBaseline) {
-                        Odometer(text: row.value, size: size, spinning: spinning[index], color: colors.ink)
+                        Odometer(text: row.value, size: size, color: colors.ink)
                         Spacer(minLength: 12)
                         Text(row.label)
                             .font(.system(size: min(19, max(15, size * 0.2)), weight: .bold))
@@ -125,14 +127,13 @@ struct WelcomeView: View {
         .catPanel(cat)
     }
 
-    /// The numbers spin and land one by one while the cat comes up for a sniff, then it grins and stays.
+    /// The cat comes up for a sniff, then the numbers roll up one by one, then it grins and stays.
     private func play() async {
-        spinning = spinning.map { _ in true }
         try? await Task.sleep(for: .milliseconds(400))
         cat = CatState(out: true, sniffing: true)
         try? await Task.sleep(for: .milliseconds(900))
-        for index in spinning.indices {
-            spinning[index] = false
+        for index in arrived.indices {
+            arrived[index] = true
             model.feedback.tick(column: index)
             try? await Task.sleep(for: .milliseconds(320))
         }

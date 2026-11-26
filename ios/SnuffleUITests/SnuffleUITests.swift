@@ -36,7 +36,7 @@ final class SnuffleUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.buttons["startConnecting"].waitForExistence(timeout: 5))
         app.buttons["tryDemo"].tap()
-        XCTAssertTrue(app.staticTexts["今日"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["总览"].waitForExistence(timeout: 5))
         attach(app, name: "demo-home")
         // The way out sits beside the title, not at the end of the list.
         app.buttons["leaveDemo"].tap()
@@ -109,8 +109,13 @@ final class SnuffleUITests: XCTestCase {
         row.tap()
         XCTAssertTrue(app.staticTexts["数据来自"].waitForExistence(timeout: 5))
         app.buttons["7 天"].tap()
-        XCTAssertTrue(app.staticTexts["每日新增用户"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["每日新增 · 按平台"].waitForExistence(timeout: 5))
         attach(app, name: "project-detail-week")
+        // Each number says how it is counted.
+        app.buttons["tile-active_week"].tap()
+        XCTAssertTrue(app.staticTexts["一句话"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["怎么算"].exists)
+        attach(app, name: "metric-sheet")
     }
 
     /// Opens the paywall from settings and for a locked feature, with the local StoreKit configuration so
@@ -236,7 +241,7 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "connect-appstore")
         app.buttons["返回"].tap()
         app.buttons["startDemo"].tap()
-        XCTAssertTrue(app.staticTexts["今日"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["总览"].waitForExistence(timeout: 5))
 
         app = makeApp(["-resetState", "-sampleWorkspace"])
         app.launch()
@@ -260,57 +265,36 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "editor-metrics")
     }
 
-    /// A card and the totals strip take other numbers from the library, outside demo mode (its projects are fixed).
-    func testCardAndTotalsEditors() {
+    /// A card takes other numbers from the library, outside demo mode (its projects are fixed), and the library leads
+    /// to how they are counted.
+    func testCardEditorAndCounting() {
         let app = makeApp(["-resetState", "-sampleWorkspace"])
         app.launch()
-        let card = app.buttons["card-Quiet Atlas"]
+        let card = app.buttons["card-Lumen Notes"]
         XCTAssertTrue(card.waitForExistence(timeout: 5))
         card.press(forDuration: 1.2)
         app.buttons["调整卡片"].tap()
         XCTAssertTrue(app.buttons["saveCard"].waitForExistence(timeout: 5))
-        // Two big numbers: the first pill moves up, which frees a pill slot.
+        // Two big numbers: the first small one moves up, which frees a slot.
         app.buttons["两个大数"].tap()
-        app.buttons["加一个小数"].tap()
-        XCTAssertTrue(app.staticTexts["加一个小数"].waitForExistence(timeout: 5))
+        app.buttons["加一个数"].tap()
+        XCTAssertTrue(app.staticTexts["加一个数"].waitForExistence(timeout: 5))
         attach(app, name: "metric-library")
-        // Whose activity counts is said under the numbers it changes, with the way to change it.
-        let scopeLine = app.staticTexts["scopeLine"]
-        XCTAssertTrue(scopeLine.label.contains("不含网站访客（未登录）"), scopeLine.label)
-        let scope = app.buttons["scope"]
-        scope.tap()
-        let visitors = app.switches["surface-visitors"]
-        XCTAssertTrue(visitors.waitForExistence(timeout: 5))
-        XCTAssertEqual(visitors.value as? String, "0")
-        XCTAssertTrue(app.switches["surface-android"].exists)
-        visitors.tap()
-        XCTAssertEqual(visitors.value as? String, "1")
-        attach(app, name: "scope")
+        // How people are counted is said under the numbers it changes, with the way to change it.
+        let countingLine = app.staticTexts["countingLine"]
+        XCTAssertTrue(countingLine.label.contains("Snuffle 默认"), countingLine.label)
+        app.buttons["counting"].tap()
+        XCTAssertTrue(app.buttons["readDashboard"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["activityEvent"].exists)
+        attach(app, name: "counting")
         app.buttons["返回"].tap()
-        XCTAssertTrue(scopeLine.waitForExistence(timeout: 5))
-        XCTAssertTrue(scopeLine.label.contains("所有来源"), scopeLine.label)
-        let weekly = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '周活跃'")).firstMatch
-        XCTAssertTrue(weekly.waitForExistence(timeout: 5))
-        weekly.tap()
+        let monthly = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '30 日活跃'")).firstMatch
+        XCTAssertTrue(monthly.waitForExistence(timeout: 5))
+        monthly.tap()
         attach(app, name: "card-editor")
         app.buttons["saveCard"].tap()
         XCTAssertTrue(card.waitForExistence(timeout: 5))
-        XCTAssertTrue(card.label.contains("今日活跃") && card.label.contains("周活跃"), card.label)
-
-        let strip = app.descendants(matching: .any)["totalsStrip"]
-        strip.press(forDuration: 1.2)
-        app.buttons["调整合计"].tap()
-        // The middle tile, revenue by default.
-        let revenue = app.buttons["totalTile-1"]
-        XCTAssertTrue(revenue.waitForExistence(timeout: 5))
-        revenue.tap()
-        let active = app.buttons.matching(NSPredicate(format: "label BEGINSWITH '今日活跃'")).firstMatch
-        XCTAssertTrue(active.waitForExistence(timeout: 5))
-        active.tap()
-        attach(app, name: "totals-editor")
-        app.buttons["完成"].tap()
-        XCTAssertTrue(strip.waitForExistence(timeout: 5))
-        XCTAssertTrue(strip.label.contains("今日活跃") && !strip.label.contains("收入"), strip.label)
+        XCTAssertTrue(card.label.contains("30 日活跃"), card.label)
         attach(app, name: "home-customized")
     }
 
@@ -324,7 +308,7 @@ final class SnuffleUITests: XCTestCase {
             sleep(1)
             attach(app, name: "bottom-\(tab)")
         }
-        // The last card of 今日 can be reached above the bar once scrolled to the end. Its frame is not
+        // The last card of 总览 can be reached above the bar once scrolled to the end. Its frame is not
         // checked: SwiftUI reports a combined NavigationLink taller than the screen. The screenshot shows the gap.
         app.buttons["tab-today"].tap()
         for _ in 0..<6 { app.swipeUp(velocity: .fast) }

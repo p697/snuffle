@@ -2,12 +2,15 @@ import Foundation
 
 /// A number a project card, the totals strip or a widget can show. Every one is read from a connected source; none
 /// is computed from another.
-public enum Metric: Hashable, Sendable {
+public enum Metric: Hashable, Sendable, Identifiable {
     /// Counted the way the project's `MetricSettings.newUsers` says.
     case newUsers
-    /// People with any event today, in the last 7 days and in the last 30 days.
+    /// People who used the product today, and over the last 7 and 30 days counting today (whole days in the
+    /// project's time zone, as PostHog's own charts count them).
     case activeToday, activeWeek, activeMonth
-    /// People PostHog has identified (signed in), ever.
+    /// People who started using the product in the last 7 days counting today, the way new users are counted.
+    case newWeek
+    /// Everyone who ever used the product (since the counting's first day).
     case totalUsers
     /// People with an event in the last minute.
     case online
@@ -39,6 +42,7 @@ public enum Metric: Hashable, Sendable {
         case .activeToday: "active_today"
         case .activeWeek: "active_week"
         case .activeMonth: "active_month"
+        case .newWeek: "new_week"
         case .totalUsers: "total_users"
         case .online: "online"
         case .pageviews: "pageviews"
@@ -68,7 +72,7 @@ public enum Metric: Hashable, Sendable {
 
     /// Every metric except per-project events, in library order.
     public static let fixed: [Metric] = [
-        .newUsers, .activeToday, .activeWeek, .activeMonth, .totalUsers, .online, .pageviews,
+        .newUsers, .activeToday, .activeWeek, .activeMonth, .newWeek, .totalUsers, .online, .pageviews,
         .revenue, .orders, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days,
         .reviewsToAnswer
     ]
@@ -89,7 +93,7 @@ public enum Metric: Hashable, Sendable {
 
     public var source: Source {
         switch self {
-        case .newUsers, .activeToday, .activeWeek, .activeMonth, .totalUsers, .online, .pageviews, .event, .orders: .posthog
+        case .newUsers, .activeToday, .activeWeek, .activeMonth, .newWeek, .totalUsers, .online, .pageviews, .event, .orders: .posthog
         case .revenue: .revenueSetting
         case .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days: .revenueCat
         case .reviewsToAnswer: .stores
@@ -116,11 +120,11 @@ public enum Metric: Hashable, Sendable {
         }
     }
 
-    /// Read at most once an hour (`hourlyInterval`): numbers over long windows, or that the source itself only
-    /// recalculates now and then.
+    /// Read at most once an hour (`hourlyInterval`): the 30-day window, and numbers the source itself only
+    /// recalculates now and then. Everything else is read on every refresh.
     public var isHourly: Bool {
         switch self {
-        case .activeWeek, .activeMonth, .totalUsers, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days: true
+        case .activeMonth, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days: true
         default: false
         }
     }
@@ -131,7 +135,7 @@ public enum Metric: Hashable, Sendable {
     /// and revenue events are what they name, wherever they were sent from.
     public var isScoped: Bool {
         switch self {
-        case .activeToday, .activeWeek, .activeMonth, .totalUsers, .online, .pageviews: true
+        case .activeToday, .activeWeek, .activeMonth, .newWeek, .totalUsers, .online, .pageviews: true
         default: false
         }
     }
@@ -139,6 +143,26 @@ public enum Metric: Hashable, Sendable {
     /// Changes meaning when the project's counting or scope (`MetricSettings`) changes.
     public var followsCounting: Bool {
         isScoped || self == .newUsers || self == .revenue || self == .orders
+    }
+
+    /// What a number is set against, so it never stands alone.
+    public enum Reference: Sendable {
+        /// "今天 +6": how much of it arrived today.
+        case today
+        /// "昨天此时 54": the same count yesterday up to the same time of day.
+        case sameTimeYesterday
+        /// "▲ 20.7%": the window before this one, e.g. the 7 days before the last 7.
+        case previousPeriod
+    }
+
+    /// The reference `ProjectSnapshot.previous` holds for this metric, if any.
+    public var reference: Reference? {
+        switch self {
+        case .totalUsers: .today
+        case .newUsers, .activeToday: .sameTimeYesterday
+        case .activeWeek, .newWeek: .previousPeriod
+        default: nil
+        }
     }
 
     /// The same everywhere, so it can be added up across projects (the totals strip and the widgets). An event is
@@ -169,8 +193,9 @@ public enum Metric: Hashable, Sendable {
         switch self {
         case .newUsers: String(localized: "新增用户", bundle: .module)
         case .activeToday: String(localized: "今日活跃", bundle: .module)
-        case .activeWeek: String(localized: "周活跃", bundle: .module)
-        case .activeMonth: String(localized: "月活跃", bundle: .module)
+        case .activeWeek: String(localized: "7 日活跃", bundle: .module)
+        case .activeMonth: String(localized: "30 日活跃", bundle: .module)
+        case .newWeek: String(localized: "7 日新增", bundle: .module)
         case .totalUsers: String(localized: "累计用户", bundle: .module)
         case .online: String(localized: "此刻在线", bundle: .module)
         case .pageviews: String(localized: "页面浏览", bundle: .module)
@@ -194,56 +219,62 @@ public enum Metric: Hashable, Sendable {
     }
 }
 
-/// Which numbers a project card shows: one or two big ones and up to three small pills.
+/// Which numbers a project card shows: one or two big ones, up to three smaller ones beneath, and whether the last 14
+/// days of activity and the platform split are drawn.
 public struct CardLayout: Codable, Hashable, Sendable {
     public var big: [Metric]
     public var small: [Metric]
+    /// Bars of the last 14 days' active people beside the big number.
+    public var trend: Bool
+    /// The share of each platform among everyone counted.
+    public var split: Bool
 
     public static let maxBig = 2
     public static let maxSmall = 3
+    /// Saved with every layout; layouts from builds before it are replaced by the standard one.
+    static let version = 2
 
-    /// A metric appears once: repeats, and pills that are already big, are dropped.
-    public init(big: [Metric], small: [Metric] = []) {
+    /// A metric appears once: repeats, and small numbers that are already big, are dropped.
+    public init(big: [Metric], small: [Metric] = [], trend: Bool = true, split: Bool = true) {
         var seen = Set<Metric>()
         self.big = Array(big.filter { seen.insert($0).inserted }.prefix(Self.maxBig))
         self.small = Array(small.filter { seen.insert($0).inserted }.prefix(Self.maxSmall))
+        self.trend = trend
+        self.split = split
     }
 
     public var metrics: [Metric] { big + small }
 
-    /// The layout as drawn for `project`: numbers from sources it does not have are left out, and a card with no big
-    /// number left promotes its first pill.
+    /// The layout as drawn for `project`: numbers from sources it does not have are left out, a card with no big
+    /// number left promotes its first small one, and bars and split need PostHog.
     public func visible(in project: Project) -> CardLayout {
         var big = big.filter { $0.isAvailable(in: project) }
         var small = small.filter { $0.isAvailable(in: project) }
         if big.isEmpty, !small.isEmpty { big = [small.removeFirst()] }
         if big.isEmpty { big = CardLayout.standard(for: project).big }
-        return CardLayout(big: big, small: small)
+        let people = project.posthog != nil
+        return CardLayout(big: big, small: small, trend: trend && people, split: split && people)
     }
 
-    /// The card a project starts with: new users and the hourly bars when PostHog is connected, otherwise the reviews
-    /// waiting for a reply; then revenue, installs and reviews as pills where the project has them.
-    public static func standard(for project: Project, sendsInstalls: Bool = true) -> CardLayout {
+    /// The card a project starts with. With PostHog: everyone counted, with today's, the week's and the week's new
+    /// people beneath; otherwise the reviews waiting for a reply, or revenue.
+    public static func standard(for project: Project) -> CardLayout {
         guard project.posthog != nil else {
             return CardLayout(big: [project.hasStore ? .reviewsToAnswer : .revenue], small: project.revenueCat != nil && project.hasStore ? [.mrr] : [])
         }
-        var small: [Metric] = []
-        if project.metrics.revenue != .none { small.append(.revenue) }
-        if sendsInstalls { small.append(.installs) }
-        if project.hasStore { small.append(.reviewsToAnswer) }
-        return CardLayout(big: [.newUsers], small: small)
+        return CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .newWeek])
     }
 
-    public static let standardTotals: [Metric] = [.newUsers, .revenue, .reviewsToAnswer]
-
     // Stored as metric ids so a renamed case never breaks saved layouts; unknown ids are dropped.
-    enum CodingKeys: String, CodingKey { case big, small }
+    enum CodingKeys: String, CodingKey { case big, small, trend, split, v }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.init(
             big: try container.decode([String].self, forKey: .big).compactMap(Metric.init(id:)),
-            small: try container.decodeIfPresent([String].self, forKey: .small)?.compactMap(Metric.init(id:)) ?? []
+            small: try container.decodeIfPresent([String].self, forKey: .small)?.compactMap(Metric.init(id:)) ?? [],
+            trend: try container.decodeIfPresent(Bool.self, forKey: .trend) ?? true,
+            split: try container.decodeIfPresent(Bool.self, forKey: .split) ?? true
         )
     }
 
@@ -251,6 +282,14 @@ public struct CardLayout: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(big.map(\.id), forKey: .big)
         try container.encode(small.map(\.id), forKey: .small)
+        try container.encode(trend, forKey: .trend)
+        try container.encode(split, forKey: .split)
+        try container.encode(Self.version, forKey: .v)
+    }
+
+    /// Whether a saved layout comes from this version's cards.
+    struct Version: Decodable {
+        var v: Int?
     }
 }
 

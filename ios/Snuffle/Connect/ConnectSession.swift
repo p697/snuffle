@@ -14,8 +14,6 @@ final class ConnectSession {
     var revenueCatProjects: [RevenueCatProject] = []
     var appStoreApps: [AppStoreApp] = []
     var googleApps: [GooglePlayApp] = []
-    /// Whether the PostHog project sends the install event, so a new card shows installs only when there are some.
-    var sendsInstalls = true
 
     init(project: Project, isNewProject: Bool) {
         self.project = project
@@ -32,7 +30,7 @@ final class ConnectSession {
     var finished: Project {
         guard isNewProject else { return project }
         var finished = project
-        finished.card = CardLayout.standard(for: finished, sendsInstalls: sendsInstalls)
+        finished.card = CardLayout.standard(for: finished)
         return finished
     }
 

@@ -50,18 +50,18 @@ struct LiveSmokeTests {
         for metric in Metric.fixed + [.installs] where metric.isAvailable(in: project) {
             print("[live]   \(metric.id): \(snapshot[metric].map(metric.format) ?? "–")")
         }
-        print("[live]   yesterday by now \(snapshot.newUsersYesterday ?? -1), hours \(snapshot.hourlyNewUsers.count), failures \(snapshot.failures.map(\.message))")
+        print("[live]   references \(snapshot.previous.map { "\($0.key.id) \(Int($0.value))" }.sorted()), days \(snapshot.dailyActive), failures \(snapshot.failures.map(\.message))")
         #expect(snapshot.failures.isEmpty)
         #expect(snapshot.hourlyReadAt != nil)
         #expect(snapshot[.activeMonth] ?? 0 >= snapshot[.activeWeek] ?? 0)
         let events = try await provider.events(for: project)
         print("[live]   events (7 days): \(events.prefix(5).map { "\($0.name) \($0.people)" })")
-        #expect(snapshot.hourlyNewUsers.reduce(0, +) == snapshot.newUsers)
+        #expect(snapshot.dailyActive.last == snapshot[.activeToday].map(Int.init))
         let orders = try await provider.orders(for: project)
         print("[live]   orders today: \(orders.count), named: \(orders.filter { $0.product != nil }.count)")
-        let history = try await provider.history(for: project, days: 7)
-        print("[live]   7-day new users: \(history.map { $0.newUsers ?? 0 })")
-        #expect(history.count == 7)
+        let board = try await provider.board(for: project, days: 7, total: Dictionary(uniqueKeysWithValues: snapshot.platforms.map { ($0.name, $0.count) }))
+        print("[live]   7-day active: \(board.days.map { $0.active.values.reduce(0, +) }), weeks \(board.weeks.count)")
+        #expect(board.days.count == 7)
     }
 
     @Test(.enabled(if: ProcessInfo.processInfo.environment["SNUFFLE_LIVE_RC_KEY"] != nil))

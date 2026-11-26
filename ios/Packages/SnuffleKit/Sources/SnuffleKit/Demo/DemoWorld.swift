@@ -24,7 +24,6 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         public var pace: Pace
         public var newUsers: Int
         public var newUsersYesterday: Int
-        public var hourly: [Int]
         public var revenue: Double
         public var sales: Int
         /// Times each of the project's demo events (`DemoWorld.events`) was sent today.
@@ -54,7 +53,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             appStore: AppStoreLink(accountId: demoAccount, appId: "1", appName: "Lumen Notes", bundleId: "com.example.lumen"),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.lumen"),
             metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .posthogEvent(event: "purchase", valueProperty: "value"), excludedSurfaces: [.visitors]),
-            card: CardLayout(big: [.newUsers], small: [.revenue, .installs, .reviewsToAnswer])
+            card: CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .revenue])
         ),
         Project(
             id: ferryId, name: "Pocket Ferry", tint: .coral,
@@ -62,14 +61,14 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             revenueCat: RevenueCatLink(accountId: demoAccount, projectId: "demo", projectName: "Pocket Ferry"),
             appStore: AppStoreLink(accountId: demoAccount, appId: "2", appName: "Pocket Ferry", bundleId: "com.example.ferry"),
             metrics: MetricSettings(newUsers: .event(MetricSettings.signupEvent), revenue: .revenueCat, excludedSurfaces: [.visitors]),
-            card: CardLayout(big: [.mrr, .newUsers], small: [.activeSubscriptions, .activeTrials, .reviewsToAnswer])
+            card: CardLayout(big: [.totalUsers], small: [.newUsers, .mrr, .reviewsToAnswer])
         ),
         Project(
             id: atlasId, name: "Quiet Atlas", tint: .cocoa,
             posthog: PostHogLink(accountId: demoAccount, projectId: 3, projectName: "Quiet Atlas", timeZone: TimeZone.current.identifier),
             googlePlay: GooglePlayLink(accountId: demoAccount, packageName: "com.example.atlas"),
             metrics: MetricSettings(newUsers: .firstSeen, revenue: .none, excludedSurfaces: [.visitors]),
-            card: CardLayout(big: [.newUsers], small: [.activeToday, .event("paywall_viewed", people: false), .reviewsToAnswer])
+            card: CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .newWeek])
         )
     ]
 
@@ -80,6 +79,14 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         ferryId: [.ios: 0.74, .android: 0.26, .visitors: 3.1],
         atlasId: [.android: 0.81, .ios: 0.19, .visitors: 0.6]
     ]
+
+    /// The counted surfaces' shares of a demo project's people, adding up to 1.
+    static func shares(_ projectId: UUID, excluding excluded: Set<Surface>) -> [String: Double] {
+        let chosen = (surfaceShares[projectId] ?? [:]).filter { !excluded.contains($0.key) }
+        let sum = chosen.values.reduce(0, +)
+        guard sum > 0 else { return [:] }
+        return Dictionary(uniqueKeysWithValues: chosen.map { ($0.key.rawValue, $0.value / sum) })
+    }
 
     /// How much bigger people-based numbers get with these surfaces than with the demo's own choice.
     static func scale(_ projectId: UUID, excluding excluded: Set<Surface>) -> Double {
@@ -109,7 +116,6 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         let dayStart = calendar.startOfDay(for: now)
         let clock = lateInDay ? max(now, dayStart.addingTimeInterval(21.5 * 3600)) : now
         let fraction = max(0.08, clock.timeIntervalSince(dayStart) / 86_400)
-        let hours = max(1, Int(clock.timeIntervalSince(dayStart) / 3600) + 1)
         let books = projects.map { project -> Book in
             let pace = paces[project.id]!
             let today = Int(pace.yesterdayTotal * pace.growth * fraction)
@@ -122,7 +128,6 @@ public struct DemoWorld: Codable, Sendable, Equatable {
                 pace: pace,
                 newUsers: today,
                 newUsersYesterday: Int(pace.yesterdayTotal * fraction),
-                hourly: spread(today, hours: hours, random: &random),
                 revenue: project.id == ferryId ? 3.28 : orders.reduce(0) { $0 + $1.amount },
                 sales: project.id == ferryId ? 1 : sales,
                 events: Dictionary(uniqueKeysWithValues: (events[project.id] ?? []).map { ($0.name, Int($0.perDay * fraction)) }),
@@ -145,15 +150,12 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         // At least a few minutes pass per refresh so the demo always has something to show.
         let minutes = max(now.timeIntervalSince(simulatedNow) / 60, Double(Int.random(in: 2...15, using: &random)))
         simulatedNow = max(now, simulatedNow.addingTimeInterval(minutes * 60))
-        let hours = max(1, Int(simulatedNow.timeIntervalSince(dayStart) / 3600) + 1)
         for index in books.indices {
             var book = books[index]
             let perMinute = book.pace.yesterdayTotal * book.pace.growth / 1440
             let added = scenario == .quiet ? 0 : DemoWorld.poisson(perMinute * minutes, random: &random)
             book.newUsers += added
             book.newUsersYesterday += Int(book.pace.yesterdayTotal / 1440 * minutes)
-            if book.hourly.count < hours { book.hourly += Array(repeating: 0, count: hours - book.hourly.count) }
-            book.hourly[book.hourly.count - 1] += added
             if scenario != .quiet {
                 for event in DemoWorld.events[book.projectId] ?? [] {
                     book.events[event.name, default: 0] += DemoWorld.poisson(event.perDay / 1440 * minutes, random: &random)
@@ -181,6 +183,7 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         guard let book = books.first(where: { $0.projectId == project.id }) else { return nil }
         let pace = book.pace
         let fraction = max(0.08, simulatedNow.timeIntervalSince(dayStart) / 86_400)
+        let firstTimers = (Double(book.newUsers) * 1.3).rounded()
         var values: [Metric: Double] = [
             .newUsers: Double(book.newUsers),
             .activeToday: Double(book.active),
@@ -188,12 +191,21 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             // Long windows grow slowly through the day; enough to look alive without moving on every refresh.
             .activeWeek: (pace.activePerDay * 3.4 + Double(book.active) * 0.4).rounded(),
             .activeMonth: (pace.activePerDay * 8.1 + Double(book.active) * 0.6).rounded(),
-            .totalUsers: (pace.yesterdayTotal * 260 + Double(book.newUsers)).rounded()
+            .newWeek: (pace.yesterdayTotal * 6.1 + Double(book.newUsers)).rounded(),
+            .totalUsers: (pace.yesterdayTotal * 260 + firstTimers).rounded()
+        ]
+        var previous: [Metric: Double] = [
+            .newUsers: Double(book.newUsersYesterday),
+            .activeToday: (Double(book.active) * 0.94).rounded(),
+            .activeWeek: (pace.activePerDay * 3.4 * 0.87).rounded(),
+            .newWeek: (pace.yesterdayTotal * 6.1 * 0.91).rounded(),
+            .totalUsers: (pace.yesterdayTotal * 260).rounded()
         ]
         // Other surfaces than the demo's own (the surfaces page previews each choice).
         let scale = DemoWorld.scale(project.id, excluding: project.metrics.surfacesLeftOut)
         for metric in [Metric.activeToday, .online, .activeWeek, .activeMonth, .totalUsers] {
             values[metric] = values[metric].map { ($0 * scale).rounded() }
+            previous[metric] = previous[metric].map { ($0 * scale).rounded() }
         }
         // Counted another way than the demo project does (the counting page previews each choice).
         if project.metrics.newUsers != DemoWorld.projects.first(where: { $0.id == project.id })?.metrics.newUsers {
@@ -211,16 +223,21 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             values[.event(event.name, people: true)] = (times * event.peopleShare).rounded()
             if event.name == "$pageview" || event.name == "$screen" { values[.pageviews] = (times * scale).rounded() }
         }
+        if project.metrics.newUsers == .firstSeen { previous[.newUsers] = previous[.newUsers].map { ($0 * 2.4 * scale).rounded() } }
+        let total = values[.totalUsers] ?? 0
+        let shares = DemoWorld.shares(project.id, excluding: project.metrics.surfacesLeftOut)
+        let recent = board(for: project.id, days: PostHogQueries.recentDays, total: nil).days
         var snapshot = ProjectSnapshot(
             projectId: project.id,
             fetchedAt: simulatedNow,
             dayStart: dayStart,
             values: values,
-            newUsersYesterday: book.newUsersYesterday,
-            hourlyNewUsers: book.hourly,
+            previous: previous,
+            dailyActive: recent.map { Int((Double($0.active.values.reduce(0, +)) * scale).rounded()) }.dropLast() + [Int(values[.activeToday] ?? 0)],
+            platforms: PlatformCount.sorted(shares.mapValues { Int((total * $0).rounded()) }),
             hourlyReadAt: simulatedNow,
             countedAs: project.metrics.inEffect,
-            userTally: values[.totalUsers].map { UserTally(people: Int($0) - book.newUsers, before: dayStart) }
+            userTally: UserTally(byPlatform: shares.mapValues { Int(((previous[.totalUsers] ?? 0) * $0).rounded()) }, before: dayStart)
         )
         switch project.metrics.revenue {
         case .posthogEvent:
@@ -270,16 +287,20 @@ public struct DemoWorld: Codable, Sendable, Equatable {
         reviews[index].reply = ReviewReply(text: text, date: date, pending: reviews[index].platform == .appStore)
     }
 
-    /// Thirty days of made-up history ending today; deterministic per project so the chart is stable.
-    public func history(for projectId: UUID, days: Int, calendar: Calendar = .current) -> [DailyPoint] {
-        guard let book = books.first(where: { $0.projectId == projectId }) else { return [] }
+    /// Made-up history ending today, deterministic per project so the charts are stable: each day's active and new
+    /// people by platform, totals worked back from `total`, revenue, and 11 weeks of new and returning people.
+    public func board(for projectId: UUID, days: Int, total: [String: Int]?, calendar: Calendar = .current) -> ProjectBoard {
+        guard let book = books.first(where: { $0.projectId == projectId }) else { return ProjectBoard(days: [], weeks: [], platforms: []) }
         // Seeded from the id's bytes: `hashValue` changes on every launch.
         var generator = SplitMix64(seed: UInt64(projectId.uuid.15) << 8 | UInt64(projectId.uuid.14))
-        let hasRevenue = DemoWorld.projects.first(where: { $0.id == projectId })?.metrics.revenue != MetricSettings.Revenue.none
-        return (0..<days).map { offset -> DailyPoint in
+        let project = DemoWorld.projects.first { $0.id == projectId }
+        let hasRevenue = project?.metrics.revenue != MetricSettings.Revenue.none
+        let shares = DemoWorld.shares(projectId, excluding: project?.metrics.surfacesLeftOut ?? [.visitors])
+        func split(_ count: Int) -> [String: Int] { shares.mapValues { Int((Double(count) * $0).rounded()) } }
+        var boardDays = (0..<days).map { offset -> ProjectBoard.Day in
             let day = calendar.date(byAdding: .day, value: offset - (days - 1), to: dayStart)!
             if offset == days - 1 {
-                return DailyPoint(day: day, newUsers: book.newUsers, revenue: hasRevenue ? book.revenue : nil, active: book.active)
+                return ProjectBoard.Day(day: day, active: split(book.active), new: split(book.newUsers), revenue: hasRevenue ? book.revenue : nil)
             }
             let weekday = calendar.component(.weekday, from: day)
             let weekend = weekday == 1 || weekday == 7 ? 0.82 : 1
@@ -287,8 +308,23 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             let noise = Double.random(in: 0.9...1.1, using: &generator)
             let users = Int(book.pace.yesterdayTotal * trend * weekend * noise)
             let revenue = hasRevenue ? ((book.pace.salesPerMinute * 1440 * book.pace.averageOrder * trend * noise) * 100).rounded() / 100 : nil
-            return DailyPoint(day: day, newUsers: users, revenue: revenue, active: Int(book.pace.activePerDay * trend * weekend * noise))
+            return ProjectBoard.Day(day: day, active: split(Int(book.pace.activePerDay * trend * weekend * noise)), new: split(users), revenue: revenue)
         }
+        if let total {
+            let totals = ProjectBoard.totals(now: total, firstSeen: boardDays.map(\.new))
+            for index in boardDays.indices { boardDays[index].total = totals[index] }
+        }
+        let weeks = (0..<11).map { index -> ProjectBoard.Week in
+            let start = calendar.date(byAdding: .day, value: (index - 10) * 7, to: dayStart)!
+            let growth = 0.55 + 0.45 * Double(index) / 10
+            let partial = index == 10 ? 0.6 : 1
+            return ProjectBoard.Week(
+                start: start,
+                new: Int(book.pace.yesterdayTotal * 7 * growth * partial),
+                returning: Int(book.pace.activePerDay * 2.6 * growth * partial)
+            )
+        }
+        return ProjectBoard(days: boardDays, weeks: weeks, platforms: ProjectBoard.order(shares.mapValues { Int($0 * 1000) }))
     }
 
     // MARK: Building blocks
@@ -309,18 +345,6 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             p *= Double.random(in: 0...1, using: &random)
         } while p > limit
         return k - 1
-    }
-
-    static func spread(_ total: Int, hours: Int, random: inout some RandomNumberGenerator) -> [Int] {
-        // Quiet nights, busy afternoons.
-        let weights = (0..<hours).map { hour -> Double in
-            let h = Double(hour % 24)
-            return 0.35 + max(0, sin((h - 6) / 24 * 2 * .pi)) + Double.random(in: 0...0.15, using: &random)
-        }
-        let sum = weights.reduce(0, +)
-        var result = weights.map { Int(Double(total) * $0 / sum) }
-        result[result.count - 1] += total - result.reduce(0, +)
-        return result
     }
 
     static func demoOrder(_ projectId: UUID, at date: Date, random: inout some RandomNumberGenerator) -> Order {

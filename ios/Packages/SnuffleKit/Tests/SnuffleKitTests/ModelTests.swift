@@ -87,7 +87,8 @@ struct ModelTests {
         let read = ProjectSnapshot(projectId: id, fetchedAt: day, dayStart: day, values: [.activeMonth: 900, .newUsers: 4], hourlyReadAt: day)
         #expect(!read.needsHourlyRead([.activeMonth, .newUsers], at: day.addingTimeInterval(600)))
         #expect(read.needsHourlyRead([.activeMonth], at: day.addingTimeInterval(3600)), "an hour later")
-        #expect(read.needsHourlyRead([.activeWeek], at: day.addingTimeInterval(600)), "newly shown, never read")
+        #expect(read.needsHourlyRead([.revenueLast28Days], at: day.addingTimeInterval(600)), "newly shown, never read")
+        #expect(!read.needsHourlyRead([.activeWeek, .totalUsers], at: day.addingTimeInterval(600)), "the week and the total are read on every refresh")
         #expect(!read.needsHourlyRead([.newUsers], at: day.addingTimeInterval(7200)), "nothing hourly is shown")
 
         // A refresh that skipped the hourly read keeps the last values, even across midnight.
@@ -123,21 +124,24 @@ struct ModelTests {
         let data = try JSONEncoder().encode(snapshot)
         #expect(String(decoding: data, as: UTF8.self).contains(#""event_people:paid wall":2"#))
         #expect(try JSONDecoder().decode(ProjectSnapshot.self, from: data) == snapshot)
-        // A cache written before metrics had ids reads as empty, not as a failure.
-        let legacy = #"{"projectId":"\#(snapshot.projectId)","fetchedAt":0,"dayStart":0,"newUsers":4,"hourlyNewUsers":[],"failures":[]}"#
-        #expect(try JSONDecoder().decode(ProjectSnapshot.self, from: Data(legacy.utf8)).values.isEmpty)
+        // A cache written before metrics had ids reads as empty, not as a failure; a tally from before platforms is dropped.
+        let legacy = #"{"projectId":"\#(snapshot.projectId)","fetchedAt":0,"dayStart":0,"newUsers":4,"hourlyNewUsers":[],"failures":[],"userTally":{"people":9,"before":0}}"#
+        let decoded = try JSONDecoder().decode(ProjectSnapshot.self, from: Data(legacy.utf8))
+        #expect(decoded.values.isEmpty && decoded.userTally == nil && decoded.previous.isEmpty)
     }
 
-    @Test func projectsSavedBeforeCardLayoutsKeepTheirNumbers() throws {
+    @Test func cardsFromBeforeTheRedesignStartWithTheStandardCard() throws {
         let account = UUID()
-        let base = Project(name: "Old", tint: .ink, posthog: PostHogLink(accountId: account, projectId: 1, projectName: "x", timeZone: "UTC"), appStore: AppStoreLink(accountId: account, appId: "1", appName: "x", bundleId: "b"))
+        var base = Project(name: "Old", tint: .ink, posthog: PostHogLink(accountId: account, projectId: 1, projectName: "x", timeZone: "UTC"), appStore: AppStoreLink(accountId: account, appId: "1", appName: "x", bundleId: "b"))
+        base.card = CardLayout(big: [.mrr], small: [.online], trend: false, split: true)
         var json = try #require(try JSONSerialization.jsonObject(with: JSONEncoder().encode(base)) as? [String: Any])
+        // A card this version saved keeps everything, the switches included.
+        #expect(try JSONDecoder().decode(Project.self, from: JSONSerialization.data(withJSONObject: json)) == base)
+        // One saved before (no version) and one from before cards were customizable start over.
+        json["card"] = ["big": ["new_users"], "small": ["revenue", "event_count:Application Installed"]]
+        #expect(try JSONDecoder().decode(Project.self, from: JSONSerialization.data(withJSONObject: json)).card == CardLayout.standard(for: base))
         json["card"] = nil
-        json["metrics"] = ["newUsers": ["firstSeen": [:]], "revenue": ["posthogEvent": ["event": "purchase", "valueProperty": "value"]], "extra": ["event": ["name": "paywall_viewed", "label": "次付费墙浏览"]]]
-        let old = try JSONDecoder().decode(Project.self, from: JSONSerialization.data(withJSONObject: json))
-        #expect(old.metrics == MetricSettings(newUsers: .firstSeen, revenue: .posthogEvent(event: "purchase", valueProperty: "value")))
-        #expect(old.card == CardLayout(big: [.newUsers], small: [.revenue, .event("paywall_viewed", people: false), .reviewsToAnswer]))
-        #expect(try JSONDecoder().decode(Project.self, from: JSONEncoder().encode(old)) == old)
+        #expect(try JSONDecoder().decode(Project.self, from: JSONSerialization.data(withJSONObject: json)).card == CardLayout(big: [.totalUsers], small: [.activeToday, .activeWeek, .newWeek]))
     }
 
     @Test func cardsLeaveOutNumbersTheProjectCannotRead() {
@@ -145,7 +149,7 @@ struct ModelTests {
         let storeOnly = Project(name: "Store", tint: .ink, appStore: AppStoreLink(accountId: account, appId: "1", appName: "x", bundleId: "b"))
         #expect(storeOnly.card == CardLayout(big: [.reviewsToAnswer]))
         let layout = CardLayout(big: [.activeToday, .mrr], small: [.revenue, .reviewsToAnswer, .reviewsToAnswer])
-        #expect(layout.visible(in: storeOnly) == CardLayout(big: [.reviewsToAnswer]), "a pill takes the empty big slot")
+        #expect(layout.visible(in: storeOnly) == CardLayout(big: [.reviewsToAnswer], trend: false, split: false), "a small number takes the empty big slot; bars and split need PostHog")
         #expect(Set(Metric.fixed.map(\.id)).count == Metric.fixed.count)
         #expect(Metric.fixed.allSatisfy { Metric(id: $0.id) == $0 })
         #expect(Metric(id: "event_count:a:b") == .event("a:b", people: false))
@@ -156,10 +160,7 @@ struct ModelTests {
         let saved = #"{"demoMode":true,"theme":"dark","accent":"mint","haptics":false,"sound":true,"refreshOnOpen":false,"replyTone":"brief","replySignature":"— Liu"}"#
         let settings = try JSONDecoder().decode(AppSettings.self, from: Data(saved.utf8))
         #expect(settings.theme == .dark && settings.accent == .mint && settings.replySignature == "— Liu")
-        #expect(settings.totals == CardLayout.standardTotals)
-        var changed = settings
-        changed.totals = [.activeToday, .mrr, .newUsers]
-        #expect(try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(changed)).totals == [.activeToday, .mrr, .newUsers])
+        #expect(try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(settings)) == settings)
     }
 
     @Test func refreshCountStartsOverEachDay() {

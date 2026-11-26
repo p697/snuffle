@@ -36,10 +36,11 @@ public enum Surface: String, Codable, CaseIterable, Sendable, Identifiable {
         }
     }
 
-    /// The surfaces a project leaves out until the person chooses: website visitors, unless they are all there is
-    /// (a website without sign-in), in which case nothing is left out.
+    /// The surfaces a project leaves out until the person chooses: website visitors when the product also has people
+    /// who sign in or use an app, so a marketing site's readers never count as users. A website without sign-in keeps
+    /// them, even when a server sends a few events of its own (`other`).
     public static func defaultExcluded(seen: some Collection<Surface>) -> Set<Surface> {
-        seen.contains { $0 != .visitors } ? [.visitors] : []
+        seen.contains { $0 == .web || $0 == .ios || $0 == .android } ? [.visitors] : []
     }
 }
 

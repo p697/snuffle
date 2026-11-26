@@ -27,6 +27,25 @@ public enum Format {
         ), locale: locale)
     }
 
+    /// "20.7%" in the person's language, one decimal at most: a change from the period before.
+    public static func percent(_ fraction: Double) -> String { percent(fraction, locale: .current) }
+
+    static func percent(_ fraction: Double, locale: Locale) -> String {
+        fraction.formatted(.percent.precision(.fractionLength(0...1)).locale(latin(locale)))
+    }
+
+    /// "11/26" or "26.11.", a day without the year, as the person writes it.
+    public static func day(_ date: Date, in zone: TimeZone = .current) -> String {
+        var style = Date.FormatStyle(date: .omitted, time: .omitted).month(.defaultDigits).day().locale(latin())
+        style.timeZone = zone
+        return date.formatted(style)
+    }
+
+    /// A number as HogQL writes it: "1", "0.5". Never localized.
+    public static func plain(_ value: Double) -> String {
+        value == value.rounded() && abs(value) < 1e15 ? String(Int(value)) : String(value)
+    }
+
     /// "+48" or "+$300".
     public static func delta(users: Int) -> String { "+" + number(users) }
     public static func delta(money value: Double) -> String { leftToRight("+" + money(value), locale: .current) }

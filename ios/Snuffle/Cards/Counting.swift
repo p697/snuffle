@@ -19,7 +19,7 @@ struct CountingPage: View {
                     title: kind == .newUsers ? String(localized: "新增用户怎么算") : String(localized: "收入怎么算"),
                     subtitle: String(localized: "这个项目里显示这个数的地方都按这里算。右边是按这种算法今天的数。")
                 )
-                CountingOptions(kind: kind, project: $project)
+                CountingChoices(kind: kind, project: $project)
             }
             .padding(16)
         }
@@ -28,7 +28,7 @@ struct CountingPage: View {
 }
 
 /// The ways to count one number, each with what it counts today, so the right one is the one that matches.
-struct CountingOptions: View {
+struct CountingChoices: View {
     var kind: CountingKind
     @Binding var project: Project
     @Environment(AppModel.self) private var model
@@ -260,7 +260,7 @@ struct EventField: View {
 
 /// "挑一个事件": the events the project sent in the last 7 days, most people first, with a search.
 struct EventPicker: View {
-    enum Purpose { case newUsers, metric }
+    enum Purpose { case newUsers, metric, activity }
 
     var project: Project
     var purpose: Purpose
@@ -277,7 +277,7 @@ struct EventPicker: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 BackButton()
-                PageTitle(title: String(localized: "挑一个事件"), subtitle: purpose == .newUsers ? String(localized: "新增用户按发过这个事件的人数算。右边是近 7 天的人数。") : String(localized: "右边是近 7 天的人数或次数。"))
+                PageTitle(title: String(localized: "挑一个事件"), subtitle: subtitle)
                 if purpose == .metric {
                     ChoiceBar(options: [(true, "数人数"), (false, "数次数")], selection: $byPeople)
                 }
@@ -309,6 +309,14 @@ struct EventPicker: View {
         }
         .sheetPage()
         .task { await load() }
+    }
+
+    private var subtitle: String {
+        switch purpose {
+        case .newUsers: String(localized: "新增用户按发过这个事件的人数算。右边是近 7 天的人数。")
+        case .metric: String(localized: "右边是近 7 天的人数或次数。")
+        case .activity: String(localized: "发过这个事件，才算用过一次。右边是近 7 天的人数。")
+        }
     }
 
     private var typed: String { search.trimmingCharacters(in: .whitespaces) }

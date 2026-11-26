@@ -149,7 +149,7 @@ struct PostHogSignIn: View {
                 Button(busy ? "验证中…" : "用这把密钥连接") { Task { await connectWithKey() } }
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(!key.hasPrefix("phx_") || busy)
-                Text("在 PostHog 的 **设置 → 个人 API 密钥** 新建一把，权限勾选 project:read、query:read、user:read。")
+                Text("在 PostHog 的 **设置 → 个人 API 密钥** 新建一把，权限勾选 project:read、query:read、user:read、dashboard:read、insight:read。")
                     .font(.system(size: 12))
                     .foregroundStyle(Palette.ink2)
             } else {
@@ -351,18 +351,29 @@ struct PostHogPickPage: View {
     }
 }
 
-/// Links a PostHog project and picks counting defaults from the events it really sends.
+/// Links a PostHog project and picks counting defaults: the events it really sends, and the counting of its own
+/// dashboards when they have one.
 enum PostHogLinker {
     static func link(_ item: PostHogProject, account: Account, session: ConnectSession, model: AppModel) async {
-        session.project.posthog = PostHogLink(accountId: account.id, projectId: item.id, projectName: item.displayName, timeZone: item.timezone ?? TimeZone.current.identifier)
+        let zone = item.timezone ?? TimeZone.current.identifier
+        session.project.posthog = PostHogLink(accountId: account.id, projectId: item.id, projectName: item.displayName, timeZone: zone)
         if session.project.name.isEmpty { session.project.name = item.displayName }
-        // Keep the standard defaults if the check fails.
+        // Keep the standard defaults if the checks fail.
         guard let (host, token) = try? await TokenBroker(store: model.credentials).posthogToken(account.id) else { return }
-        let query = PostHogQueries.eventsSeen([MetricSettings.signupEvent, MetricSettings.installEvent], since: Date().addingTimeInterval(-30 * 86_400))
-        guard let rows = try? await PostHogClient(host: host, token: { token }).query(projectId: item.id, query, name: "snuffle-defaults") else { return }
-        let seen = PostHogParsing.eventNames(rows)
-        session.project.adoptDefaults(seenEvents: seen)
-        session.sendsInstalls = seen.contains(MetricSettings.installEvent)
+        let client = PostHogClient(host: host, token: { token })
+        let query = PostHogQueries.eventsSeen([MetricSettings.signupEvent], since: Date().addingTimeInterval(-30 * 86_400))
+        async let rows = try? client.query(projectId: item.id, query, name: "snuffle-defaults")
+        // Nil when the dashboards could not be read: the first refresh looks again (`AppModel.followDashboards`).
+        async let counting: DashboardReading.Counting?? = {
+            do { return .some(try await client.dashboardCounting(projectId: item.id)) } catch { return .none }
+        }()
+        if let rows = await rows { session.project.adoptDefaults(seenEvents: PostHogParsing.eventNames(rows)) }
+        guard let checked = await counting else { return }
+        session.project.dashboardChecked = true
+        if let counting = checked {
+            session.project.metrics = counting.applied(to: session.project.metrics, timeZone: TimeZone(identifier: zone) ?? .current)
+            Analytics.countingChanged(.dashboard, settings: session.project.metrics)
+        }
     }
 }
 

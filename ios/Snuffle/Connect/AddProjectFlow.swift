@@ -166,7 +166,7 @@ private struct StartPage: View {
                     .background(accent, in: Capsule())
             }
             HStack(spacing: 6) {
-                ForEach([String(localized: "新增用户"), String(localized: "在线人数"), String(localized: "活跃"), String(localized: "付费事件")], id: \.self) { Pill(text: $0) }
+                ForEach([String(localized: "累计用户"), String(localized: "活跃"), String(localized: "新增用户"), String(localized: "看板")], id: \.self) { Pill(text: $0) }
             }
             PostHogSignIn(signedIn: postHogSignedIn)
         }

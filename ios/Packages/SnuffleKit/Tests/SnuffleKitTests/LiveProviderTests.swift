@@ -33,11 +33,24 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
 
+    /// The name a PostHog query was sent with, so a route can answer one query and not another.
+    static func queryName(_ request: URLRequest) -> String? {
+        guard let body = request.httpBodyStream.map(Data.init(reading:)) ?? request.httpBody,
+              let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else { return nil }
+        return json["name"] as? String
+    }
+
     override func startLoading() {
         let key = (request.url?.host() ?? "") + (request.url?.path() ?? "")
+        let name = Self.queryName(request)
         let match = Self.lock.withLock { () -> (Int, String)? in
             Self.seen.append(request)
-            return Self.routes.first { key.hasPrefix($0.key) }?.value
+            // "host/path#name" answers only the query sent with that name; "host/path" answers the rest.
+            let named = Self.routes.first { route in
+                let parts = route.key.split(separator: "#", maxSplits: 1).map(String.init)
+                return parts.count == 2 && key.hasPrefix(parts[0]) && name == parts[1]
+            }
+            return named?.value ?? Self.routes.first { !$0.key.contains("#") && key.hasPrefix($0.key) }?.value
         }
         let (status, body) = match ?? (404, #"{"detail":"no stub"}"#)
         let response = HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: ["Content-Type": "application/json"])!
@@ -100,18 +113,18 @@ struct LiveProviderTests {
         #expect(!StubProtocol.seen.contains { $0.url?.path() == "/api/organizations/org-a/" }, "the current organization is not read twice")
     }
 
-    @Test func historyTakesDailyRevenueFromRevenueCatCharts() async throws {
+    @Test func boardTakesDailyRevenueFromRevenueCatCharts() async throws {
         // The shape the Charts API really returns: one row per day and measure (0 = revenue, 1 = transactions).
         StubProtocol.reset([
             "api.revenuecat.com/v2/projects/proj1/charts/revenue": (200, #"{"object":"chart_data","measures":[{"display_name":"Revenue"},{"display_name":"Transactions"}],"values":[{"cohort":1795046400,"incomplete":false,"measure":0,"value":0},{"cohort":1795046400,"incomplete":false,"measure":1,"value":0},{"cohort":1795132800,"incomplete":false,"measure":0,"value":3.28},{"cohort":1795132800,"incomplete":false,"measure":1,"value":1},{"cohort":1795219200,"incomplete":true,"measure":0,"value":null},{"cohort":1795219200,"incomplete":true,"measure":1,"value":0}]}"#)
         ])
         var revenueOnly = project
         revenueOnly.posthog = nil
-        let points = try await provider(store: store).history(for: revenueOnly, days: 3)
+        let board = try await provider(store: store).board(for: revenueOnly, days: 3, total: nil)
         let clock = ProjectClock(now: ISO8601.parse("2026-11-20T01:30:00Z")!, timeZoneIdentifier: "UTC")
-        #expect(points.map { clock.dayKey($0.day) } == ["2026-11-18", "2026-11-19", "2026-11-20"])
-        #expect(points.map(\.revenue) == [0, 0, 3.28], "11-19 is 0, 11-20 has the 3.28 renewal, 11-21 is outside the range")
-        #expect(points.allSatisfy { $0.newUsers == nil })
+        #expect(board.days.map { clock.dayKey($0.day) } == ["2026-11-18", "2026-11-19", "2026-11-20"])
+        #expect(board.days.map(\.revenue) == [0, 0, 3.28], "11-19 is 0, 11-20 has the 3.28 renewal, 11-21 is outside the range")
+        #expect(board.days.allSatisfy { $0.new.isEmpty && $0.active.isEmpty })
         let request = try #require(StubProtocol.seen.first?.url?.absoluteString)
         #expect(request.contains("resolution=0") && request.contains("currency=USD") && request.contains("start_date=2026-11-16"))
     }
@@ -133,16 +146,21 @@ struct LiveProviderTests {
     }
 
     @Test func combinesSourcesIntoOneSnapshot() async throws {
-        // 01:30 UTC: two hour columns after the two fixed ones.
+        let days = (0..<14).map { String($0 * 10) }.joined(separator: ",")
         StubProtocol.reset([
-            "us.posthog.com/api/projects/42/query": (200, #"{"results":[[17,5,1,2]]}"#),
+            "us.posthog.com/api/projects/42/query#snuffle_counts": (200, #"{"results":[[17,5]]}"#),
+            "us.posthog.com/api/projects/42/query#snuffle_people_today": (200, #"{"results":[[50,54,2,900]]}"#),
+            "us.posthog.com/api/projects/42/query#snuffle_people_days": (200, #"{"results":[[531,440,\#(days)]]}"#),
             "api.revenuecat.com/v2/projects/proj1/metrics/revenue": (200, #"{"object":"revenue_metric","value":3.28}"#)
         ])
-        let result = await provider(store: store).refresh(project, metrics: [.newUsers, .revenue], previous: nil)
+        let result = await provider(store: store).refresh(project, metrics: [.newUsers, .revenue, .activeToday, .activeWeek], previous: nil)
         #expect(result.snapshot.newUsers == 17)
         #expect(result.snapshot.hourlyReadAt == nil, "nothing hourly was asked for")
-        #expect(result.snapshot.newUsersYesterday == 5)
-        #expect(result.snapshot.hourlyNewUsers == [1, 2])
+        #expect(result.snapshot.previous[.newUsers] == 5)
+        #expect(result.snapshot[.activeToday] == 50 && result.snapshot.previous[.activeToday] == 54)
+        #expect(result.snapshot[.activeWeek] == 531 && result.snapshot.previous[.activeWeek] == 440)
+        #expect(result.snapshot.online == 2 && result.snapshot[.pageviews] == 900)
+        #expect(result.snapshot.dailyActive == (0..<14).map { $0 * 10 })
         #expect(result.snapshot.revenue == 3.28)
         #expect(result.snapshot.revenueSource == .revenueCat)
         #expect(result.snapshot.failures.isEmpty)
@@ -164,7 +182,7 @@ struct LiveProviderTests {
 
         // Read ten minutes ago under the same scope: the monthly number is kept until the hour is up.
         let kept = await provider(store: store).refresh(scoped, metrics: [.activeMonth], previous: previous(scoped.metrics.inEffect))
-        #expect(queries() == 2, "today's counts and presence only")
+        #expect(queries() == 3, "today's counts and people only")
         #expect(kept.snapshot.countedAs == scoped.metrics.inEffect)
         #expect(kept.snapshot.fillingGaps(from: previous(scoped.metrics.inEffect))[.activeMonth] == 1233)
 
@@ -172,7 +190,7 @@ struct LiveProviderTests {
         for other in [nil, scoped.metrics.leaving(out: [])] {
             StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[3,40,120,800]]}"#)])
             let reread = await provider(store: store).refresh(scoped, metrics: [.activeMonth], previous: previous(other))
-            #expect(queries() == 3, "and the hourly activity")
+            #expect(queries() == 4, "and the month")
             #expect(reread.snapshot.fillingGaps(from: previous(other))[.activeMonth] != 1233)
         }
     }
@@ -182,55 +200,61 @@ struct LiveProviderTests {
         scoped.metrics.excludedSurfaces = [.visitors]
         let now = ISO8601.parse("2026-11-20T01:30:00Z")!
         let today = ProjectClock(now: now, timeZoneIdentifier: "UTC").todayStart
-        let names = { StubProtocol.seen.compactMap { request -> String? in
-            guard let body = request.httpBodyStream.map(Data.init(reading:)) ?? request.httpBody,
-                  let json = try? JSONSerialization.jsonObject(with: body) as? [String: Any] else { return nil }
-            return json["name"] as? String
-        } }
+        let names = { StubProtocol.seen.compactMap(StubProtocol.queryName) }
+        let firstSeen = #"{"results":[["ios",5,3,40,30],["android",2,1,20,10]]}"#
 
-        // First time: the whole history before today, and the people new today.
-        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[900,7]]}"#)])
+        // First time: everyone before today by platform, and the people new today on top.
+        StubProtocol.reset([
+            "us.posthog.com/api/projects/42/query#snuffle_tally": (200, #"{"results":[["ios",600],["android",300]]}"#),
+            "us.posthog.com/api/projects/42/query#snuffle_first_seen": (200, firstSeen),
+            "us.posthog.com/api/projects/42/query": (200, #"{"results":[[]]}"#)
+        ])
         let first = await provider(store: store).refresh(scoped, metrics: [.totalUsers], previous: nil)
-        #expect(names().contains("snuffle_people_before"))
-        #expect(first.snapshot.userTally == UserTally(people: 900 + 900, before: today), "the stub answers both queries with 900 first")
+        #expect(names().contains("snuffle_tally"))
+        #expect(first.snapshot.userTally == UserTally(byPlatform: ["ios": 600, "android": 300], before: today))
+        #expect(first.snapshot[.totalUsers] == 907)
+        #expect(first.snapshot.previous[.totalUsers] == 900, "the total set against itself before today")
+        #expect(first.snapshot.platforms == [PlatformCount(name: "ios", count: 605), PlatformCount(name: "android", count: 302)])
 
-        // Two days later: no history scan, the settled days move the tally and today adds on top.
+        // Two days later: no history scan; the settled days move the tally, and today adds on top.
         let earlier = ProjectSnapshot(projectId: scoped.id, fetchedAt: now, dayStart: today, values: [.totalUsers: 1000],
-                                      hourlyReadAt: now.addingTimeInterval(-7200), countedAs: scoped.metrics.inEffect,
-                                      userTally: UserTally(people: 1000, before: today.addingTimeInterval(-2 * 86_400)))
-        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[30,4]]}"#)])
+                                      countedAs: scoped.metrics.inEffect,
+                                      userTally: UserTally(byPlatform: ["ios": 700, "android": 300], before: today.addingTimeInterval(-2 * 86_400)))
+        StubProtocol.reset([
+            "us.posthog.com/api/projects/42/query#snuffle_tally_move": (200, #"{"results":[["ios",20],["android",10]]}"#),
+            "us.posthog.com/api/projects/42/query#snuffle_first_seen": (200, firstSeen),
+            "us.posthog.com/api/projects/42/query": (200, #"{"results":[[]]}"#)
+        ])
         let next = await provider(store: store).refresh(scoped, metrics: [.totalUsers], previous: earlier)
-        #expect(!names().contains("snuffle_people_before"))
-        #expect(names().contains("snuffle_new_people"))
-        #expect(next.snapshot.userTally == UserTally(people: 1030, before: today))
-        #expect(next.snapshot[.totalUsers] == 1034)
+        #expect(!names().contains("snuffle_tally"))
+        #expect(next.snapshot.userTally == UserTally(byPlatform: ["ios": 720, "android": 310], before: today))
+        #expect(next.snapshot[.totalUsers] == 1037)
+
+        // Later the same day: the tally is current, so only today's first-timers are read.
+        StubProtocol.reset(["us.posthog.com/api/projects/42/query#snuffle_first_seen": (200, firstSeen), "us.posthog.com/api/projects/42/query": (200, #"{"results":[[]]}"#)])
+        let same = await provider(store: store).refresh(scoped, metrics: [.totalUsers], previous: next.snapshot)
+        #expect(!names().contains { $0.hasPrefix("snuffle_tally") })
+        #expect(same.snapshot[.totalUsers] == 1037)
 
         // A tally kept under another scope is not used: the history is read again.
         var other = earlier
         other.countedAs = scoped.metrics.leaving(out: [])
-        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[30,4]]}"#)])
+        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[]]}"#)])
         _ = await provider(store: store).refresh(scoped, metrics: [.totalUsers], previous: other)
-        #expect(names().contains("snuffle_people_before"))
+        #expect(names().contains("snuffle_tally"))
     }
 
-    @Test func aTotalFromBeforeTalliesIsReadAgainAfterTheUpdate() async throws {
-        // What a build before tallies left in the cache: the signed-in count, read ten minutes ago, same scope.
-        var scoped = project
-        scoped.metrics.excludedSurfaces = [.visitors]
-        let now = ISO8601.parse("2026-11-20T01:30:00Z")!
-        let today = ProjectClock(now: now, timeZoneIdentifier: "UTC").todayStart
-        var old = try JSONSerialization.jsonObject(with: JSONEncoder().encode(ProjectSnapshot(
-            projectId: scoped.id, fetchedAt: now, dayStart: today, values: [.totalUsers: 0, .activeMonth: 814],
-            hourlyReadAt: now.addingTimeInterval(-600), countedAs: scoped.metrics.inEffect))) as! [String: Any]
-        old["userTally"] = nil
-        let cached = try JSONDecoder().decode(ProjectSnapshot.self, from: JSONSerialization.data(withJSONObject: old))
-        #expect(cached[.totalUsers] == nil)
-        #expect(cached[.activeMonth] == 814)
-
-        StubProtocol.reset(["us.posthog.com/api/projects/42/query": (200, #"{"results":[[907,33]]}"#)])
-        let result = await provider(store: store).refresh(scoped, metrics: [.totalUsers, .activeMonth], previous: cached)
-        #expect(result.snapshot.userTally == UserTally(people: 907 + 907, before: today), "the stub answers every query alike")
-        #expect(result.snapshot[.totalUsers] != nil && result.snapshot[.totalUsers] != 0)
+    @Test func firstSeenProjectsCountNewUsersFromFirstUse() async throws {
+        var seen = project
+        seen.metrics = MetricSettings(newUsers: .firstSeen, revenue: .none, excludedSurfaces: [])
+        StubProtocol.reset([
+            "us.posthog.com/api/projects/42/query#snuffle_first_seen": (200, #"{"results":[["ios",5,3,40,30],["android",2,1,20,10]]}"#),
+            "us.posthog.com/api/projects/42/query": (200, #"{"results":[[]]}"#)
+        ])
+        let result = await provider(store: store).refresh(seen, metrics: [.newUsers, .newWeek], previous: nil)
+        #expect(result.snapshot.newUsers == 7 && result.snapshot.previous[.newUsers] == 4)
+        #expect(result.snapshot[.newWeek] == 60 && result.snapshot.previous[.newWeek] == 40)
+        #expect(!StubProtocol.seen.compactMap(StubProtocol.queryName).contains("snuffle_counts"), "nothing is event-based")
     }
 
     @Test func oneFailingSourceDoesNotBlankTheRest() async {

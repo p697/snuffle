@@ -95,19 +95,70 @@ public struct SubscriptionOverview: Codable, Hashable, Sendable {
     }
 }
 
-/// One day in a project's history chart.
-public struct DailyPoint: Codable, Hashable, Sendable, Identifiable {
-    public var day: Date
-    public var newUsers: Int?
-    public var revenue: Double?
-    public var active: Int?
+/// A project's history for its board: each day by platform, and each week's new and returning people.
+public struct ProjectBoard: Hashable, Sendable {
+    public struct Day: Hashable, Sendable, Identifiable {
+        public var day: Date
+        /// People active that day, by platform.
+        public var active: [String: Int]
+        /// People new that day the way the project counts new users, by platform.
+        public var new: [String: Int]
+        /// Everyone counted at the end of the day (so far, today), by platform; empty when the total is unknown.
+        public var total: [String: Int]
+        public var revenue: Double?
 
-    public var id: Date { day }
+        public var id: Date { day }
 
-    public init(day: Date, newUsers: Int?, revenue: Double?, active: Int?) {
-        self.day = day
-        self.newUsers = newUsers
-        self.revenue = revenue
-        self.active = active
+        public init(day: Date, active: [String: Int] = [:], new: [String: Int] = [:], total: [String: Int] = [:], revenue: Double? = nil) {
+            self.day = day
+            self.active = active
+            self.new = new
+            self.total = total
+            self.revenue = revenue
+        }
+    }
+
+    public struct Week: Hashable, Sendable, Identifiable {
+        public var start: Date
+        public var new: Int
+        public var returning: Int
+
+        public var id: Date { start }
+
+        public init(start: Date, new: Int, returning: Int) {
+            self.start = start
+            self.new = new
+            self.returning = returning
+        }
+    }
+
+    public var days: [Day]
+    public var weeks: [Week]
+    /// Platform names in the order charts stack them: the largest first.
+    public var platforms: [String]
+
+    public init(days: [Day], weeks: [Week], platforms: [String]) {
+        self.days = days
+        self.weeks = weeks
+        self.platforms = platforms
+    }
+
+    public var hasRevenue: Bool { days.contains { $0.revenue != nil } }
+
+    /// The total at the end of each day, worked back from `now` (today's total by platform) by taking away the people
+    /// first seen after it.
+    public static func totals(now: [String: Int], firstSeen: [[String: Int]]) -> [[String: Int]] {
+        var running = now
+        var result = Array(repeating: [String: Int](), count: firstSeen.count)
+        for index in firstSeen.indices.reversed() {
+            result[index] = running
+            for (platform, count) in firstSeen[index] { running[platform, default: 0] -= count }
+        }
+        return result
+    }
+
+    /// Platforms by their share of `counts`, largest first.
+    public static func order(_ counts: [String: Int]) -> [String] {
+        PlatformCount.sorted(counts).map(\.name)
     }
 }

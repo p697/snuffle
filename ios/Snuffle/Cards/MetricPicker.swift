@@ -94,7 +94,7 @@ struct CardMetricPicker: View {
     @State private var loading: Set<Metric> = []
     @State private var connecting: Platform?
 
-    private enum Route: Hashable { case counting(CountingKind), events, scope }
+    private enum Route: Hashable { case counting(CountingKind), events, definition }
 
     private var current: Metric? {
         switch slot {
@@ -109,7 +109,7 @@ struct CardMetricPicker: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(alignment: .top) {
-                        PageTitle(title: slot == .add ? String(localized: "加一个小数") : String(localized: "换成哪个数"), subtitle: String(localized: "\(project.name) · 右边是现在的数，选了就是它"))
+                        PageTitle(title: slot == .add ? String(localized: "加一个数") : String(localized: "换成哪个数"), subtitle: String(localized: "\(project.name) · 右边是现在的数，选了就是它"))
                         RoundIconButton(systemName: "xmark", label: String(localized: "关闭")) { dismiss() }
                     }
                     usersSection
@@ -122,7 +122,7 @@ struct CardMetricPicker: View {
             .navigationDestination(for: Route.self) { route in
                 switch route {
                 case .counting(let kind): CountingPage(kind: kind, project: $project)
-                case .scope: ScopePage(project: $project)
+                case .definition: DefinitionPage(project: $project)
                 case .events:
                     EventPicker(project: project, purpose: .metric) { metric in
                         Task { [project] in
@@ -147,8 +147,8 @@ struct CardMetricPicker: View {
                 if project.posthog == nil {
                     MissingSourceRow(titles: String(localized: "新增用户 · 活跃 · 在线 · 事件"), platform: .posthog) { connecting = .posthog }
                 } else {
-                    row(.newUsers, counting: .newUsers)
-                    ForEach([Metric.activeToday, .activeWeek, .activeMonth, .totalUsers, .online, .pageviews], id: \.self) { metric in
+                    row(.newUsers)
+                    ForEach([Metric.totalUsers, .activeToday, .activeWeek, .newWeek, .activeMonth, .online, .pageviews], id: \.self) { metric in
                         RowDivider()
                         row(metric)
                     }
@@ -175,16 +175,16 @@ struct CardMetricPicker: View {
                 }
             }
             if project.posthog != nil {
-                // Under the numbers it changes, like "改口径" under new users.
+                // Under the numbers it changes.
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text(verbatim: project.scopeLine)
+                    Text(verbatim: project.countingSummary)
                         .font(.system(size: 12))
                         .foregroundStyle(Palette.ink2)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .accessibilityIdentifier("scopeLine")
-                    NavigationLink(value: Route.scope) {
-                        Text("改范围")
+                        .accessibilityIdentifier("countingLine")
+                    NavigationLink(value: Route.definition) {
+                        Text("改口径")
                             .font(.system(size: 13, weight: .bold))
                             .underline()
                             .foregroundStyle(Palette.ink)
@@ -192,7 +192,7 @@ struct CardMetricPicker: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityIdentifier("scope")
+                    .accessibilityIdentifier("counting")
                 }
                 .padding(.horizontal, 6)
             }
@@ -254,7 +254,7 @@ struct CardMetricPicker: View {
         }()
         VStack(alignment: .leading, spacing: 0) {
             MetricRow(
-                title: metric.title,
+                title: metric.title(in: project),
                 detail: elsewhere ? String(localized: "已在卡片上") : metric.explanation(in: project),
                 value: available ? metric.text(value(metric)) : nil,
                 loading: loading.contains(metric),
@@ -322,166 +322,6 @@ struct MeasuredNumbers {
     mutating func add(_ read: [Metric: Double], countedAs settings: MetricSettings) {
         values = values(countedAs: settings).merging(read) { $1 }
         countedAs = settings
-    }
-}
-
-// MARK: Totals
-
-/// "调整合计": the three numbers in the totals strip, each added up across projects.
-struct TotalsEditor: View {
-    @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
-    @State private var totals: [Metric] = []
-    @State private var picking: Int?
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    RoundIconButton(systemName: "xmark", label: String(localized: "取消")) { dismiss() }
-                    Spacer()
-                    Text("顶部合计").font(.system(size: 17, weight: .heavy)).foregroundStyle(Palette.ink)
-                    Spacer()
-                    Button("完成") {
-                        model.saveTotals(totals)
-                        dismiss()
-                    }
-                    .font(.system(size: 15, weight: .heavy))
-                    .foregroundStyle(Palette.paper)
-                    .padding(.horizontal, 18)
-                    .frame(minHeight: 44)
-                    .background(Palette.ink, in: Capsule())
-                }
-                Text("点一个数换掉它。每个数是所有项目加起来的。")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Palette.ink2)
-                    .padding(.horizontal, 4)
-                HStack(alignment: .top, spacing: 8) {
-                    ForEach(Array(totals.enumerated()), id: \.offset) { index, metric in
-                        Button { picking = index } label: {
-                            TotalTile(metric: metric, value: model.total(metric), rise: nil)
-                                .padding(10)
-                                .background(picking == index ? Color.white.opacity(0.14) : .clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .strokeBorder(Palette.stripMuted, style: StrokeStyle(lineWidth: 1.5, dash: picking == index ? [] : [5, 4]))
-                                }
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityHint("换成别的数")
-                        .accessibilityIdentifier("totalTile-\(index)")
-                    }
-                }
-                .padding(10)
-                .background(Palette.strip, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-                Button("恢复默认") { withAnimation(.snappy) { totals = CardLayout.standardTotals } }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.ink2)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-            }
-            .padding(16)
-        }
-        .background(Palette.paper.ignoresSafeArea())
-        .onAppear { if totals.isEmpty { totals = model.settings.totals } }
-        .sheet(item: Binding(get: { picking.map(TotalSlot.init) }, set: { picking = $0?.index })) { slot in
-            TotalsMetricPicker(current: totals[slot.index], taken: totals) { metric in
-                if let other = totals.firstIndex(of: metric) { totals.swapAt(slot.index, other) } else { totals[slot.index] = metric }
-            }
-        }
-    }
-
-    private struct TotalSlot: Identifiable {
-        var index: Int
-        var id: Int { index }
-    }
-}
-
-/// The library for the totals strip: numbers every project shares, added up.
-private struct TotalsMetricPicker: View {
-    var current: Metric
-    var taken: [Metric]
-    var pick: (Metric) -> Void
-    @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
-    @State private var measured: [Metric: Double] = [:]
-    @State private var loading: Set<Metric> = []
-
-    private static let sections: [(LocalizedStringKey, [Metric])] = [
-        ("用户 · PostHog", [.newUsers, .activeToday, .activeWeek, .activeMonth, .totalUsers, .online, .pageviews]),
-        ("收入", [.revenue, .orders, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days]),
-        ("商店", [.reviewsToAnswer])
-    ]
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .top) {
-                    PageTitle(title: String(localized: "换成哪个数"), subtitle: String(localized: "全部项目加起来 · 右边是现在的数"))
-                    RoundIconButton(systemName: "xmark", label: String(localized: "关闭")) { dismiss() }
-                }
-                ForEach(Self.sections.indices, id: \.self) { index in
-                    let metrics = Self.sections[index].1.filter { metric in metric == current || model.projects.contains { metric.isAvailable(in: $0) } }
-                    if !metrics.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(Self.sections[index].0)
-                                .font(.system(size: 12, weight: .bold))
-                                .tracking(0.6)
-                                .foregroundStyle(Palette.ink2)
-                                .padding(.horizontal, 6)
-                            CardGroup {
-                                ForEach(Array(metrics.enumerated()), id: \.offset) { position, metric in
-                                    if position > 0 { RowDivider() }
-                                    MetricRow(
-                                        title: metric.title,
-                                        detail: projectsLine(metric),
-                                        value: metric.text(total(metric)),
-                                        loading: loading.contains(metric),
-                                        selected: metric == current
-                                    ) {
-                                        pick(metric)
-                                        dismiss()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(16)
-        }
-        .background(Palette.paper.ignoresSafeArea())
-        .task { await measure() }
-    }
-
-    private func projectsLine(_ metric: Metric) -> String {
-        let count = model.projects.filter { metric.isAvailable(in: $0) }.count
-        let place = taken.contains(metric) && metric != current ? String(localized: "已在合计里") + " · " : ""
-        return place + String(localized: "\(count) 个项目有这个数")
-    }
-
-    private func total(_ metric: Metric) -> Double? {
-        measured[metric] ?? model.total(metric)
-    }
-
-    /// Adds up what the cache does not have yet, project by project.
-    private func measure() async {
-        let library = Self.sections.flatMap(\.1)
-        let missing = library.filter { model.total($0) == nil && model.projects.contains(where: $0.isAvailable(in:)) }
-        guard !missing.isEmpty else { return }
-        loading = Set(missing)
-        defer { loading = [] }
-        let provider = model.provider
-        let projects = model.refreshable
-        let results = await withTaskGroup(of: [Metric: Double].self) { group in
-            for project in projects {
-                group.addTask { (try? await provider.measure(project, metrics: Set(missing))) ?? [:] }
-            }
-            var sum: [Metric: Double] = [:]
-            for await values in group { sum.merge(values, uniquingKeysWith: +) }
-            return sum
-        }
-        measured.merge(results) { $1 }
     }
 }
 

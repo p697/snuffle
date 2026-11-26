@@ -32,6 +32,17 @@ public protocol DataProvider: Sendable {
     func surfaces(for project: Project) async throws -> [SurfaceStat]
     func orders(for project: Project) async throws -> [Order]
     func overview(for project: Project) async throws -> SubscriptionOverview?
-    func history(for project: Project, days: Int) async throws -> [DailyPoint]
+    /// The project's board for the last `days` days. `total` is today's total by platform, from which the daily
+    /// totals are worked back; nil leaves them out.
+    func board(for project: Project, days: Int, total: [String: Int]?) async throws -> ProjectBoard
+    /// The PostHog dashboards of the project.
+    func dashboards(for project: Project) async throws -> [DashboardSummary]
+    func dashboard(_ ref: DashboardRef, for project: Project) async throws -> DashboardDetail
+    /// The counting the project's own dashboards use (`PostHogClient.dashboardCounting`).
+    func dashboardCounting(for project: Project) async throws -> DashboardReading.Counting?
+    /// Runs one dashboard chart's own query.
+    func run(_ tile: InsightTile, for project: Project) async throws -> InsightResult
+    /// How many of the last day's events `condition` keeps, out of all of them: checks a hand-typed condition.
+    func check(condition: String, for project: Project) async throws -> (kept: Int, total: Int)
     func reply(to review: Review, text: String, in project: Project) async throws
 }

@@ -153,12 +153,33 @@ enum Analytics {
         capture("card_layout_saved", [
             "big": layout.big.map(\.analyticsName),
             "small": layout.small.map(\.analyticsName),
+            "trend": layout.trend,
+            "split": layout.split,
             "everywhere": everywhere,
         ])
     }
 
-    static func totalsLayoutSaved(_ metrics: [Metric]) {
-        capture("totals_layout_saved", ["metrics": metrics.map(\.analyticsName)])
+    /// Where a project's counting came from: its PostHog dashboard, the person's own edits, or Snuffle's standard.
+    enum CountingSource: String {
+        case dashboard, manual, standard
+    }
+
+    /// The shape of the counting only: whether it has an event, how many conditions, the unit. Never the event, the
+    /// conditions or the dashboard themselves.
+    static func countingChanged(_ source: CountingSource, settings: MetricSettings) {
+        capture("counting_changed", [
+            "source": source.rawValue,
+            "has_activity_event": settings.activityEvent != nil,
+            "condition_count": settings.conditions.count,
+            "unit": settings.unit.rawValue,
+            "has_platform_property": settings.platformProperty != nil,
+            "has_since": settings.since != nil,
+        ])
+    }
+
+    /// Charts from a PostHog dashboard placed on a project's board.
+    static func chartsPinned(_ added: Int, total: Int) {
+        capture("charts_pinned", ["added": added, "total": total])
     }
 
     static func projectDeleted(_ project: Project, projectCount: Int) {

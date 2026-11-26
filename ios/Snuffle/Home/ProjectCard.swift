@@ -5,7 +5,7 @@ import SwiftUI
 enum CardSlot: Hashable {
     case big(Int)
     case small(Int)
-    /// A new pill at the end.
+    /// A new small number at the end.
     case add
 }
 
@@ -17,8 +17,9 @@ struct CardEditing {
     var remove: (Int) -> Void
 }
 
-/// One project on the home screen. Every row has a fixed height so nothing moves while refreshing:
-/// progress, deltas and failures only fill slots that are always there.
+/// One project on the home screen: a big number with what it is set against and the last 14 days beside it, up to
+/// three smaller numbers, and the platform split. Every row has a fixed height and every number stays on screen
+/// while refreshing: a line sweeps along the top, then the digits that changed roll up and the rise is marked.
 struct ProjectCard: View {
     @Environment(AppModel.self) private var model
     @Environment(\.accent) private var accent
@@ -37,25 +38,34 @@ struct ProjectCard: View {
     private var mark: SnapshotChange? { editing == nil && !model.marksFading ? model.marks[project.id] : nil }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             header
-            bigRow
+            heroRow
             if !layout.small.isEmpty || editing != nil {
-                pills
+                Rectangle().fill(Palette.line).frame(height: 1)
+                stats
+            }
+            if layout.split {
+                SplitBar(platforms: snapshot?.platforms ?? [])
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 16)
         .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(alignment: .top) {
+            if stage == .loading {
+                SweepLine().clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            }
+        }
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(failed ? Palette.badLine : .clear, lineWidth: 2)
         }
-        .shadow(color: Palette.shadow.opacity(stage == .loading ? (colorScheme == .dark ? 0.6 : 0.18) : 0), radius: 17, y: 16)
-        .scaleEffect(stage == .loading ? 1.025 : 1)
-        .opacity(stage == .waiting ? 0.42 : 1)
+        .shadow(color: Palette.shadow.opacity(stage == .loading ? (colorScheme == .dark ? 0.6 : 0.16) : 0), radius: 17, y: 14)
+        .scaleEffect(stage == .loading ? 1.02 : 1)
         .zIndex(stage == .loading ? 1 : 0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: stage)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: stage)
         .modifier(Shake.Driver(trigger: model.shakes[project.id] ?? 0))
         .overlay {
             if !isPreview, model.isLocked(project) { LockedOverlay() }
@@ -66,13 +76,24 @@ struct ProjectCard: View {
 
     private var failed: Bool { editing == nil && !(snapshot?.failures.isEmpty ?? true) && stage != .loading }
 
+    // MARK: Header
+
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             ProjectBadge(project: project, size: 28)
             Text(project.name)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(Palette.ink)
                 .lineLimit(1)
+            if let zone = project.dayZoneLabel {
+                Text(zone)
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Palette.ink2)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Palette.line))
+                    .accessibilityLabel(Text("按 \(zone) 计日"))
+            }
             Spacer(minLength: 8)
             stateLabel
         }
@@ -81,7 +102,11 @@ struct ProjectCard: View {
 
     @ViewBuilder
     private var stateLabel: some View {
-        if let failure = snapshot?.failures.first, stage != .loading, editing == nil {
+        if stage == .loading {
+            Text("正在闻…")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(Palette.ink)
+        } else if let failure = snapshot?.failures.first, editing == nil {
             Button {
                 Task { await model.refresh([project], trigger: .project) }
             } label: {
@@ -103,117 +128,128 @@ struct ProjectCard: View {
         }
     }
 
+    // MARK: Big numbers
+
     @ViewBuilder
-    private var bigRow: some View {
+    private var heroRow: some View {
         if layout.big.count > 1 {
             HStack(alignment: .bottom, spacing: editing == nil ? 12 : 8) {
                 ForEach(Array(layout.big.enumerated()), id: \.offset) { index, metric in
-                    slot(.big(index)) { big(metric, base: 46, chip: false) }
+                    slot(.big(index)) { hero(metric, base: 44) }
                 }
             }
         } else if let metric = layout.big.first {
             HStack(alignment: .bottom, spacing: 12) {
-                slot(.big(0)) { big(metric, base: 56, chip: true) }
-                if metric == .newUsers, editing == nil {
-                    HourBars(values: snapshot?.hourlyNewUsers ?? [])
-                        .frame(width: 104, height: 44)
+                slot(.big(0)) { hero(metric, base: 54) }
+                if layout.trend {
+                    VStack(alignment: .trailing, spacing: 4) {
+                        DayBars(values: snapshot?.dailyActive ?? [], hot: mark?[.activeToday] != nil)
+                            .frame(width: 118, height: 42)
+                        Text("近 14 天活跃")
+                            .font(.system(size: 11))
+                            .foregroundStyle(Palette.ink2)
+                            .lineLimit(1)
+                    }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Text("近 14 天活跃"))
                 }
             }
         }
     }
 
-    private func big(_ metric: Metric, base: CGFloat, chip: Bool) -> some View {
+    private func hero(_ metric: Metric, base: CGFloat) -> some View {
         let text = metric.text(snapshot?[metric])
         let rise = mark?[metric]
-        return VStack(alignment: .leading, spacing: 2) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Odometer(
-                    text: text,
-                    size: NumberSize.fit(text, base: base),
-                    spinning: stage == .loading,
-                    color: rise != nil && colorScheme == .dark ? accent : Palette.ink
-                )
-                .padding(.horizontal, 2)
-                .background(alignment: .bottomLeading) { Highlighter(on: rise != nil, fading: model.marksFading) }
-                .layoutPriority(1)
-                if chip {
-                    DeltaChip(text: rise.map(metric.delta), visible: rise != nil, size: 14)
-                }
-            }
-            .frame(height: 54, alignment: .bottomLeading)
-            caption(metric, single: chip)
+        return VStack(alignment: .leading, spacing: 4) {
+            caption(metric)
                 .font(.system(size: 12))
-                .foregroundStyle(Palette.ink2)
-                .frame(height: 18)
+                .frame(height: 16, alignment: .leading)
+            HStack(alignment: .center, spacing: 8) {
+                Odometer(text: text, size: NumberSize.fit(text, base: base), color: rise != nil && colorScheme == .dark ? accent : Palette.ink)
+                    .padding(.horizontal, 2)
+                    .background(alignment: .bottomLeading) { Highlighter(on: rise != nil, fading: model.marksFading, height: base * 0.36) }
+                    .layoutPriority(1)
+                DeltaChip(text: rise.map(metric.delta), visible: rise != nil, size: 14)
+            }
+            .frame(height: base, alignment: .leading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// The line under a big number. Alone, long languages drop the label before the comparison rather than cutting
-    /// it off; side by side, the label stays, since two numbers need their names.
-    private func caption(_ metric: Metric, single: Bool) -> some View {
-        let label = captionLabel(metric, short: !single)
-        let detail = captionDetail(metric)
+    /// "累计用户 · 今天 +6": the name, then what the number is set against. Long languages drop the reference before
+    /// cutting the name.
+    private func caption(_ metric: Metric) -> some View {
+        let reference = referenceText(metric)
         return ViewThatFits(in: .horizontal) {
-            Text(([label] + [detail].compactMap { $0 }).joined(separator: " · ")).fixedSize()
-            if single, let detail { Text(detail).fixedSize() }
-            Text(label).lineLimit(1)
+            HStack(spacing: 0) {
+                Text(metric.title(in: project)).foregroundStyle(Palette.ink2)
+                if let reference {
+                    Text(verbatim: " · ").foregroundStyle(Palette.ink2)
+                    Text(reference.text).fontWeight(.semibold).foregroundStyle(reference.tone.color)
+                }
+            }
+            .fixedSize()
+            Text(metric.title(in: project)).foregroundStyle(Palette.ink2).lineLimit(1)
         }
     }
 
-    private func captionLabel(_ metric: Metric, short: Bool) -> String {
+    /// The reference, or for numbers without one the detail that makes them readable.
+    private func referenceText(_ metric: Metric, compact: Bool = false) -> Metric.ReferenceText? {
+        if let reference = metric.reference(in: snapshot, compact: compact) { return reference }
         switch metric {
-        case .newUsers: short ? metric.title : String(localized: "今日新增用户")
-        case .revenue: String(localized: "今日收入")
-        default: metric.title
-        }
-    }
-
-    private func captionDetail(_ metric: Metric) -> String? {
-        switch metric {
-        case .newUsers:
-            return snapshot?.newUsersYesterday.map { String(localized: "昨天此时 \(Format.number($0))") }
         case .revenue:
-            if let orders = snapshot?.orders { return String(localized: "\(orders) 笔", comment: "Number of sales today, after the revenue amount.") }
-            return project.metrics.revenue == .revenueCat ? "RevenueCat" : nil
-        case .reviewsToAnswer:
-            return [project.appStore != nil ? "App Store" : nil, project.googlePlay != nil ? "Google Play" : nil].compactMap { $0 }.joined(separator: " + ")
+            if let orders = snapshot?.orders { return .init(text: String(localized: "\(orders) 笔", comment: "Number of sales today, after the revenue amount."), tone: .muted) }
+            return project.metrics.revenue == .revenueCat ? .init(text: "RevenueCat", tone: .muted) : nil
         default:
             return nil
         }
     }
 
-    /// Whole pills only: when they do not fit (long languages), the last ones go first.
-    @ViewBuilder
-    private var pills: some View {
-        if editing != nil {
-            // Editing wraps instead, so every pill and the add button stay reachable.
-            FlowLayout(spacing: 6) {
-                ForEach(Array(layout.small.enumerated()), id: \.offset) { index, metric in
-                    slot(.small(index)) { pill(metric) }
-                }
-                if layout.small.count < CardLayout.maxSmall { AddPillButton(selected: editing?.selected == .add) { editing?.choose(.add) } }
+    // MARK: Small numbers
+
+    private var stats: some View {
+        HStack(alignment: .top, spacing: 8) {
+            ForEach(Array(layout.small.enumerated()), id: \.offset) { index, metric in
+                slot(.small(index)) { stat(metric) }
             }
-        } else {
-            ViewThatFits(in: .horizontal) {
-                ForEach((1...max(1, layout.small.count)).reversed(), id: \.self) { count in
-                    HStack(spacing: 6) {
-                        ForEach(Array(layout.small.prefix(count).enumerated()), id: \.offset) { _, metric in pill(metric) }
-                    }
-                    .fixedSize()
-                }
+            if let editing, layout.small.count < CardLayout.maxSmall {
+                AddStatButton(selected: editing.selected == .add) { editing.choose(.add) }
             }
-            .frame(height: 28, alignment: .leading)
-            .clipped()
+            if editing == nil {
+                // Fewer than three keep their width, so numbers line up from card to card.
+                ForEach(layout.small.count..<CardLayout.maxSmall, id: \.self) { _ in Color.clear.frame(maxWidth: .infinity, maxHeight: 1) }
+            }
         }
     }
 
-    private func pill(_ metric: Metric) -> some View {
-        var value = metric.text(snapshot?[metric])
-        if metric == .revenue, let orders = snapshot?.orders, snapshot?.revenue != nil {
-            value += " · " + String(localized: "\(orders) 笔", comment: "Number of sales today, after the revenue amount.")
+    private func stat(_ metric: Metric) -> some View {
+        let text = metric.text(snapshot?[metric])
+        let rise = mark?[metric]
+        let reference = referenceText(metric, compact: true)
+        return VStack(alignment: .leading, spacing: 3) {
+            // The rise sits beside the name: the number takes the column's whole width.
+            HStack(spacing: 4) {
+                Text(metric.title(in: project))
+                    .font(.system(size: 12))
+                    .foregroundStyle(Palette.ink2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                DeltaChip(text: rise.map(metric.delta), visible: rise != nil, size: 10)
+                    .fixedSize()
+                    .layoutPriority(1)
+            }
+            .frame(height: 16, alignment: .leading)
+            Odometer(text: text, size: NumberSize.fit(text, base: 28), color: rise != nil && colorScheme == .dark ? accent : Palette.ink)
+                .padding(.horizontal, 1)
+                .background(alignment: .bottomLeading) { Highlighter(on: rise != nil, fading: model.marksFading, height: 10) }
+                .frame(height: 30, alignment: .leading)
+            Text(reference?.text ?? " ")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(reference?.tone.color ?? Palette.ink2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
-        return Pill(label: metric.title, value: value, hot: mark?[metric] != nil)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// In the editor a number is a button with a dashed outline, solid when it is the one being changed.
@@ -221,28 +257,30 @@ struct ProjectCard: View {
     private func slot(_ slot: CardSlot, @ViewBuilder content: () -> some View) -> some View {
         if let editing {
             let selected = editing.selected == slot
-            let shape = RoundedRectangle(cornerRadius: slot.isBig ? 16 : 99, style: .continuous)
-            HStack(spacing: 6) {
+            let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+            ZStack(alignment: .topTrailing) {
                 Button { editing.choose(slot) } label: { content().contentShape(shape) }
                     .buttonStyle(.plain)
                     .accessibilityHint("换成别的数")
+                    .padding(EdgeInsets(top: 4, leading: 6, bottom: 4, trailing: 6))
+                    .background(selected ? accent.opacity(0.3) : .clear, in: shape)
+                    .overlay {
+                        shape.strokeBorder(selected ? Palette.ink : Palette.faint, style: StrokeStyle(lineWidth: selected ? 2 : 1.5, dash: selected ? [] : [5, 4]))
+                    }
                 if case .small(let index) = slot {
                     Button { editing.remove(index) } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 10, weight: .heavy))
-                            .foregroundStyle(Palette.ink2)
-                            .frame(width: 28, height: 28)
+                            .font(.system(size: 9, weight: .heavy))
+                            .foregroundStyle(Palette.paper)
+                            .frame(width: 20, height: 20)
+                            .background(Palette.ink2, in: Circle())
+                            .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("移除")
-                    .padding(.leading, -8)
+                    .offset(x: 16, y: -16)
                 }
-            }
-            .padding(slot.isBig ? EdgeInsets(top: 4, leading: 8, bottom: 6, trailing: 8) : EdgeInsets(top: 2, leading: 2, bottom: 2, trailing: 4))
-            .background(selected ? accent.opacity(0.3) : .clear, in: shape)
-            .overlay {
-                shape.strokeBorder(selected ? Palette.ink : Palette.faint, style: StrokeStyle(lineWidth: selected ? 2 : 1.5, dash: selected ? [] : [5, 4]))
             }
         } else {
             content()
@@ -250,46 +288,151 @@ struct ProjectCard: View {
     }
 }
 
-extension CardSlot {
-    var isBig: Bool { if case .big = self { true } else { false } }
+/// The line that sweeps along a card's top while its numbers are read.
+private struct SweepLine: View {
+    @State private var phase: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        GeometryReader { geometry in
+            Capsule()
+                .fill(Palette.ink)
+                .frame(width: geometry.size.width * 0.38, height: 3)
+                .offset(x: reduceMotion ? geometry.size.width * 0.31 : -geometry.size.width * 0.4 + phase * geometry.size.width * 1.4)
+        }
+        .frame(height: 3)
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: false)) { phase = 1 }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
+/// People active on each of the last 14 days; today, the last, in ink, or in the accent when it just went up.
+struct DayBars: View {
+    var values: [Int]
+    var hot = false
+    @Environment(\.accent) private var accent
+
+    var body: some View {
+        let slots = PostHogQueries.recentDays
+        let shown = Array(values.suffix(slots))
+        let peak = max(1, shown.max() ?? 1)
+        GeometryReader { geometry in
+            HStack(alignment: .bottom, spacing: 2) {
+                ForEach(0..<slots, id: \.self) { index in
+                    let offset = index - (slots - shown.count)
+                    let value = offset >= 0 ? shown[offset] : 0
+                    let isToday = index == slots - 1
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(isToday ? (hot ? accent : Palette.ink) : Palette.faint)
+                        .frame(height: max(2, geometry.size.height * CGFloat(value) / CGFloat(peak)))
+                }
+            }
+            .frame(maxHeight: .infinity, alignment: .bottom)
+        }
+        .animation(.timingCurve(0.2, 0.9, 0.25, 1, duration: 0.7), value: shown)
+    }
+}
+
+/// Everyone counted, by platform: a bar of shares and, beneath, each platform's count and share.
+struct SplitBar: View {
+    var platforms: [PlatformCount]
+    var height: CGFloat = 8
+    var labels = true
+
+    /// Up to four, the rest folded into one.
+    private var parts: [PlatformCount] {
+        guard platforms.count > 4 else { return platforms }
+        let rest = platforms.dropFirst(3).map(\.count).reduce(0, +)
+        return Array(platforms.prefix(3)) + [PlatformCount(name: Surface.other.rawValue, count: rest)]
+    }
+
+    var body: some View {
+        let total = max(1, parts.map(\.count).reduce(0, +))
+        VStack(alignment: .leading, spacing: 6) {
+            GeometryReader { geometry in
+                let gaps = CGFloat(max(0, parts.count - 1)) * 2
+                HStack(spacing: 2) {
+                    if parts.isEmpty {
+                        Capsule().fill(Palette.line)
+                    }
+                    ForEach(parts, id: \.name) { part in
+                        Capsule()
+                            .fill(PlatformStyle.color(part.name))
+                            .frame(width: max(3, (geometry.size.width - gaps) * CGFloat(part.count) / CGFloat(total)))
+                    }
+                }
+            }
+            .frame(height: height)
+            .animation(.easeInOut(duration: 0.6), value: parts)
+            if labels {
+                ViewThatFits(in: .horizontal) {
+                    labelRow(total: total, counts: true)
+                    labelRow(total: total, counts: false)
+                }
+                .frame(height: 16)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(parts.map { "\(PlatformStyle.name($0.name)) \(Format.percent(Double($0.count) / Double(total)))" }.joined(separator: ", "))
+    }
+
+    private func labelRow(total: Int, counts: Bool) -> some View {
+        HStack(spacing: 12) {
+            ForEach(parts, id: \.name) { part in
+                HStack(spacing: 5) {
+                    Circle().fill(PlatformStyle.color(part.name)).frame(width: 8, height: 8)
+                    Text(PlatformStyle.name(part.name)).fontWeight(.semibold).foregroundStyle(Palette.ink)
+                    if counts { Text(Format.number(part.count)).foregroundStyle(Palette.ink2) }
+                    Text(Format.percent(Double(part.count) / Double(total))).foregroundStyle(Palette.ink2)
+                }
+                .fixedSize()
+            }
+            if parts.isEmpty {
+                Text("刷新后显示各平台占比").foregroundStyle(Palette.ink2)
+            }
+        }
+        .font(.system(size: 12))
+    }
 }
 
 /// The highlighter under a number that went up: sweeps in left to right, retracts right to left.
 struct Highlighter: View {
     var on: Bool
     var fading: Bool
+    var height: CGFloat = 20
     @Environment(\.accent) private var accent
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Rectangle()
             .fill(colorScheme == .dark ? .clear : accent)
-            .frame(height: 20)
+            .frame(height: height)
             .scaleEffect(x: on ? 1 : 0, anchor: fading ? .trailing : .leading)
             .animation(.timingCurve(0.2, 0.8, 0.2, 1, duration: on ? 0.28 : 0.4), value: on)
-            .padding(.bottom, 3)
+            .padding(.bottom, height * 0.15)
     }
 }
 
-private struct AddPillButton: View {
+private struct AddStatButton: View {
     var selected: Bool
     var action: () -> Void
     @Environment(\.accent) private var accent
 
     var body: some View {
         Button(action: action) {
-            Label("小数", systemImage: "plus")
+            Label("加一个数", systemImage: "plus")
                 .font(.system(size: 12.5, weight: .bold))
                 .foregroundStyle(Palette.ink)
-                .padding(.horizontal, 10)
-                .frame(height: 28)
-                .background(selected ? accent.opacity(0.3) : .clear, in: Capsule())
-                .overlay(Capsule().strokeBorder(Palette.ink, style: StrokeStyle(lineWidth: 1.5, dash: selected ? [] : [5, 4])))
-                .frame(minHeight: 44)
+                .frame(maxWidth: .infinity, minHeight: 60)
+                .background(selected ? accent.opacity(0.3) : .clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Palette.ink, style: StrokeStyle(lineWidth: 1.5, dash: selected ? [] : [5, 4])))
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("加一个小数")
+        .accessibilityLabel("加一个数")
     }
 }
 
@@ -345,37 +488,6 @@ struct DeltaChip: View {
             .animation(visible ? .spring(response: 0.22, dampingFraction: 0.5) : .easeIn(duration: 0.4), value: visible)
             .onChange(of: text) { _, new in if let new { lastText = new } }
             .accessibilityHidden(!(visible && text != nil))
-    }
-}
-
-/// New users per hour of today; the current hour in ink, the rest faint.
-struct HourBars: View {
-    var values: [Int]
-
-    var body: some View {
-        Canvas { context, size in
-            let slots = 17
-            let shown = Array(values.suffix(slots))
-            let peak = max(1, shown.max() ?? 1)
-            let step = size.width / CGFloat(slots)
-            for (index, value) in shown.enumerated() {
-                let x = step * (CGFloat(index) + 0.5)
-                let height = max(2, size.height * CGFloat(value) / CGFloat(peak))
-                var bar = Path()
-                bar.move(to: CGPoint(x: x, y: size.height))
-                bar.addLine(to: CGPoint(x: x, y: size.height - height))
-                let isNow = index == shown.count - 1
-                context.stroke(bar, with: .color(isNow ? Palette.ink : Palette.faint), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-            }
-            for index in shown.count..<slots {
-                let x = step * (CGFloat(index) + 0.5)
-                var dot = Path()
-                dot.move(to: CGPoint(x: x, y: size.height))
-                dot.addLine(to: CGPoint(x: x, y: size.height - 2))
-                context.stroke(dot, with: .color(Palette.line), style: StrokeStyle(lineWidth: 4, lineCap: .round))
-            }
-        }
-        .accessibilityLabel("今天每小时新增用户")
     }
 }
 

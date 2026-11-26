@@ -32,6 +32,11 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
     public var metrics: MetricSettings
     /// The numbers on the project's card.
     public var card: CardLayout
+    /// Charts from the project's PostHog dashboards placed on its board, in order.
+    public var pins: [InsightTile]
+    /// Whether its PostHog dashboards were looked at for a counting to follow, once (when it was added, or the first
+    /// refresh after an update, as soon as the dashboards could be read).
+    public var dashboardChecked: Bool
     /// Set when the person picked a picture for the project; bumped on every change. The picture lives only on this
     /// phone (`SharedContainer.projectIcon`), so it is lost with the app, like the rest of the local data.
     public var iconVersion: Int?
@@ -47,6 +52,8 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         googlePlay: GooglePlayLink? = nil,
         metrics: MetricSettings = .standard,
         card: CardLayout? = nil,
+        pins: [InsightTile] = [],
+        dashboardChecked: Bool = false,
         iconVersion: Int? = nil
     ) {
         self.id = id
@@ -59,12 +66,12 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         self.googlePlay = googlePlay
         self.metrics = metrics
         self.iconVersion = iconVersion
+        self.pins = pins
+        self.dashboardChecked = dashboardChecked
         self.card = CardLayout(big: [])
         self.card = card ?? CardLayout.standard(for: self)
     }
 
-    /// Reads projects saved before cards were customizable (TestFlight builds before November 23, 2026), which had a fixed big
-    /// number and a "second number" in `metrics.extra`. Remove once those builds are out of use.
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -77,34 +84,17 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         googlePlay = try container.decodeIfPresent(GooglePlayLink.self, forKey: .googlePlay)
         metrics = try container.decode(MetricSettings.self, forKey: .metrics)
         iconVersion = try container.decodeIfPresent(Int.self, forKey: .iconVersion)
+        pins = try container.decodeIfPresent([InsightTile].self, forKey: .pins) ?? []
+        dashboardChecked = try container.decodeIfPresent(Bool.self, forKey: .dashboardChecked) ?? false
         card = CardLayout(big: [])
-        if let saved = try container.decodeIfPresent(CardLayout.self, forKey: .card) {
+        // Cards from before the dashboard redesign (TestFlight builds before November 26, 2026) start over with the
+        // standard card, which shows the numbers the redesign is about. Remove once those builds are out of use.
+        if let saved = try container.decodeIfPresent(CardLayout.self, forKey: .card),
+           (try container.decodeIfPresent(CardLayout.Version.self, forKey: .card))?.v == CardLayout.version {
             card = saved
         } else {
-            // The old card: revenue, then the second number (PostHog only), then reviews.
-            var small = CardLayout.standard(for: self, sendsInstalls: false).small
-            if posthog != nil, let extra = (try? container.decode(LegacyMetrics.self, forKey: .metrics))?.extra?.metric {
-                small.insert(extra, at: min(small.count, metrics.revenue == .none ? 0 : 1))
-            }
-            card = CardLayout(big: CardLayout.standard(for: self).big, small: small)
+            card = CardLayout.standard(for: self)
         }
-    }
-
-    private struct LegacyMetrics: Decodable {
-        enum Extra: Decodable {
-            case installs
-            case event(name: String, label: String)
-            case none
-
-            var metric: Metric? {
-                switch self {
-                case .installs: .installs
-                case .event(let name, _): name.isEmpty ? nil : .event(name, people: false)
-                case .none: nil
-                }
-            }
-        }
-        var extra: Extra?
     }
 
     /// The letter on the project's square badge.
@@ -130,7 +120,9 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
     /// Disconnects a platform. Revenue counted by RevenueCat stops being counted rather than counting nothing.
     public mutating func unlink(_ platform: Platform) {
         switch platform {
-        case .posthog: posthog = nil
+        case .posthog:
+            posthog = nil
+            pins = []
         case .revenueCat:
             revenueCat = nil
             if metrics.revenue == .revenueCat { metrics.revenue = .none }
@@ -196,8 +188,28 @@ public struct GooglePlayLink: Codable, Hashable, Sendable {
     }
 }
 
-/// How a project's headline numbers are counted. Chosen when the project is added and editable later.
-public struct MetricSettings: Codable, Hashable, Sendable {
+/// How one person, or one installation, is counted in the people numbers.
+public enum PeopleUnit: String, Codable, CaseIterable, Sendable {
+    /// PostHog's person: everyone a sign-in merged is one, whatever devices they used.
+    case person
+    /// One `distinct_id`: an app installation or a browser, the way most app dashboards count installs.
+    case install
+}
+
+/// The PostHog dashboard a project's counting was read from.
+public struct DashboardRef: Codable, Hashable, Sendable {
+    public var id: Int
+    public var name: String
+
+    public init(id: Int, name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+/// How a project's numbers are counted: who counts as a user, and how new users and revenue are counted. Chosen when
+/// the project is added (from its PostHog dashboards when it has them) and editable later.
+public struct MetricSettings: Hashable, Sendable {
     public enum NewUsers: Codable, Hashable, Sendable {
         /// Count this PostHog event, e.g. `user_signed_up`.
         case event(String)
@@ -215,14 +227,42 @@ public struct MetricSettings: Codable, Hashable, Sendable {
 
     public var newUsers: NewUsers
     public var revenue: Revenue
-    /// Surfaces left out of the people-based numbers (`Metric.isScoped`). Nil until the project's events were seen
-    /// once; the first refresh fills it with `Surface.defaultExcluded`.
+    /// Surfaces left out of the people numbers (`Metric.isScoped`). Nil until the project's events were seen once;
+    /// the first refresh fills it with `Surface.defaultExcluded`.
     public var excludedSurfaces: Set<Surface>?
+    /// The event that means someone used the product, e.g. `app_opened`; nil counts any event.
+    public var activityEvent: String?
+    /// HogQL conditions every people number keeps to, e.g. `properties.app_environment = 'release'`.
+    public var conditions: [String]
+    public var unit: PeopleUnit
+    /// The event property that names the platform, e.g. `app_platform`; nil tells platforms apart the way PostHog's
+    /// SDKs do (`Surface`).
+    public var platformProperty: String?
+    /// The first day the totals count from (a day start in the project's zone); nil counts all history.
+    public var since: Date?
+    /// The dashboard this counting was read from; its charts are where the numbers are checked.
+    public var dashboard: DashboardRef?
 
-    public init(newUsers: NewUsers, revenue: Revenue, excludedSurfaces: Set<Surface>? = nil) {
+    public init(
+        newUsers: NewUsers,
+        revenue: Revenue,
+        excludedSurfaces: Set<Surface>? = nil,
+        activityEvent: String? = nil,
+        conditions: [String] = [],
+        unit: PeopleUnit = .person,
+        platformProperty: String? = nil,
+        since: Date? = nil,
+        dashboard: DashboardRef? = nil
+    ) {
         self.newUsers = newUsers
         self.revenue = revenue
         self.excludedSurfaces = excludedSurfaces
+        self.activityEvent = activityEvent
+        self.conditions = conditions
+        self.unit = unit
+        self.platformProperty = platformProperty
+        self.since = since
+        self.dashboard = dashboard
     }
 
     /// What to leave out now: the person's choice, or website visitors while nothing was chosen or seen yet.
@@ -237,6 +277,11 @@ public struct MetricSettings: Codable, Hashable, Sendable {
         return settings
     }
 
+    /// Counted the way Snuffle does by itself: any event, people, every surface but website visitors.
+    public var isStandardPeople: Bool {
+        activityEvent == nil && conditions.isEmpty && unit == .person && platformProperty == nil && since == nil
+    }
+
     /// PostHog's conventional signup event and the install event its mobile SDKs send.
     public static let signupEvent = "user_signed_up"
     public static let installEvent = "Application Installed"
@@ -244,11 +289,44 @@ public struct MetricSettings: Codable, Hashable, Sendable {
     public static let standard = MetricSettings(newUsers: .event(signupEvent), revenue: .none)
 }
 
+extension MetricSettings: Codable {
+    enum CodingKeys: String, CodingKey {
+        case newUsers, revenue, excludedSurfaces, activityEvent, conditions, unit, platformProperty, since, dashboard
+    }
+
+    /// Settings saved before counting could follow a dashboard have none of its keys: they read as Snuffle's own.
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        newUsers = try container.decode(NewUsers.self, forKey: .newUsers)
+        revenue = try container.decode(Revenue.self, forKey: .revenue)
+        excludedSurfaces = try container.decodeIfPresent(Set<Surface>.self, forKey: .excludedSurfaces)
+        activityEvent = try container.decodeIfPresent(String.self, forKey: .activityEvent)
+        conditions = try container.decodeIfPresent([String].self, forKey: .conditions) ?? []
+        unit = (try? container.decodeIfPresent(PeopleUnit.self, forKey: .unit)) ?? .person
+        platformProperty = try container.decodeIfPresent(String.self, forKey: .platformProperty)
+        since = try container.decodeIfPresent(Date.self, forKey: .since)
+        dashboard = try container.decodeIfPresent(DashboardRef.self, forKey: .dashboard)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(newUsers, forKey: .newUsers)
+        try container.encode(revenue, forKey: .revenue)
+        try container.encodeIfPresent(excludedSurfaces, forKey: .excludedSurfaces)
+        try container.encodeIfPresent(activityEvent, forKey: .activityEvent)
+        if !conditions.isEmpty { try container.encode(conditions, forKey: .conditions) }
+        if unit != .person { try container.encode(unit, forKey: .unit) }
+        try container.encodeIfPresent(platformProperty, forKey: .platformProperty)
+        try container.encodeIfPresent(since, forKey: .since)
+        try container.encodeIfPresent(dashboard, forKey: .dashboard)
+    }
+}
+
 extension Project {
-    /// Counting and card defaults from the events the project actually sends: without signups new users are
-    /// first-seen people, and without installs the card has no install pill, so nothing sits at zero forever.
+    /// Counting defaults from the events the project actually sends: without signups new users are first-seen
+    /// people, so nothing sits at zero forever.
     public mutating func adoptDefaults(seenEvents: Set<String>) {
         metrics.newUsers = seenEvents.contains(MetricSettings.signupEvent) ? .event(MetricSettings.signupEvent) : .firstSeen
-        card = CardLayout.standard(for: self, sendsInstalls: seenEvents.contains(MetricSettings.installEvent))
+        card = CardLayout.standard(for: self)
     }
 }

@@ -89,11 +89,58 @@ public struct PostHogClient: Sendable {
         let organizations: [Organization]?
     }
 
-    /// The project's time zone, read fresh in case it was changed in PostHog.
-    public func timeZone(projectId: Int) async throws -> String? {
-        struct Row: Decodable { let timezone: String? }
+    /// The project's time zone, first day of the week and home dashboard, read fresh in case they were changed in
+    /// PostHog.
+    public func settings(projectId: Int) async throws -> (timeZone: String?, weekStartsMonday: Bool, primaryDashboard: Int?) {
+        struct Row: Decodable { let timezone: String?; let week_start_day: Int?; let primary_dashboard: Int? }
         let row: Row = try await http.decode(Row.self, try await request("api/projects/\(projectId)/"), platform: .posthog)
-        return row.timezone
+        return (row.timezone, row.week_start_day == 1, row.primary_dashboard)
+    }
+
+    // MARK: Dashboards
+
+    /// The project's dashboards, pinned ones first. Needs `dashboard:read`.
+    public func dashboards(projectId: Int) async throws -> [DashboardSummary] {
+        DashboardReading.summaries(try await http.decode(JSONValue.self, try await request("api/projects/\(projectId)/dashboards/?limit=200"), platform: .posthog))
+    }
+
+    /// One dashboard with the queries of its charts. Needs `dashboard:read` and `insight:read`.
+    public func dashboard(projectId: Int, ref: DashboardRef) async throws -> DashboardDetail {
+        DashboardReading.detail(try await http.decode(JSONValue.self, try await request("api/projects/\(projectId)/dashboards/\(ref.id)/"), platform: .posthog), ref: ref)
+    }
+
+    /// The counting the project's own dashboards use, to count that way from the start. The project's home dashboard
+    /// says it best; without one, a project with a few dashboards takes the one with the most people charts. One with
+    /// many (often one per feature or page) is left for the person to choose. Only a counting chosen on purpose is
+    /// taken (`Counting.isDeliberate`). Nil when there is none; throws when the dashboards cannot be listed (an account
+    /// connected before Snuffle read dashboards has no `dashboard:read`).
+    public func dashboardCounting(projectId: Int) async throws -> DashboardReading.Counting? {
+        let list = try await dashboards(projectId: projectId)
+        func counting(_ summary: DashboardSummary) async -> DashboardReading.Counting? {
+            guard let detail = try? await dashboard(projectId: projectId, ref: summary.ref),
+                  let counting = DashboardReading.counting(detail), counting.isDeliberate else { return nil }
+            return counting
+        }
+        if let home = try? await settings(projectId: projectId).primaryDashboard, let summary = list.first(where: { $0.id == home }),
+           let found = await counting(summary) {
+            return found
+        }
+        guard list.count <= 3 else { return nil }
+        var best: DashboardReading.Counting?
+        for summary in list {
+            if let found = await counting(summary), found.sources.count > (best?.sources.count ?? 0) { best = found }
+        }
+        return best
+    }
+
+    /// Runs a saved insight's query as it is.
+    public func run(projectId: Int, query: JSONValue, now: Date = Date()) async throws -> InsightResult {
+        struct Body: Encodable { let query: JSONValue; let name: String }
+        var request = try await request("api/projects/\(projectId)/query/")
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(Body(query: query, name: "snuffle_insight"))
+        return InsightResult.parse(try await http.decode(JSONValue.self, request, platform: .posthog), at: now)
     }
 
     // MARK: Query
@@ -114,339 +161,10 @@ public struct PostHogClient: Sendable {
     }
 
     private func request(_ path: String) async throws -> URLRequest {
-        var request = URLRequest(url: host.appending(path: path))
+        var request = URLRequest(url: URL(string: path, relativeTo: host)!.absoluteURL)
         request.setValue("Bearer \(try await token())", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.timeoutInterval = 30
         return request
-    }
-}
-
-/// HogQL for every number Snuffle shows. Kept separate from the transport so tests can check the SQL itself.
-public enum PostHogQueries {
-    /// Escapes a value for a single-quoted HogQL string literal.
-    public static func literal(_ text: String) -> String {
-        "'" + text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "'", with: "\\'") + "'"
-    }
-
-    /// A property reference that works for any name, including ones with spaces or `$`.
-    public static func property(_ name: String) -> String {
-        "properties[\(literal(name))]"
-    }
-
-    static func seconds(_ date: Date) -> Int { Int(date.timeIntervalSince1970.rounded(.down)) }
-
-    /// One column per hour of today so far (at most 25, on the day clocks go back), so the response size stays
-    /// fixed however many people sign up. `count` turns a condition into the column's aggregate.
-    static func hourColumns(column: String, clock: ProjectClock, count: (String) -> String) -> [String] {
-        let today = seconds(clock.todayStart)
-        return (0..<min(25, clock.hoursSoFar)).map { hour in
-            let from = today + hour * 3600
-            return count("\(column) >= fromUnixTimestamp(\(from)) AND \(column) < fromUnixTimestamp(\(from + 3600))")
-        }
-    }
-
-    /// People who did `event` while `condition` holds: a person who signs up twice is still one new user.
-    static func people(did event: String, _ condition: String? = nil) -> String {
-        "uniqExactIf(person_id, event = \(literal(event))\(condition.map { " AND \($0)" } ?? ""))"
-    }
-
-    /// The day an event falls on in the project's zone, as "yyyy-MM-dd", so history days match `ProjectClock`
-    /// even if PostHog's own project zone has since changed.
-    static func day(_ column: String, clock: ProjectClock) -> String {
-        "toString(toDate(toTimeZone(\(column), \(literal(clock.timeZone.identifier)))))"
-    }
-
-    /// What one column of `counts` holds.
-    public enum CountsColumn: Hashable, Sendable {
-        case newToday, newYesterday, revenue, orders, hour
-        case metric(Metric)
-    }
-
-    /// Event-based counts in one scan from the start of yesterday: new users (today and yesterday by now) and their
-    /// hours when an event counts them, revenue and orders when an event carries revenue, and each event metric in
-    /// `events`. The columns say what each position holds.
-    public static func counts(settings: MetricSettings, events: [Metric], clock: ProjectClock) -> (sql: String, columns: [CountsColumn])? {
-        let today = seconds(clock.todayStart)
-        let yesterday = seconds(clock.yesterdayStart)
-        let yesterdayNow = seconds(clock.sameTimeYesterday)
-        var columns: [(CountsColumn, String)] = []
-        var names: Set<String> = []
-
-        if case .event(let name) = settings.newUsers {
-            names.insert(name)
-            columns.append((.newToday, people(did: name, "timestamp >= fromUnixTimestamp(\(today))")))
-            columns.append((.newYesterday, people(did: name, "timestamp >= fromUnixTimestamp(\(yesterday)) AND timestamp < fromUnixTimestamp(\(yesterdayNow))")))
-        }
-        if case .posthogEvent(let name, let valueProperty) = settings.revenue {
-            names.insert(name)
-            columns.append((.revenue, "sumIf(toFloat(\(property(valueProperty))), event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today)))"))
-            columns.append((.orders, "countIf(event = \(literal(name)) AND timestamp >= fromUnixTimestamp(\(today)))"))
-        }
-        for metric in events {
-            guard case .event(let name, let byPeople) = metric else { continue }
-            names.insert(name)
-            let condition = "timestamp >= fromUnixTimestamp(\(today))"
-            columns.append((.metric(metric), byPeople ? people(did: name, condition) : "countIf(event = \(literal(name)) AND \(condition))"))
-        }
-        if case .event(let name) = settings.newUsers {
-            columns += hourColumns(column: "timestamp", clock: clock) { people(did: name, $0) }.map { (.hour, $0) }
-        }
-        guard !columns.isEmpty else { return nil }
-        let eventList = names.sorted().map(literal).joined(separator: ", ")
-        let select = columns.enumerated().map { "\($1.1) AS c\($0)" }.joined(separator: ", ")
-        return ("SELECT \(select) FROM events WHERE timestamp >= fromUnixTimestamp(\(yesterday)) AND event IN (\(eventList))", columns.map(\.0))
-    }
-
-    /// Which of these events the project sent since `since`, to choose defaults when a project is added.
-    public static func eventsSeen(_ names: [String], since: Date) -> String {
-        let list = names.map(literal).joined(separator: ", ")
-        return "SELECT DISTINCT event FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(since))) AND event IN (\(list))"
-    }
-
-    /// How far back a person must be unseen to count as new. Bounds every first-seen query to this window plus the
-    /// days shown, so its cost follows the project's monthly event volume, not its whole history.
-    public static let firstSeenLookbackDays = 30
-
-    static let mobileLibraries = ["posthog-ios", "posthog-android", "posthog-react-native", "posthog-flutter"]
-
-    /// The `Surface` an event came from, as a HogQL string expression. `$lib`, `$os` and `$is_identified` are set
-    /// by PostHog's SDKs; an event without `$lib` was sent to the capture API directly (a server or desktop client).
-    static let surface: String = {
-        let mobile = mobileLibraries.map(literal).joined(separator: ", ")
-        return "multiIf(properties.$lib = 'web', if(ifNull(toString(properties.$is_identified), '') = 'true', 'web', 'visitors'), "
-            + "properties.$lib IN (\(mobile)), multiIf(properties.$os IN ('iOS', 'iPadOS'), 'ios', properties.$os = 'Android', 'android', 'other'), "
-            + "'other')"
-    }()
-
-    /// The condition that keeps a project's included surfaces, or nil when it includes them all (no filter at all).
-    public static func scope(excluding excluded: Set<Surface>) -> String? {
-        guard !excluded.isEmpty else { return nil }
-        let names = excluded.map(\.rawValue).sorted().map(literal).joined(separator: ", ")
-        return "\(surface) NOT IN (\(names))"
-    }
-
-    static func and(_ condition: String?) -> String { condition.map { " AND \($0)" } ?? "" }
-
-    /// People and their surfaces over the last 30 days, to choose what to count and to pick the defaults.
-    public static func surfaceStats(clock: ProjectClock) -> String {
-        "SELECT \(surface) AS surface, uniq(person_id) AS people FROM events "
-            + "WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.now) - 30 * 86_400)) GROUP BY surface ORDER BY people DESC"
-    }
-
-    /// When each person within the lookback started using the product on the included surfaces, as `first`, for
-    /// `firstSeen` and `firstSeenHistory`: someone who read the website last week and opened the app today is new
-    /// today when only the app counts. Based on events, not the persons table: projects that send anonymous events
-    /// (no person profiles) still have new people.
-    static func firstEvents(since start: Date, excluding excluded: Set<Surface>) -> String {
-        let lookback = seconds(start) - firstSeenLookbackDays * 86_400
-        return "(SELECT min(timestamp) AS first FROM events WHERE timestamp >= fromUnixTimestamp(\(lookback))\(and(scope(excluding: excluded))) GROUP BY person_id)"
-    }
-
-    /// People who started using the product today (not seen in the previous 30 days), for projects without a
-    /// signup event.
-    public static func firstSeen(clock: ProjectClock, excluding excluded: Set<Surface>) -> String {
-        let today = seconds(clock.todayStart)
-        let yesterday = seconds(clock.yesterdayStart)
-        let yesterdayNow = seconds(clock.sameTimeYesterday)
-        let columns = [
-            "countIf(first >= fromUnixTimestamp(\(today))) AS new_today",
-            "countIf(first >= fromUnixTimestamp(\(yesterday)) AND first < fromUnixTimestamp(\(yesterdayNow))) AS new_yesterday"
-        ] + hourColumns(column: "first", clock: clock) { "countIf(\($0))" }.enumerated().map { "\($1) AS h\($0)" }
-        return "SELECT \(columns.joined(separator: ", ")) FROM \(firstEvents(since: clock.yesterdayStart, excluding: excluded)) WHERE first >= fromUnixTimestamp(\(yesterday))"
-    }
-
-    /// People online (last minute) and active today, and pages and screens seen today, on the included surfaces, in
-    /// one scan of today.
-    public static func presence(clock: ProjectClock, excluding excluded: Set<Surface>) -> String {
-        "SELECT uniqIf(person_id, timestamp >= now() - INTERVAL 1 MINUTE) AS online, uniq(person_id) AS active, countIf(event IN ('$pageview', '$screen')) AS views "
-            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.todayStart)))\(and(scope(excluding: excluded)))"
-    }
-
-    /// People active in the last 7 days and, when `month`, the last 30, ending now, on the included surfaces. One
-    /// scan of the longest window, so it is read hourly (`Metric.isHourly`), not on every refresh.
-    public static func activity(clock: ProjectClock, month: Bool, excluding excluded: Set<Surface>) -> String {
-        let week = seconds(clock.now) - 7 * 86_400
-        let scope = and(scope(excluding: excluded))
-        guard month else {
-            return "SELECT uniq(person_id) AS week FROM events WHERE timestamp >= fromUnixTimestamp(\(week))\(scope)"
-        }
-        return "SELECT uniqIf(person_id, timestamp >= fromUnixTimestamp(\(week))) AS week, uniq(person_id) AS month "
-            + "FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(clock.now) - 30 * 86_400))\(scope)"
-    }
-
-    /// People PostHog has identified (signed in), ever. Profiles of anonymous people are left out: projects that send
-    /// anonymous events often have none, so their count would mean nothing.
-    /// How long someone must be unseen to count again in total users: bounds each day's addition to a year of events.
-    public static let tallyLookbackDays = 365
-
-    /// Everyone the included surfaces saw before `date`: signed-in people once each, everyone else once per device.
-    /// Scans the whole history, so it runs once per project and scope; `newPeople` moves it forward.
-    public static func peopleBefore(_ date: Date, excluding excluded: Set<Surface>) -> String {
-        "SELECT uniq(person_id) AS people FROM events WHERE timestamp < fromUnixTimestamp(\(seconds(date)))\(and(scope(excluding: excluded)))"
-    }
-
-    /// People first seen since `since` (not in the year before it): those before today, which move the tally to
-    /// today, and those today.
-    public static func newPeople(since: Date, clock: ProjectClock, excluding excluded: Set<Surface>) -> String {
-        let start = seconds(since)
-        let today = seconds(clock.todayStart)
-        return "SELECT countIf(first < fromUnixTimestamp(\(today))) AS settled, countIf(first >= fromUnixTimestamp(\(today))) AS today "
-            + "FROM (SELECT min(timestamp) AS first FROM events WHERE timestamp >= fromUnixTimestamp(\(start - tallyLookbackDays * 86_400))\(and(scope(excluding: excluded))) GROUP BY person_id) "
-            + "WHERE first >= fromUnixTimestamp(\(start))"
-    }
-
-    /// Events of the last 7 days with how many people sent each and how often, most people first.
-    public static func eventStats(since: Date, limit: Int = 200) -> String {
-        "SELECT event, uniq(person_id) AS people, count() AS times FROM events WHERE timestamp >= fromUnixTimestamp(\(seconds(since))) "
-            + "GROUP BY event ORDER BY people DESC LIMIT \(limit)"
-    }
-
-    /// Today's orders, newest first. Product names come from whichever common property the event carries.
-    public static func orders(event: String, valueProperty: String, since: Date, limit: Int = 50) -> String {
-        let fields = ["product_name", "product", "plan", "plan_tier", "billing_interval", "product_id", "sku"]
-            .map { "toString(\(property($0)))" }
-            .joined(separator: ", ")
-        return "SELECT toString(uuid), toString(timestamp), toFloat(\(property(valueProperty))), toString(properties.$geoip_country_code), \(fields) "
-            + "FROM events WHERE event = \(literal(event)) AND timestamp >= fromUnixTimestamp(\(seconds(since))) "
-            + "ORDER BY timestamp DESC LIMIT \(limit)"
-    }
-
-    /// Per-day new users, revenue and active people for the history chart.
-    public static func history(metrics: MetricSettings, clock: ProjectClock, days: Int) -> String {
-        let start = seconds(clock.historyStart(days: days))
-        // Only the active column follows the surfaces: sign-ups and revenue are their events, wherever they came from.
-        let active = scope(excluding: metrics.surfacesLeftOut).map { "uniqIf(person_id, \($0))" } ?? "uniq(person_id)"
-        var columns = ["\(day("timestamp", clock: clock)) AS day", "\(active) AS active"]
-        if case .event(let name) = metrics.newUsers {
-            columns.append("\(people(did: name)) AS new_users")
-        } else {
-            columns.append("0 AS new_users")
-        }
-        if case .posthogEvent(let name, let valueProperty) = metrics.revenue {
-            columns.append("sumIf(toFloat(\(property(valueProperty))), event = \(literal(name))) AS revenue")
-        } else {
-            columns.append("0 AS revenue")
-        }
-        return "SELECT \(columns.joined(separator: ", ")) FROM events WHERE timestamp >= fromUnixTimestamp(\(start)) GROUP BY day ORDER BY day"
-    }
-
-    /// Per-day first-seen people, used when new users are counted that way.
-    public static func firstSeenHistory(clock: ProjectClock, days: Int, excluding excluded: Set<Surface>) -> String {
-        let start = clock.historyStart(days: days)
-        return "SELECT \(day("first", clock: clock)) AS day, count() AS new_users FROM \(firstEvents(since: start, excluding: excluded)) "
-            + "WHERE first >= fromUnixTimestamp(\(seconds(start))) GROUP BY day ORDER BY day"
-    }
-
-    /// "Pro 月付" / "Pro 年付" in the person's language.
-    static func planName(_ tier: String, yearly: Bool) -> String {
-        yearly ? String(localized: "\(tier) 年付", bundle: .module) : String(localized: "\(tier) 月付", bundle: .module)
-    }
-
-    /// Readable product name from the order row's property columns.
-    public static func productName(_ values: [String?]) -> String? {
-        let named = values.prefix(3).compactMap { $0 }.first { !$0.isEmpty && $0 != "null" }
-        if let named { return named }
-        let tier = values[3].flatMap { $0.isEmpty || $0 == "null" ? nil : $0 }
-        let interval = values[4].flatMap { $0.isEmpty || $0 == "null" ? nil : $0 }
-        if let tier {
-            let label = tier.prefix(1).uppercased() + tier.dropFirst()
-            switch interval?.lowercased() {
-            case "month", "monthly": return planName(label, yearly: false)
-            case "year", "yearly", "annual", "annually": return planName(label, yearly: true)
-            default: return label
-            }
-        }
-        return values.dropFirst(5).compactMap { $0 }.first { !$0.isEmpty && $0 != "null" }
-    }
-}
-
-/// Turns query rows into the pieces of a snapshot.
-public enum PostHogParsing {
-    /// The event names returned by `PostHogQueries.eventsSeen`.
-    public static func eventNames(_ rows: [[JSONValue]]) -> Set<String> {
-        Set(rows.compactMap { row in
-            if case .string(let name)? = row.first { return name }
-            return nil
-        })
-    }
-
-    public struct Counts: Equatable, Sendable {
-        public var values: [Metric: Double] = [:]
-        public var newYesterday: Int?
-        public var hourly: [Int] = []
-    }
-
-    /// Reads a `counts` row by its columns: new users, revenue and orders land under their metrics.
-    public static func counts(_ row: [JSONValue], columns: [PostHogQueries.CountsColumn]) -> Counts {
-        var counts = Counts()
-        for (column, value) in zip(columns, row) {
-            switch column {
-            case .newToday: counts.values[.newUsers] = value.double
-            case .newYesterday: counts.newYesterday = value.int
-            case .revenue: counts.values[.revenue] = value.double ?? 0
-            case .orders: counts.values[.orders] = value.double ?? 0
-            case .hour: counts.hourly.append(value.int ?? 0)
-            case .metric(let metric): counts.values[metric] = value.double ?? 0
-            }
-        }
-        return counts
-    }
-
-    public static func surfaceStats(_ rows: [[JSONValue]]) -> [SurfaceStat] {
-        rows.compactMap { row in
-            guard row.count >= 2, let name = row[0].string, let surface = Surface(rawValue: name) else { return nil }
-            return SurfaceStat(surface: surface, people: row[1].int ?? 0)
-        }
-    }
-
-    public static func eventStats(_ rows: [[JSONValue]]) -> [EventStat] {
-        rows.compactMap { row in
-            guard row.count >= 3, let name = row[0].string, !EventStat.hidden.contains(name) else { return nil }
-            return EventStat(name: name, people: row[1].int ?? 0, times: row[2].int ?? 0)
-        }
-    }
-
-    /// The `firstSeen` row: new today, new yesterday by now, then one column per hour.
-    public static func firstSeen(_ row: [JSONValue]) -> (today: Int?, yesterday: Int?, hourly: [Int]) {
-        (row.first?.int, row.count > 1 ? row[1].int : nil, row.dropFirst(2).map { $0.int ?? 0 })
-    }
-
-    public static func orders(_ rows: [[JSONValue]], projectId: UUID) -> [Order] {
-        rows.compactMap { row in
-            guard row.count >= 4, let id = row[0].string, let dateText = row[1].string, let date = ISO8601.parse(dateText) else { return nil }
-            let props = row.dropFirst(4).map { value -> String? in
-                guard let text = value.string, text != "null" else { return nil }
-                return text
-            }
-            let country = row[3].string.flatMap { $0 == "null" || $0.isEmpty ? nil : $0 }
-            return Order(
-                id: id,
-                projectId: projectId,
-                date: date,
-                amount: row[2].double ?? 0,
-                product: PostHogQueries.productName(Array(props) + Array(repeating: nil, count: max(0, 7 - props.count))),
-                country: country
-            )
-        }
-    }
-
-    /// History rows keyed by local day ("yyyy-MM-dd"), filled to one point per day.
-    public static func history(_ rows: [[JSONValue]], firstSeen: [[JSONValue]]?, clock: ProjectClock, days: Int, hasRevenue: Bool) -> [DailyPoint] {
-        var byDay: [String: (active: Int?, newUsers: Int?, revenue: Double?)] = [:]
-        for row in rows where row.count >= 4 {
-            guard let key = row[0].string?.prefix(10) else { continue }
-            byDay[String(key)] = (row[1].int, row[2].int, row[3].double)
-        }
-        var firstSeenByDay: [String: Int] = [:]
-        for row in firstSeen ?? [] where row.count >= 2 {
-            if let key = row[0].string?.prefix(10) { firstSeenByDay[String(key)] = row[1].int ?? 0 }
-        }
-        return clock.dayStarts(days: days).map { day in
-            let key = clock.dayKey(day)
-            let row = byDay[key]
-            let newUsers = firstSeen != nil ? (firstSeenByDay[key] ?? 0) : (row?.newUsers ?? 0)
-            return DailyPoint(day: day, newUsers: newUsers, revenue: hasRevenue ? (row?.revenue ?? 0) : nil, active: row?.active ?? 0)
-        }
     }
 }

@@ -31,8 +31,6 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var refreshOnOpen: Bool
     public var replyTone: ReplyTone
     public var replySignature: String
-    /// The three numbers in the totals strip, each added up across projects.
-    public var totals: [Metric]
 
     public init(
         demoMode: Bool = false,
@@ -42,8 +40,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         sound: Bool = false,
         refreshOnOpen: Bool = true,
         replyTone: ReplyTone = .warm,
-        replySignature: String = "",
-        totals: [Metric] = CardLayout.standardTotals
+        replySignature: String = ""
     ) {
         self.demoMode = demoMode
         self.theme = theme
@@ -53,11 +50,10 @@ public struct AppSettings: Codable, Sendable, Equatable {
         self.refreshOnOpen = refreshOnOpen
         self.replyTone = replyTone
         self.replySignature = replySignature
-        self.totals = totals
     }
 
     enum CodingKeys: String, CodingKey {
-        case demoMode, theme, accent, haptics, sound, refreshOnOpen, replyTone, replySignature, totals
+        case demoMode, theme, accent, haptics, sound, refreshOnOpen, replyTone, replySignature
     }
 
     /// Every key is optional, so a setting added later never resets the others saved before it.
@@ -72,8 +68,6 @@ public struct AppSettings: Codable, Sendable, Equatable {
         refreshOnOpen = try container.decodeIfPresent(Bool.self, forKey: .refreshOnOpen) ?? standard.refreshOnOpen
         replyTone = (try? container.decodeIfPresent(ReplyTone.self, forKey: .replyTone)) ?? standard.replyTone
         replySignature = try container.decodeIfPresent(String.self, forKey: .replySignature) ?? standard.replySignature
-        let totals = (try container.decodeIfPresent([String].self, forKey: .totals) ?? []).compactMap(Metric.init(id:)).filter(\.isShared)
-        self.totals = totals.count == CardLayout.standardTotals.count ? totals : standard.totals
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -86,15 +80,17 @@ public struct AppSettings: Codable, Sendable, Equatable {
         try container.encode(refreshOnOpen, forKey: .refreshOnOpen)
         try container.encode(replyTone, forKey: .replyTone)
         try container.encode(replySignature, forKey: .replySignature)
-        try container.encode(totals.map(\.id), forKey: .totals)
     }
 }
 
-/// The numbers a refresh reads for a project: its card, the totals strip and the widgets on screen. Anything else
-/// costs a query nobody looks at.
+/// The numbers a refresh reads for a project: its card, the four on its board and the widgets on screen. Anything
+/// else costs a query nobody looks at.
 public enum MetricsInUse {
-    public static func forProject(_ project: Project, totals: [Metric], widgets: Set<Metric>) -> Set<Metric> {
-        Set(project.card.metrics + totals + widgets).filter { $0.isAvailable(in: project) }
+    /// The board's four people numbers, read with the card so opening a project needs no wait.
+    public static let board: [Metric] = [.totalUsers, .activeToday, .activeWeek, .newWeek]
+
+    public static func forProject(_ project: Project, widgets: Set<Metric>) -> Set<Metric> {
+        Set(project.card.metrics + board + widgets).filter { $0.isAvailable(in: project) }
     }
 }
 
