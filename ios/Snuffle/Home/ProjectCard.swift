@@ -1,24 +1,8 @@
 import SnuffleKit
 import SwiftUI
 
-/// One slot on a card, for the card editor.
-enum CardSlot: Hashable {
-    case big(Int)
-    case small(Int)
-    /// A new small number at the end.
-    case add
-}
-
-/// What the card editor passes to a card: the layout being edited and what tapping a number does.
-struct CardEditing {
-    var layout: CardLayout
-    var selected: CardSlot?
-    var choose: (CardSlot) -> Void
-    var remove: (Int) -> Void
-}
-
 /// One project on the home screen: a big number with what it is set against and the last 14 days beside it, up to
-/// three smaller numbers, and the platform split. Every row has a fixed height and every number stays on screen
+/// two rows of smaller numbers, and the platform split. Every row has a fixed height and every number stays on screen
 /// while refreshing: a line sweeps along the top, then the digits that changed roll up and the rise is marked.
 struct ProjectCard: View {
     @Environment(AppModel.self) private var model
@@ -28,13 +12,14 @@ struct ProjectCard: View {
     /// Numbers for a project that is not saved yet (the connect flow's "连上了" page); nil on the home screen.
     var preview: ProjectSnapshot?
     var previewLoading = false
-    /// Set by the card editor: every number becomes a button that picks another.
+    /// Set by the card editor: every number becomes a button that picks another and can be dragged onto another.
     var editing: CardEditing?
 
     private var isPreview: Bool { preview != nil || previewLoading || editing != nil }
     private var snapshot: ProjectSnapshot? { preview ?? model.snapshot(project.id) }
     private var stage: CardStage { previewLoading ? .loading : editing != nil ? .rest : model.stage(project.id) }
-    private var layout: CardLayout { (editing?.layout ?? project.card).visible(in: project) }
+    /// The editor's layout is already the project's visible one; its slots must stay as they are while dragging.
+    private var layout: CardLayout { editing?.shown ?? project.card.visible(in: project) }
     private var mark: SnapshotChange? { editing == nil && !model.marksFading ? model.marks[project.id] : nil }
 
     var body: some View {
@@ -70,6 +55,7 @@ struct ProjectCard: View {
         .overlay {
             if !isPreview, model.isLocked(project) { LockedOverlay() }
         }
+        .modifier(CardDropArea(editing: editing))
         .accessibilityElement(children: editing == nil ? .combine : .contain)
         .accessibilityIdentifier("card-\(project.name)")
     }
@@ -135,12 +121,12 @@ struct ProjectCard: View {
         if layout.big.count > 1 {
             HStack(alignment: .bottom, spacing: editing == nil ? 12 : 8) {
                 ForEach(Array(layout.big.enumerated()), id: \.offset) { index, metric in
-                    slot(.big(index)) { hero(metric, base: 44) }
+                    slot(.big(index), metric: metric) { hero(metric, base: 44) }
                 }
             }
         } else if let metric = layout.big.first {
             HStack(alignment: .bottom, spacing: 12) {
-                slot(.big(0)) { hero(metric, base: 54) }
+                slot(.big(0), metric: metric) { hero(metric, base: 54) }
                 if layout.trend {
                     VStack(alignment: .trailing, spacing: 4) {
                         DayBars(values: snapshot?.dailyActive ?? [], hot: mark?[.activeToday] != nil)
@@ -208,16 +194,22 @@ struct ProjectCard: View {
     // MARK: Small numbers
 
     private var stats: some View {
-        HStack(alignment: .top, spacing: 8) {
-            ForEach(Array(layout.small.enumerated()), id: \.offset) { index, metric in
-                slot(.small(index)) { stat(metric) }
+        VStack(alignment: .leading, spacing: editing == nil ? 14 : 10) {
+            ForEach(Array(layout.rows.enumerated()), id: \.offset) { row, metrics in
+                HStack(alignment: .top, spacing: 8) {
+                    ForEach(Array(metrics.enumerated()), id: \.offset) { index, metric in
+                        slot(.small(row: row, index: index), metric: metric) { stat(metric) }
+                    }
+                    if let editing, metrics.count < CardLayout.perRow {
+                        Opening(slot: .add(row: row), editing: editing, wide: false)
+                    }
+                    // Fewer than three keep their width, so numbers line up from row to row and card to card.
+                    let open = CardLayout.perRow - metrics.count - (editing == nil ? 0 : 1)
+                    ForEach(0..<max(0, open), id: \.self) { _ in Color.clear.frame(maxWidth: .infinity, maxHeight: 1) }
+                }
             }
-            if let editing, layout.small.count < CardLayout.maxSmall {
-                AddStatButton(selected: editing.selected == .add) { editing.choose(.add) }
-            }
-            if editing == nil {
-                // Fewer than three keep their width, so numbers line up from card to card.
-                ForEach(layout.small.count..<CardLayout.maxSmall, id: \.self) { _ in Color.clear.frame(maxWidth: .infinity, maxHeight: 1) }
+            if let editing, layout.rows.count < CardLayout.maxRows {
+                Opening(slot: .add(row: layout.rows.count), editing: editing, wide: true)
             }
         }
     }
@@ -252,23 +244,42 @@ struct ProjectCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// In the editor a number is a button with a dashed outline, solid when it is the one being changed.
+    /// In the editor a number is a button with a dashed outline: tap it for the library, or hold and drag it onto
+    /// another number or an empty place. The number under a dragged one already shows them traded.
     @ViewBuilder
-    private func slot(_ slot: CardSlot, @ViewBuilder content: () -> some View) -> some View {
+    private func slot(_ slot: CardSlot, metric: Metric, @ViewBuilder content: () -> some View) -> some View {
         if let editing {
-            let selected = editing.selected == slot
+            let look = editing.look(slot)
             let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
             ZStack(alignment: .topTrailing) {
-                Button { editing.choose(slot) } label: { content().contentShape(shape) }
-                    .buttonStyle(.plain)
-                    .accessibilityHint("换成别的数")
+                // A tap rather than a Button: a Button's press keeps the hold from lifting the number into a drag.
+                content()
+                    .id(metric)
+                    .transition(.asymmetric(insertion: .scale(scale: 0.88).combined(with: .opacity), removal: .opacity))
                     .padding(EdgeInsets(top: 4, leading: 6, bottom: 4, trailing: 6))
-                    .background(selected ? accent.opacity(0.3) : .clear, in: shape)
-                    .overlay {
-                        shape.strokeBorder(selected ? Palette.ink : Palette.faint, style: StrokeStyle(lineWidth: selected ? 2 : 1.5, dash: selected ? [] : [5, 4]))
+                    .contentShape(shape)
+                    .onTapGesture { editing.pick(slot) }
+                    .background(look.fill(accent), in: shape)
+                    .overlay { shape.strokeBorder(look.stroke, style: look.strokeStyle) }
+                    .opacity(look == .lifted ? 0.4 : 1)
+                    .scaleEffect(look == .landing ? 1.03 : 1)
+                    .contentShape(.dragPreview, shape)
+                    .onDrag {
+                        editing.lift(slot)
+                        return NSItemProvider(object: metric.id as NSString)
+                    } preview: {
+                        DragTile(title: metric.title(in: project), value: metric.text(snapshot?[metric]), big: slot.isBig)
                     }
-                if case .small(let index) = slot {
-                    Button { editing.remove(index) } label: {
+                    .onDrop(of: cardDragTypes, delegate: SlotDrop(slot: slot, editing: editing))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { editing.pick(slot) }
+                    .accessibilityIdentifier(slot.identifier)
+                    .accessibilityHint("换成别的数；按住拖到别的数上，两个数换位置")
+                    .accessibilityAction(named: "和前一个数换位置") { editing.shift(slot, by: -1) }
+                    .accessibilityAction(named: "和后一个数换位置") { editing.shift(slot, by: 1) }
+                if !slot.isBig {
+                    Button { editing.remove(slot) } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 9, weight: .heavy))
                             .foregroundStyle(Palette.paper)
@@ -280,11 +291,129 @@ struct ProjectCard: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel("移除")
                     .offset(x: 16, y: -16)
+                    // Faded rather than removed while dragging, so the slots under the finger stay as they are.
+                    .opacity(editing.dragging ? 0 : 1)
+                    .allowsHitTesting(!editing.dragging)
                 }
             }
         } else {
             content()
         }
+    }
+}
+
+extension CardSlot {
+    fileprivate var isBig: Bool {
+        if case .big = self { true } else { false }
+    }
+
+    /// For UI tests: "slot-big-0", "slot-1-2".
+    fileprivate var identifier: String {
+        switch self {
+        case .big(let index): "slot-big-\(index)"
+        case .small(let row, let index): "slot-\(row)-\(index)"
+        case .add(let row): "slot-add-\(row)"
+        }
+    }
+}
+
+extension CardEditing.Look {
+    fileprivate func fill(_ accent: Color) -> Color {
+        switch self {
+        case .plain, .lifted: .clear
+        case .selected: accent.opacity(0.3)
+        case .trading: accent.opacity(0.15)
+        case .landing: accent.opacity(0.4)
+        }
+    }
+
+    fileprivate var stroke: Color {
+        self == .plain ? Palette.faint : Palette.ink
+    }
+
+    fileprivate var strokeStyle: StrokeStyle {
+        let solid = self == .selected || self == .landing
+        return StrokeStyle(lineWidth: solid ? 2 : 1.5, dash: solid ? [] : [5, 4])
+    }
+}
+
+/// The card being edited takes a drag anywhere between its numbers, so the drag stays on the card; letting go
+/// there changes nothing.
+private struct CardDropArea: ViewModifier {
+    var editing: CardEditing?
+
+    func body(content: Content) -> some View {
+        if let editing {
+            content.onDrop(of: cardDragTypes, delegate: CardDrop(editing: editing))
+        } else {
+            content
+        }
+    }
+}
+
+/// An empty place on the card being edited: the end of a row with room, or a new row. Tap it to add a number from
+/// the library, or drop a dragged number there.
+private struct Opening: View {
+    var slot: CardSlot
+    var editing: CardEditing
+    /// A whole row: the next one, or the first when there is none.
+    var wide: Bool
+    @Environment(\.accent) private var accent
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: 14, style: .continuous)
+        let look = editing.look(slot)
+        let hot = look == .landing || look == .selected
+        let takes = editing.dragging && editing.accepts(slot)
+        Button { editing.pick(slot) } label: {
+            Label(title(takes: takes), systemImage: takes ? "arrow.down.to.line" : "plus")
+                .font(.system(size: 12.5, weight: .bold))
+                .foregroundStyle(Palette.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 6)
+                .frame(maxWidth: .infinity, minHeight: wide ? 44 : 60)
+                .background(hot ? accent.opacity(0.4) : .clear, in: shape)
+                .overlay {
+                    shape.strokeBorder(Palette.ink.opacity(editing.dragging && !takes ? 0.25 : 1), style: StrokeStyle(lineWidth: hot ? 2 : 1.5, dash: hot ? [] : [5, 4]))
+                }
+                .contentShape(shape)
+        }
+        .buttonStyle(.plain)
+        .scaleEffect(look == .landing ? 1.03 : 1)
+        .onDrop(of: cardDragTypes, delegate: SlotDrop(slot: slot, editing: editing))
+        .accessibilityLabel(Text(title(takes: takes)))
+        .accessibilityIdentifier(wide ? "addRow" : "addNumber")
+    }
+
+    private func title(takes: Bool) -> LocalizedStringKey {
+        if takes { return "放到这里" }
+        return wide && slot != .add(row: 0) ? "再加一行数" : "加一个数"
+    }
+}
+
+/// What follows the finger while a number is dragged.
+private struct DragTile: View {
+    var title: String
+    var value: String
+    var big: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(verbatim: title)
+                .font(.system(size: 12))
+                .foregroundStyle(Palette.ink2)
+                .lineLimit(1)
+            Text(verbatim: value)
+                .font(Typeface.number(big ? 40 : 28))
+                .foregroundStyle(Palette.ink)
+                .lineLimit(1)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(minWidth: 96, alignment: .leading)
+        .background(Palette.card, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Palette.ink, lineWidth: 2))
     }
 }
 
@@ -413,26 +542,6 @@ struct Highlighter: View {
             .scaleEffect(x: on ? 1 : 0, anchor: fading ? .trailing : .leading)
             .animation(.timingCurve(0.2, 0.8, 0.2, 1, duration: on ? 0.28 : 0.4), value: on)
             .padding(.bottom, height * 0.15)
-    }
-}
-
-private struct AddStatButton: View {
-    var selected: Bool
-    var action: () -> Void
-    @Environment(\.accent) private var accent
-
-    var body: some View {
-        Button(action: action) {
-            Label("加一个数", systemImage: "plus")
-                .font(.system(size: 12.5, weight: .bold))
-                .foregroundStyle(Palette.ink)
-                .frame(maxWidth: .infinity, minHeight: 60)
-                .background(selected ? accent.opacity(0.3) : .clear, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Palette.ink, style: StrokeStyle(lineWidth: 1.5, dash: selected ? [] : [5, 4])))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("加一个数")
     }
 }
 

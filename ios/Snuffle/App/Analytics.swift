@@ -148,11 +148,14 @@ enum Analytics {
         ])
     }
 
-    /// The card editor's "完成". Event metrics are named "event", never by the event the person picked.
-    static func cardLayoutSaved(_ layout: CardLayout, everywhere: Bool) {
+    /// The card editor's "完成". Event metrics are named "event", never by the event the person picked. `dragged`:
+    /// whether a number was moved by dragging.
+    static func cardLayoutSaved(_ layout: CardLayout, everywhere: Bool, dragged: Bool) {
         capture("card_layout_saved", [
             "big": layout.big.map(\.analyticsName),
             "small": layout.small.map(\.analyticsName),
+            "rows": layout.rows.map(\.count),
+            "dragged": dragged,
             "trend": layout.trend,
             "split": layout.split,
             "everywhere": everywhere,

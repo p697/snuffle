@@ -265,6 +265,40 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "editor-metrics")
     }
 
+    /// Holding a number drags it: onto another number the two trade places, onto "再加一行数" it starts a second row,
+    /// and the home card keeps both rows.
+    func testCardNumbersDragAcrossRows() {
+        let app = makeApp(["-resetState", "-sampleWorkspace"])
+        app.launch()
+        let card = app.buttons["card-Lumen Notes"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.press(forDuration: 1.2)
+        app.buttons["调整卡片"].tap()
+        XCTAssertTrue(app.buttons["saveCard"].waitForExistence(timeout: 5))
+        let big = app.buttons["slot-big-0"]
+        XCTAssertTrue(big.label.hasPrefix("累计用户"), big.label)
+        attach(app, name: "card-editor-start")
+
+        app.buttons["slot-0-2"].press(forDuration: 1, thenDragTo: big, withVelocity: .slow, thenHoldForDuration: 0.6)
+        XCTAssertTrue(big.label.hasPrefix("收入"), big.label)
+        XCTAssertTrue(app.buttons["slot-0-2"].label.hasPrefix("累计用户"), app.buttons["slot-0-2"].label)
+        // Nothing stays lifted once the number is dropped.
+        XCTAssertTrue(app.buttons["移除"].waitForExistence(timeout: 2))
+
+        app.buttons["slot-0-0"].press(forDuration: 1, thenDragTo: app.buttons["addRow"], withVelocity: .slow, thenHoldForDuration: 0.6)
+        let second = app.buttons["slot-1-0"]
+        XCTAssertTrue(second.waitForExistence(timeout: 2))
+        XCTAssertTrue(second.label.hasPrefix("今日活跃"), second.label)
+        XCTAssertFalse(app.buttons["addRow"].exists, "two rows are the most")
+        XCTAssertTrue(app.buttons["移除"].waitForExistence(timeout: 2))
+        attach(app, name: "card-editor-two-rows")
+
+        app.buttons["saveCard"].tap()
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        XCTAssertTrue(card.label.contains("今日活跃"), card.label)
+        attach(app, name: "home-two-rows")
+    }
+
     /// A card takes other numbers from the library, outside demo mode (its projects are fixed), and the library leads
     /// to how they are counted.
     func testCardEditorAndCounting() {
