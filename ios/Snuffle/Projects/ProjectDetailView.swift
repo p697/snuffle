@@ -391,6 +391,7 @@ struct StackedChart: View {
     /// Inside another card: no title, no box of its own.
     var embedded = false
     @State private var selected: String?
+    @State private var plotWidth: CGFloat = 300
 
     private func name(_ key: String) -> String { names[key] ?? PlatformStyle.name(key) }
     private func color(_ key: String) -> Color { colors[key] ?? PlatformStyle.color(key) }
@@ -403,6 +404,7 @@ struct StackedChart: View {
 
     var body: some View {
         let shown = bars.first { $0.label == selected } ?? bars.last
+        let placed = Self.axisLabels(bars.map(\.label), plotWidth: plotWidth, labelWidth: labelWidth)
         VStack(alignment: .leading, spacing: 10) {
             if !embedded {
                 VStack(alignment: .leading, spacing: 2) {
@@ -445,10 +447,15 @@ struct StackedChart: View {
             .chartLegend(.hidden)
             .chartXSelection(value: $selected)
             .chartXAxis {
-                AxisMarks(values: axisLabels) { value in
-                    let label = value.as(String.self)
-                    AxisValueLabel(anchor: label == bars.first?.label ? .topLeading : label == bars.last?.label ? .topTrailing : .top)
+                // Charts on iOS 27 labels every category whatever `values` asks for, so the choice is made per mark.
+                AxisMarks(values: bars.map(\.label)) { value in
+                    if let label = value.as(String.self), let anchor = placed[label] {
+                        AxisValueLabel(anchor: anchor)
+                    }
                 }
+            }
+            .chartPlotStyle { plot in
+                plot.onGeometryChange(for: CGFloat.self) { $0.size.width } action: { plotWidth = $0 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading, values: .automatic(desiredCount: 3)) { _ in
@@ -463,9 +470,26 @@ struct StackedChart: View {
         .background(embedded ? .clear : Palette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
-    /// The first, middle and last day, so labels never crowd.
-    private var axisLabels: [String] {
-        guard let first = bars.first?.label, let last = bars.last?.label else { return [] }
-        return [first, bars[bars.count / 2].label, last]
+    /// The longest label's width in the axis font.
+    private var labelWidth: CGFloat {
+        let longest = bars.max { $0.label.count < $1.label.count }?.label ?? ""
+        return ceil((longest as NSString).size(withAttributes: [.font: UIFont.preferredFont(forTextStyle: .caption2)]).width)
+    }
+
+    /// The labels under the axis and where each sits on its bar; bars left out get none. Every bar is labeled while
+    /// each has room; otherwise every few bars, counted back from the latest, so labels stay well apart however dense
+    /// the bars are. A label that would run past the plot's edge is aligned to that edge.
+    static func axisLabels(_ labels: [String], plotWidth: CGFloat, labelWidth: CGFloat) -> [String: UnitPoint] {
+        guard !labels.isEmpty, plotWidth > 0 else { return [:] }
+        let slot = plotWidth / CGFloat(labels.count)
+        // Room for two labels pushed toward each other by the edges, and a gap.
+        let spacing = slot >= labelWidth + 12 ? slot : max(64, labelWidth * 2 + 12)
+        let step = max(1, Int((spacing / slot).rounded(.up)))
+        var placed: [String: UnitPoint] = [:]
+        for index in stride(from: labels.count - 1, through: 0, by: -step) {
+            let center = (CGFloat(index) + 0.5) * slot
+            placed[labels[index]] = center < labelWidth / 2 ? .topLeading : center > plotWidth - labelWidth / 2 ? .topTrailing : .top
+        }
+        return placed
     }
 }
