@@ -416,8 +416,8 @@ struct RevenueCatConnectPage: View {
 
     private var steps: some View {
         VStack(alignment: .leading, spacing: 14) {
-            NumberedStep(number: 1, text: "在 RevenueCat 打开 **项目设置 → API keys**，新建一把 **V2 密钥**。")
-            NumberedStep(number: 2, text: "权限只开 **Charts metrics: overview** 和 **Project configuration: projects** 的读取，其他保持关闭。")
+            NumberedStep(number: 1, text: "在 RevenueCat 切到**这个产品的项目**，打开 **项目设置 → API keys**，新建一把 **V2 密钥**。")
+            NumberedStep(number: 2, text: "权限只开 **Charts metrics** 和 **Project configuration: projects** 的读取，其他保持关闭。")
             NumberedStep(number: 3, text: "复制密钥，回到这里粘贴。")
             OutLink(title: String(localized: "打开 RevenueCat"), url: URL(string: "https://app.revenuecat.com")!)
                 .padding(.leading, 38)
@@ -426,15 +426,27 @@ struct RevenueCatConnectPage: View {
         .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
+    /// Shown when the key's project does not match the product by name. A V2 key reads only the project it was made
+    /// in, so the usual mistake is reusing another product's key: say so, and offer a different key.
     private var projectList: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel(String(localized: "选一个 RevenueCat 项目"))
+            SectionLabel(String(localized: "这把密钥能读到的项目"))
             CardGroup {
                 ForEach(Array(session.revenueCatProjects.enumerated()), id: \.element.id) { index, item in
                     if index > 0 { RowDivider() }
                     ChoiceRow(title: item.name, detail: nil) { link(item) }
                 }
             }
+            FinePrint(text: "RevenueCat 的每把密钥只能读它所在的项目。如果这不是你要的产品，到那个产品的 RevenueCat 项目里新建一把密钥。")
+            Button("换一把密钥") {
+                account = nil
+                session.revenueCatProjects = []
+            }
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Palette.ink2)
+            .frame(minHeight: 36)
+            .padding(.horizontal, 4)
+            .accessibilityIdentifier("revenueCatOtherKey")
         }
     }
 
