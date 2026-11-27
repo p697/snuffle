@@ -51,14 +51,22 @@ final class ConnectSession {
             .filter { !$0.isEmpty }
     }
 
-    /// The candidate that is obviously this product: the only one, or the one whose name matches a known name.
+    /// The candidate that is obviously this product: the one whose name matches a known name, or the only one when
+    /// nothing is known yet. A lone candidate that matches nothing is asked about, so a key or account that only
+    /// sees another product (a RevenueCat key belongs to one project) never links that product silently.
     func obvious<Item>(_ items: [Item], names: (Item) -> [String]) -> Item? {
-        if items.count == 1 { return items[0] }
-        let known = knownNames.map { $0.lowercased() }
-        guard !known.isEmpty else { return nil }
+        let known = knownNames.map(Self.comparable).filter { !$0.isEmpty }
+        if known.isEmpty { return items.count == 1 ? items[0] : nil }
         let matches = items.filter { item in
-            names(item).map { $0.lowercased() }.contains { name in known.contains { $0 == name || name.contains($0) || $0.contains(name) } }
+            names(item).map(Self.comparable).filter { !$0.isEmpty }.contains { name in
+                known.contains { name.contains($0) || $0.contains(name) }
+            }
         }
         return matches.count == 1 ? matches[0] : nil
+    }
+
+    /// Letters and digits only, lowercased, so "Isaac Codex" matches "com.example.isaaccodex".
+    static func comparable(_ name: String) -> String {
+        String(name.lowercased().filter { $0.isLetter || $0.isNumber })
     }
 }

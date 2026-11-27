@@ -8220,6 +8220,118 @@
         }
       }
     },
+    "RevenueCat 的每把密钥只能读它所在的项目。如果这不是你要的产品，到那个产品的 RevenueCat 项目里新建一把密钥。" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكن لكل مفتاح RevenueCat قراءة المشروع الذي أُنشئ فيه فقط. إذا لم يكن هذا هو المنتج المطلوب، فأنشئ مفتاحًا في مشروع RevenueCat الخاص بذلك المنتج."
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Jeder RevenueCat-Schlüssel kann nur das Projekt lesen, in dem er erstellt wurde. Ist das nicht das gewünschte Produkt, erstelle einen Schlüssel im RevenueCat-Projekt dieses Produkts."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Each RevenueCat key can only read the project it was created in. If this isn't the product you want, create a key in that product's RevenueCat project."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada clave de RevenueCat solo puede leer el proyecto en el que se creó. Si no es el producto que buscas, crea una clave en el proyecto de RevenueCat de ese producto."
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada clave de RevenueCat solo puede leer el proyecto en el que se creó. Si no es el producto que buscas, crea una clave en el proyecto de RevenueCat de ese producto."
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chaque clé RevenueCat ne peut lire que le projet dans lequel elle a été créée. Si ce n'est pas le bon produit, créez une clé dans le projet RevenueCat de ce produit."
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "हर RevenueCat कुंजी सिर्फ़ उसी प्रोजेक्ट को पढ़ सकती है जिसमें वह बनाई गई है। अगर यह सही प्रोडक्ट नहीं है, तो उस प्रोडक्ट के RevenueCat प्रोजेक्ट में एक कुंजी बनाएँ।"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ogni chiave RevenueCat può leggere solo il progetto in cui è stata creata. Se non è il prodotto giusto, crea una chiave nel progetto RevenueCat di quel prodotto."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RevenueCatのキーは、作成したプロジェクトしか読めません。目的のプロダクトでない場合は、そのプロダクトのRevenueCatプロジェクトでキーを作成してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RevenueCat 키는 키를 만든 프로젝트만 읽을 수 있습니다. 원하는 제품이 아니라면 그 제품의 RevenueCat 프로젝트에서 키를 새로 만드세요."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada chave do RevenueCat só lê o projeto em que foi criada. Se este não for o produto certo, crie uma chave no projeto do RevenueCat desse produto."
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cada chave do RevenueCat só lê o projeto em que foi criada. Se este não for o produto certo, cria uma chave no projeto do RevenueCat desse produto."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Каждый ключ RevenueCat читает только проект, в котором он создан. Если это не тот продукт, создайте ключ в проекте RevenueCat нужного продукта."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คีย์ RevenueCat แต่ละอันอ่านได้เฉพาะโปรเจกต์ที่สร้างคีย์นั้น หากนี่ไม่ใช่ผลิตภัณฑ์ที่ต้องการ ให้สร้างคีย์ในโปรเจกต์ RevenueCat ของผลิตภัณฑ์นั้น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Her RevenueCat anahtarı yalnızca oluşturulduğu projeyi okuyabilir. Bu istediğiniz ürün değilse, o ürünün RevenueCat projesinde bir anahtar oluşturun."
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кожен ключ RevenueCat читає лише проєкт, у якому його створено. Якщо це не той продукт, створіть ключ у проєкті RevenueCat потрібного продукту."
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mỗi khóa RevenueCat chỉ đọc được dự án nơi nó được tạo. Nếu đây không phải sản phẩm bạn cần, hãy tạo khóa trong dự án RevenueCat của sản phẩm đó."
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RevenueCat 的每組密鑰只能讀取它所在的專案。如果這不是你要的產品，請到那個產品的 RevenueCat 專案裡建立一組密鑰。"
+          }
+        }
+      }
+    },
     "RevenueCat 试用中的人 · 每小时更新" : {
       "localizations" : {
         "ar" : {
@@ -26404,114 +26516,114 @@
         }
       }
     },
-    "在 RevenueCat 打开 **项目设置 → API keys**，新建一把 **V2 密钥**。" : {
+    "在 RevenueCat 切到**这个产品的项目**，打开 **项目设置 → API keys**，新建一把 **V2 密钥**。" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "في RevenueCat، افتح **Project settings → API keys** وأنشئ **مفتاح V2**."
+            "value" : "في RevenueCat، انتقل إلى **مشروع هذا المنتج**، وافتح **Project settings → API keys** وأنشئ **مفتاح V2**."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Öffne in RevenueCat **Project settings → API keys** und erstelle einen **V2-Schlüssel**."
+            "value" : "Wechsle in RevenueCat zum **Projekt dieses Produkts**, öffne **Project settings → API keys** und erstelle einen **V2-Schlüssel**."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In RevenueCat, open **Project settings → API keys** and create a **V2 key**."
+            "value" : "In RevenueCat, switch to **this product's project**, open **Project settings → API keys** and create a **V2 key**."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En RevenueCat, abre **Project settings → API keys** y crea una **clave V2**."
+            "value" : "En RevenueCat, cambia al **proyecto de este producto**, abre **Project settings → API keys** y crea una **clave V2**."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "En RevenueCat, abre **Project settings → API keys** y crea una **clave V2**."
+            "value" : "En RevenueCat, cambia al **proyecto de este producto**, abre **Project settings → API keys** y crea una **clave V2**."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dans RevenueCat, ouvrez **Project settings → API keys** et créez une **clé V2**."
+            "value" : "Dans RevenueCat, passez au **projet de ce produit**, ouvrez **Project settings → API keys** et créez une **clé V2**."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RevenueCat में **Project settings → API keys** खोलें और एक **V2 कुंजी** बनाएँ।"
+            "value" : "RevenueCat में **इस प्रोडक्ट के प्रोजेक्ट** पर जाएँ, **Project settings → API keys** खोलें और एक **V2 कुंजी** बनाएँ।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In RevenueCat, apri **Project settings → API keys** e crea una **chiave V2**."
+            "value" : "In RevenueCat, passa al **progetto di questo prodotto**, apri **Project settings → API keys** e crea una **chiave V2**."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RevenueCatで**Project settings → API keys**を開き、**V2キー**を作成します。"
+            "value" : "RevenueCatで**このプロダクトのプロジェクト**に切り替え、**Project settings → API keys**を開いて**V2キー**を作成します。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RevenueCat에서 **Project settings → API keys**를 열고 **V2 키**를 새로 만드세요."
+            "value" : "RevenueCat에서 **이 제품의 프로젝트**로 전환하고 **Project settings → API keys**를 열어 **V2 키**를 새로 만드세요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No RevenueCat, abra **Project settings → API keys** e crie uma **chave V2**."
+            "value" : "No RevenueCat, mude para o **projeto deste produto**, abra **Project settings → API keys** e crie uma **chave V2**."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No RevenueCat, abre **Project settings → API keys** e cria uma **chave V2**."
+            "value" : "No RevenueCat, muda para o **projeto deste produto**, abre **Project settings → API keys** e cria uma **chave V2**."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В RevenueCat откройте **Project settings → API keys** и создайте **ключ V2**."
+            "value" : "В RevenueCat переключитесь на **проект этого продукта**, откройте **Project settings → API keys** и создайте **ключ V2**."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ใน RevenueCat ให้เปิด **Project settings → API keys** แล้วสร้าง **คีย์ V2**"
+            "value" : "ใน RevenueCat ให้สลับไปที่**โปรเจกต์ของผลิตภัณฑ์นี้** เปิด **Project settings → API keys** แล้วสร้าง **คีย์ V2**"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "RevenueCat’te **Project settings → API keys** bölümünü açın ve bir **V2 anahtarı** oluşturun."
+            "value" : "RevenueCat’te **bu ürünün projesine** geçin, **Project settings → API keys** bölümünü açın ve bir **V2 anahtarı** oluşturun."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "У RevenueCat відкрийте **Project settings → API keys** і створіть **ключ V2**."
+            "value" : "У RevenueCat перейдіть до **проєкту цього продукту**, відкрийте **Project settings → API keys** і створіть **ключ V2**."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Trong RevenueCat, mở **Project settings → API keys** và tạo một **khóa V2**."
+            "value" : "Trong RevenueCat, chuyển sang **dự án của sản phẩm này**, mở **Project settings → API keys** và tạo một **khóa V2**."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "在 RevenueCat 開啟 **Project settings → API keys**，建立一組 **V2 密鑰**。"
+            "value" : "在 RevenueCat 切換到**這個產品的專案**，開啟 **Project settings → API keys**，建立一組 **V2 密鑰**。"
           }
         }
       }
@@ -36069,6 +36181,118 @@
         }
       }
     },
+    "换一把密钥" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدام مفتاح آخر"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anderen Schlüssel verwenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use a different key"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar otra clave"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar otra clave"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Utiliser une autre clé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "दूसरी कुंजी इस्तेमाल करें"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usa un'altra chiave"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "別のキーを使う"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다른 키 사용"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar outra chave"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar outra chave"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Другой ключ"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ใช้คีย์อื่น"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Başka bir anahtar kullan"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Інший ключ"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dùng khóa khác"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "換一組密鑰"
+          }
+        }
+      }
+    },
     "换成别的数；按住拖到别的数上，两个数换位置" : {
       "localizations" : {
         "ar" : {
@@ -43035,114 +43259,114 @@
         }
       }
     },
-    "权限只开 **Charts metrics: overview** 和 **Project configuration: projects** 的读取，其他保持关闭。" : {
+    "权限只开 **Charts metrics** 和 **Project configuration: projects** 的读取，其他保持关闭。" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "اسمح بالقراءة فقط لـ **Charts metrics: overview** و**Project configuration: projects**، واترك كل شيء آخر متوقفًا."
+            "value" : "اسمح بالقراءة فقط لـ **Charts metrics** و**Project configuration: projects**، واترك كل شيء آخر متوقفًا."
           }
         },
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Erlaube nur Lesezugriff auf **Charts metrics: overview** und **Project configuration: projects**; alles andere bleibt aus."
+            "value" : "Erlaube nur Lesezugriff auf **Charts metrics** und **Project configuration: projects**; alles andere bleibt aus."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Allow read access to **Charts metrics: overview** and **Project configuration: projects** only; leave everything else off."
+            "value" : "Allow read access to **Charts metrics** and **Project configuration: projects** only; leave everything else off."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activa solo la lectura de **Charts metrics: overview** y **Project configuration: projects**; deja todo lo demás desactivado."
+            "value" : "Activa solo la lectura de **Charts metrics** y **Project configuration: projects**; deja todo lo demás desactivado."
           }
         },
         "es-419" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Activa solo la lectura de **Charts metrics: overview** y **Project configuration: projects**; deja todo lo demás desactivado."
+            "value" : "Activa solo la lectura de **Charts metrics** y **Project configuration: projects**; deja todo lo demás desactivado."
           }
         },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Autorisez uniquement l'accès en lecture à **Charts metrics: overview** et **Project configuration: projects** ; laissez tout le reste désactivé."
+            "value" : "Autorisez uniquement l'accès en lecture à **Charts metrics** et **Project configuration: projects** ; laissez tout le reste désactivé."
           }
         },
         "hi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "सिर्फ़ **Charts metrics: overview** और **Project configuration: projects** के लिए पढ़ने की अनुमति दें; बाकी सब बंद रखें।"
+            "value" : "सिर्फ़ **Charts metrics** और **Project configuration: projects** के लिए पढ़ने की अनुमति दें; बाकी सब बंद रखें।"
           }
         },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Consenti l'accesso in lettura solo a **Charts metrics: overview** e **Project configuration: projects**; lascia disattivato tutto il resto."
+            "value" : "Consenti l'accesso in lettura solo a **Charts metrics** e **Project configuration: projects**; lascia disattivato tutto il resto."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Charts metrics: overview**と**Project configuration: projects**の読み取りのみ許可し、ほかはすべてオフのままにします。"
+            "value" : "**Charts metrics**と**Project configuration: projects**の読み取りのみ許可し、ほかはすべてオフのままにします。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Charts metrics: overview**와 **Project configuration: projects**의 읽기 권한만 켜고 나머지는 꺼 두세요."
+            "value" : "**Charts metrics**와 **Project configuration: projects**의 읽기 권한만 켜고 나머지는 꺼 두세요."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ative só a leitura de **Charts metrics: overview** e **Project configuration: projects** e deixe todo o resto desativado."
+            "value" : "Ative só a leitura de **Charts metrics** e **Project configuration: projects** e deixe todo o resto desativado."
           }
         },
         "pt-PT" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ativa só a leitura de **Charts metrics: overview** e **Project configuration: projects**; deixa tudo o resto desativado."
+            "value" : "Ativa só a leitura de **Charts metrics** e **Project configuration: projects**; deixa tudo o resto desativado."
           }
         },
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разрешите только чтение для **Charts metrics: overview** и **Project configuration: projects**, остальное оставьте выключенным."
+            "value" : "Разрешите только чтение для **Charts metrics** и **Project configuration: projects**, остальное оставьте выключенным."
           }
         },
         "th" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "อนุญาตสิทธิ์อ่านเฉพาะ **Charts metrics: overview** และ **Project configuration: projects** และปิดสิทธิ์อื่นทั้งหมด"
+            "value" : "อนุญาตสิทธิ์อ่านเฉพาะ **Charts metrics** และ **Project configuration: projects** และปิดสิทธิ์อื่นทั้งหมด"
           }
         },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Yalnızca **Charts metrics: overview** ve **Project configuration: projects** için okuma izni verin, geri kalanını kapalı bırakın."
+            "value" : "Yalnızca **Charts metrics** ve **Project configuration: projects** için okuma izni verin, geri kalanını kapalı bırakın."
           }
         },
         "uk" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Дозвольте лише читання для **Charts metrics: overview** і **Project configuration: projects**, решту залиште вимкненим."
+            "value" : "Дозвольте лише читання для **Charts metrics** і **Project configuration: projects**, решту залиште вимкненим."
           }
         },
         "vi" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Chỉ cấp quyền đọc cho **Charts metrics: overview** và **Project configuration: projects**; tắt mọi quyền khác."
+            "value" : "Chỉ cấp quyền đọc cho **Charts metrics** và **Project configuration: projects**; tắt mọi quyền khác."
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "權限只開啟 **Charts metrics: overview** 和 **Project configuration: projects** 的讀取，其他保持關閉。"
+            "value" : "權限只開啟 **Charts metrics** 和 **Project configuration: projects** 的讀取，其他保持關閉。"
           }
         }
       }
@@ -63347,6 +63571,118 @@
         }
       }
     },
+    "这把密钥能读到的项目" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المشروع الذي يمكن لهذا المفتاح قراءته"
+          }
+        },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projekt, das dieser Schlüssel lesen kann"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Project this key can read"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proyecto que puede leer esta clave"
+          }
+        },
+        "es-419" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Proyecto que puede leer esta clave"
+          }
+        },
+        "fr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projet accessible avec cette clé"
+          }
+        },
+        "hi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "प्रोजेक्ट जिसे यह कुंजी पढ़ सकती है"
+          }
+        },
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Progetto leggibile con questa chiave"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "このキーで読めるプロジェクト"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이 키로 읽을 수 있는 프로젝트"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projeto que esta chave consegue ler"
+          }
+        },
+        "pt-PT" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Projeto que esta chave consegue ler"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проект, доступный этому ключу"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "โปรเจกต์ที่คีย์นี้อ่านได้"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu anahtarın okuyabildiği proje"
+          }
+        },
+        "uk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проєкт, доступний цьому ключу"
+          }
+        },
+        "vi" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dự án mà khóa này đọc được"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "這組密鑰能讀取的專案"
+          }
+        }
+      }
+    },
     "这是 %@ 今天到现在的数。" : {
       "localizations" : {
         "ar" : {
@@ -65583,118 +65919,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "選擇一個 App"
-          }
-        }
-      }
-    },
-    "选一个 RevenueCat 项目" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "اختر مشروع RevenueCat"
-          }
-        },
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "RevenueCat-Projekt auswählen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Pick a RevenueCat project"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elige un proyecto de RevenueCat"
-          }
-        },
-        "es-419" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Elige un proyecto de RevenueCat"
-          }
-        },
-        "fr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Choisir un projet RevenueCat"
-          }
-        },
-        "hi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "RevenueCat प्रोजेक्ट चुनें"
-          }
-        },
-        "it" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Scegli un progetto RevenueCat"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "RevenueCatプロジェクトを選択"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "RevenueCat 프로젝트 선택"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escolha um projeto do RevenueCat"
-          }
-        },
-        "pt-PT" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Escolhe um projeto do RevenueCat"
-          }
-        },
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Выберите проект RevenueCat"
-          }
-        },
-        "th" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "เลือกโปรเจกต์ RevenueCat"
-          }
-        },
-        "tr" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bir RevenueCat projesi seçin"
-          }
-        },
-        "uk" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Виберіть проєкт RevenueCat"
-          }
-        },
-        "vi" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Chọn dự án RevenueCat"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "選擇一個 RevenueCat 專案"
           }
         }
       }
