@@ -143,7 +143,10 @@ struct LiveProviderTests {
             GooglePlayApp(packageName: "com.example.atlas", displayName: "com.example.atlas")
         ], "sorted by name; a missing name falls back to the package name")
         #expect(StubProtocol.seen.first?.value(forHTTPHeaderField: "Authorization") == "Bearer token")
-        #expect(GoogleOAuth.authorizeURL(clientId: "1-a.apps.googleusercontent.com", pkce: PKCE()).absoluteString.contains("playdeveloperreporting"))
+        let authorize = GoogleOAuth.authorizeURL(clientId: "1-a.apps.googleusercontent.com", pkce: PKCE())
+        #expect(authorize.absoluteString.contains("playdeveloperreporting"))
+        let prompt = URLComponents(url: authorize, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "prompt" }?.value
+        #expect(prompt == "select_account consent", "the chooser lets another Google account be added")
     }
 
     @Test func readsPlayVitalsOnceAnHourWithoutTouchingReviews() async throws {
