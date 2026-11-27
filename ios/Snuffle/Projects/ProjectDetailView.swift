@@ -8,7 +8,7 @@ import SwiftUI
 struct ProjectDetailView: View {
     var project: Project
     @Environment(AppModel.self) private var model
-    @Environment(\.openPaywall) private var openPaywall
+    @Environment(RootSheets.self) private var sheets
     @Environment(\.dismiss) private var dismiss
     /// The range picked; until then 30 days with Pro, 7 without.
     @State private var picked: Int?
@@ -131,7 +131,7 @@ struct ProjectDetailView: View {
 
     private func select(_ next: Int) {
         if next == 30 && !canSeeMonth {
-            openPaywall(.history)
+            sheets.openPaywall(.history)
             return
         }
         picked = next

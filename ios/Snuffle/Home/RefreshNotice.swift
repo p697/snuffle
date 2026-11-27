@@ -82,8 +82,7 @@ enum RefreshNotice: Equatable {
 struct RefreshNoticeBar: View {
     @Environment(AppModel.self) private var model
     @Environment(\.accent) private var accent
-    /// 重新登录: the first project and source to sign in to again.
-    var signIn: (Project, Platform) -> Void
+    @Environment(RootSheets.self) private var sheets
 
     var body: some View {
         ZStack {
@@ -120,7 +119,7 @@ struct RefreshNoticeBar: View {
                 lines(Self.title(problem), Self.detail(problem))
                 if problem.kind == .signIn {
                     if let target = signInTarget(problem) {
-                        action(String(localized: "重新登录")) { signIn(target.project, target.platform) }
+                        action(String(localized: "重新登录")) { sheets.openSignIn(to: target.platform, of: target.project) }
                     }
                 } else {
                     action(String(localized: "重试")) { Task { await model.retry() } }

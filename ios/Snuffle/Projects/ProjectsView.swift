@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 /// 项目: the person's projects in one card, in the order the home screen shows them. Accounts have their own page.
 struct ProjectsView: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.openPaywall) private var openPaywall
+    @Environment(RootSheets.self) private var sheets
     @State private var adding = false
     @State private var dragging: UUID?
 
@@ -52,7 +52,7 @@ struct ProjectsView: View {
                         adding = true
                         Analytics.addProjectOpened(.projects)
                     } else {
-                        openPaywall(.projects)
+                        sheets.openPaywall(.projects)
                     }
                 } label: {
                     Label("添加", systemImage: "plus")

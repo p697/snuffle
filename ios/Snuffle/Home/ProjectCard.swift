@@ -9,7 +9,8 @@ struct ProjectCard: View {
     @Environment(AppModel.self) private var model
     @Environment(\.accent) private var accent
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.openSources) private var openSources
+    /// Optional: the card also shows in sheets and previews that RootView does not present.
+    @Environment(RootSheets.self) private var sheets: RootSheets?
     var project: Project
     /// Numbers for a project that is not saved yet (the connect flow's "连上了" page); nil on the home screen.
     var preview: ProjectSnapshot?
@@ -53,13 +54,13 @@ struct ProjectCard: View {
         .modifier(CardDropArea(editing: editing))
         .accessibilityElement(children: editing == nil ? .combine : .contain)
         .accessibilityIdentifier("card-\(project.name)")
-        .modifier(SourcesAction(available: !isPreview && !(snapshot?.failures.isEmpty ?? true)) { openSources(project.id) })
+        .modifier(SourcesAction(available: !isPreview && !(snapshot?.failures.isEmpty ?? true)) { sheets?.openSources(project.id) })
     }
 
     /// "停在 10:42" under a number whose source failed, in the editor and previews too, but tappable only on 总览.
     private func staleMark(_ metric: Metric, size: CGFloat = 12) -> StaleMark? {
         guard let note = snapshot?.staleNote(for: metric, in: project) else { return nil }
-        return StaleMark(text: note, size: size, action: isPreview ? nil : { openSources(project.id) })
+        return StaleMark(text: note, size: size, action: isPreview ? nil : { sheets?.openSources(project.id) })
     }
 
     // MARK: Header
@@ -647,14 +648,14 @@ private struct SourcesAction: ViewModifier {
 }
 
 private struct LockedOverlay: View {
-    @Environment(\.openPaywall) private var openPaywall
+    @Environment(RootSheets.self) private var sheets: RootSheets?
 
     var body: some View {
         RoundedRectangle(cornerRadius: 24, style: .continuous)
             .fill(Palette.paper.opacity(0.82))
             .overlay {
                 Button {
-                    openPaywall(.projects)
+                    sheets?.openPaywall(.projects)
                 } label: {
                     Label("免费版刷新前两个项目，升级 Pro 刷新全部", systemImage: "lock.fill")
                         .font(.system(size: 14, weight: .semibold))
