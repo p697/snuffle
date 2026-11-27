@@ -57,7 +57,7 @@ struct HomeView: View {
                     title
                     demo
                     // Room for a long status, so the layout does not flip while the text changes during a refresh.
-                    Text(Self.longStatus).font(.system(size: 13)).hidden().overlay(alignment: .leading) { status }
+                    Text(longStatus).font(.system(size: 13)).hidden().overlay(alignment: .leading) { status }
                 }
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(alignment: .firstTextBaseline, spacing: 10) {
@@ -134,17 +134,21 @@ struct HomeView: View {
         .lineLimit(1)
     }
 
-    private static var longStatus: String {
-        String(localized: "\(Format.ago(.now.addingTimeInterval(-50 * 60))) · 第 \(88) 次")
+    /// The longest the status gets, with the failed sources it names.
+    private var longStatus: String {
+        let base = String(localized: "\(Format.ago(.now.addingTimeInterval(-50 * 60))) · 第 \(88) 次")
+        return model.sourceProblem.map { base + " · " + $0.summary } ?? base
     }
 
-    /// Empty before the first refresh: the button says what to do.
+    /// Empty before the first refresh: the button says what to do. Names the sources that failed, which stays after
+    /// their note is closed.
     private func status(now: Date) -> String {
         if model.isRefreshing { return String(localized: "正在刷新…") }
         guard let last = model.lastRefresh else { return "" }
         let when = Format.ago(last, now: now)
         let count = model.refreshCountToday
-        return count > 0 ? String(localized: "\(when) · 第 \(count) 次") : when
+        let base = count > 0 ? String(localized: "\(when) · 第 \(count) 次") : when
+        return model.sourceProblem.map { base + " · " + $0.summary } ?? base
     }
 }
 

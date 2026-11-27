@@ -12,6 +12,13 @@ struct FailureKindTests {
         #expect(FailureKind(CancellationError()) == .other)
     }
 
+    @Test func onlyLostAccessNeedsASignIn() {
+        let signIn = [FailureKind.unauthorized, .forbidden, .missingCredential, .invalidKey].filter(\.needsSignIn)
+        let passing = [FailureKind.network, .serverError, .rateLimited, .clientError, .invalidResponse, .other].filter(\.needsSignIn)
+        #expect(signIn.count == 4)
+        #expect(passing.isEmpty)
+    }
+
     @Test func cachesWithoutKindsStillDecode() throws {
         let json = Data(#"{"platform":"posthog","message":"PostHog 的登录已失效"}"#.utf8)
         let failure = try JSONDecoder().decode(SourceFailure.self, from: json)

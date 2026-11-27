@@ -22,6 +22,14 @@ struct FormatTests {
         #expect(arabic.hasPrefix("\u{2066}") && arabic.hasSuffix("\u{2069}"))
     }
 
+    @Test func aMomentNamesTheDayOnlyWhenItIsNotToday() {
+        let now = Date()
+        let earlier = now.addingTimeInterval(-60)
+        if Calendar.current.isDate(earlier, inSameDayAs: now) { #expect(Format.moment(earlier, now: now) == Format.clock(earlier)) }
+        let yesterday = now.addingTimeInterval(-86_400)
+        #expect(Format.moment(yesterday, now: now).count > Format.clock(yesterday).count)
+    }
+
     @Test func ratesKeepTwoDecimalsLikePlayConsole() {
         #expect(Format.rate(0.0109, locale: Locale(identifier: "en_US")) == "1.09%")
         #expect(Format.rate(0.003, locale: Locale(identifier: "en_US")) == "0.30%")

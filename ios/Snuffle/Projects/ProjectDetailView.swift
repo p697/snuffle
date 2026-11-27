@@ -286,7 +286,7 @@ struct ProjectDetailView: View {
                             Text(platform.displayName).font(.system(size: 15, weight: .semibold))
                             Text(failure?.message ?? detail(platform))
                                 .font(.system(size: 12))
-                                .foregroundStyle(failure == nil ? Palette.ink2 : Palette.bad)
+                                .foregroundStyle(failure == nil ? Palette.ink2 : Palette.warn)
                         }
                         Spacer()
                     }

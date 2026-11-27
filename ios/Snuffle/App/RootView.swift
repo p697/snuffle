@@ -15,6 +15,10 @@ struct RootView: View {
     @State private var barHeight: CGFloat = 0
     /// A connect flow opened by a key file from Files or AirDrop.
     @State private var keyFlow = false
+    /// A project's sources, opened from a number that stopped.
+    @State private var sources: SourcesRequest?
+    /// Signing in to a source again, from the note about failed sources.
+    @State private var signIn: SignInRequest?
 
     /// Debug builds launched with `-paywall history` open on the paywall for that reason, so UI tests reach
     /// the entries demo mode leaves unlocked.
@@ -45,6 +49,7 @@ struct RootView: View {
             }
         }
         .environment(\.openPaywall) { paywall = $0 }
+        .environment(\.openSources) { sources = SourcesRequest(id: $0) }
         .onOpenURL { url in
             guard url.isFileURL, let file = KeyFile(url: url) else { return }
             model.openedKeyFile = file
@@ -56,6 +61,8 @@ struct RootView: View {
         }
         .sheet(isPresented: $keyFlow) { AddProjectFlow(startsAt: .appStore) }
         .sheet(item: $paywall) { reason in PaywallView(reason: reason) }
+        .sheet(item: $sources) { request in SourcesSheet(projectId: request.id) }
+        .sheet(item: $signIn) { request in ReconnectSheet(project: request.project, platform: request.platform) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.refreshOnOpenIfNeeded() } }
         }
@@ -89,6 +96,11 @@ struct RootView: View {
             TabBar(tab: $tab)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { barHeight = $0 }
                 .ignoresSafeArea(.keyboard)
+            // Clear of the cat's ears at rest; it only comes out further while a refresh runs.
+            RefreshNoticeBar { project, platform in signIn = SignInRequest(project: project, platform: platform) }
+                .padding(.horizontal, 12)
+                .padding(.bottom, barHeight + 16)
+                .ignoresSafeArea(.keyboard)
         }
     }
 
@@ -109,8 +121,10 @@ private struct TabBar: View {
             item(.today, String(localized: "总览"), "waveform.path.ecg")
             item(.money, String(localized: "收入"), "dollarsign.circle")
             Color.clear.frame(width: 104, height: 46)
-            item(.reviews, String(localized: "评论"), "text.bubble", badge: Int(model.total(.reviewsToAnswer) ?? 0))
-            item(.projects, String(localized: "项目"), "square.grid.2x2")
+            item(.reviews, String(localized: "评论"), "text.bubble", dot: (model.total(.reviewsToAnswer) ?? 0) > 0 ? Palette.bad : nil)
+            // Stays until the source is signed in to again, after the note about it is closed.
+            item(.projects, String(localized: "项目"), "square.grid.2x2", dot: model.sourceProblem?.kind == .signIn ? Palette.warn : nil)
+                .accessibilityValue(model.sourceProblem?.kind == .signIn ? Text("要重新登录") : Text(verbatim: ""))
         }
         .padding(.horizontal, 12)
         .padding(.top, 10)
@@ -127,7 +141,7 @@ private struct TabBar: View {
         .padding(.top, 26)
     }
 
-    private func item(_ value: Tab, _ title: String, _ symbol: String, badge: Int = 0) -> some View {
+    private func item(_ value: Tab, _ title: String, _ symbol: String, dot: Color? = nil) -> some View {
         Button {
             tab = value
         } label: {
@@ -135,8 +149,8 @@ private struct TabBar: View {
                 Image(systemName: symbol)
                     .font(.system(size: 20, weight: tab == value ? .bold : .regular))
                     .overlay(alignment: .topTrailing) {
-                        if badge > 0 {
-                            Circle().fill(Palette.bad).frame(width: 7, height: 7).offset(x: 4, y: -1)
+                        if let dot {
+                            Circle().fill(dot).frame(width: 7, height: 7).offset(x: 4, y: -1)
                         }
                     }
                 Text(title)
@@ -154,6 +168,16 @@ private struct TabBar: View {
     }
 }
 
+struct SourcesRequest: Identifiable {
+    var id: UUID
+}
+
+struct SignInRequest: Identifiable {
+    var project: Project
+    var platform: Platform
+    var id: String { project.id.uuidString + platform.rawValue }
+}
+
 enum PaywallReason: String, Identifiable {
     case projects, history, drafts, widgets, general
     var id: String { rawValue }
@@ -161,6 +185,8 @@ enum PaywallReason: String, Identifiable {
 
 extension EnvironmentValues {
     @Entry var openPaywall: (PaywallReason) -> Void = { _ in }
+    /// Opens a project's sources (`SourcesSheet`).
+    @Entry var openSources: (UUID) -> Void = { _ in }
     /// Height of the floating tab bar, including the room above it for the cat. Zero outside the tabs.
     @Entry var tabBarClearance: CGFloat = 0
 }

@@ -79,6 +79,12 @@ public enum Format {
         date.formatted(Date.FormatStyle(date: .omitted, time: .shortened).locale(latin()))
     }
 
+    /// When a number stopped: "20:05" today, with the day in front on another day.
+    public static func moment(_ date: Date, now: Date = .now, calendar: Calendar = .current) -> String {
+        guard !calendar.isDate(date, inSameDayAs: now) else { return clock(date) }
+        return date.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened).year(.omitted).locale(latin()))
+    }
+
     /// A country or territory name from an ISO alpha-2 or alpha-3 code.
     public static func place(_ code: String?) -> String? {
         guard let code, !code.isEmpty else { return nil }

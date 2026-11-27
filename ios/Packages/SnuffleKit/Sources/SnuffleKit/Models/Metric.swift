@@ -106,6 +106,22 @@ public enum Metric: Hashable, Sendable, Identifiable {
         }
     }
 
+    /// The sources this number is read from in `project`: one, or each store connected for the reviews to answer.
+    public func platforms(in project: Project) -> [Platform] {
+        switch source {
+        case .posthog: [.posthog]
+        case .revenueCat: [.revenueCat]
+        case .googlePlay: [.googlePlay]
+        case .stores: [project.appStore != nil ? .appStore : nil, project.googlePlay != nil ? .googlePlay : nil].compactMap { $0 }
+        case .revenueSetting:
+            switch project.metrics.revenue {
+            case .posthogEvent: [.posthog]
+            case .revenueCat: [.revenueCat]
+            case .none: []
+            }
+        }
+    }
+
     /// Whether `project` has what this number is read from.
     public func isAvailable(in project: Project) -> Bool {
         switch self {
