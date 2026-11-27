@@ -52,6 +52,22 @@ struct PublicAppStoreTests {
         #expect(PublicAppStoreClient.reviewsFeed(appId: "12/34", country: "us") == nil)
     }
 
+    @Test func listsTheNameTypedFirstAcrossStorefronts() {
+        let home = [PublicApp(id: "1", name: "OpenClaw", bundleId: "a"), PublicApp(id: "2", name: "Kimi", bundleId: "b")]
+        let us = [PublicApp(id: "3", name: "Lumen: Notes", bundleId: "c"), PublicApp(id: "1", name: "OpenClaw (US)", bundleId: "a")]
+        let merged = PublicAppStoreClient.merge([home, us], term: " lumen ")
+        #expect(merged.map(\.id) == ["3", "1", "2"], "the name typed first, then each storefront in turn")
+        #expect(merged[1].name == "OpenClaw", "an app in both is listed as the phone's storefront has it")
+        #expect(PublicAppStoreClient.merge([[PublicApp(id: "4", name: "ＬＵＭＥＮ", bundleId: "d")] + home], term: "lumen").first?.id == "4")
+        let many = (1...30).map { PublicApp(id: "\($0)", name: "App \($0)", bundleId: "b\($0)") }
+        #expect(PublicAppStoreClient.merge([many, many], term: "x").count == 25)
+
+        #expect(PublicAppStoreClient.storefront(in: "https://apps.apple.com/jp/app/lumen/id1234567890") == "jp")
+        #expect(PublicAppStoreClient.storefront(in: "https://itunes.apple.com/GB/app/id1234567890?mt=8") == "gb")
+        #expect(PublicAppStoreClient.storefront(in: "https://apps.apple.com/app/id1234567890") == nil)
+        #expect(PublicAppStoreClient.storefront(in: "https://apps.apple.com/zz/app/id1234567890") == nil)
+    }
+
     @Test func weighsEachStorefrontByItsRatings() {
         let apps = [
             PublicApp(id: "1", name: "A", bundleId: "a", rating: 5, ratingCount: 30),
@@ -124,5 +140,28 @@ extension LiveProviderTests {
         await #expect(throws: SourceError.missingCredential(.appStore)) {
             try await provider(store: MemoryCredentialStore([:])).reply(to: result.reviews[.appStore]![0], text: "Thanks", in: project)
         }
+    }
+
+    @Test func findsAppsNotSoldInThePhonesStorefront() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [StubProtocol.self]
+        let client = PublicAppStoreClient(http: HTTPClient(session: URLSession(configuration: configuration)))
+        let countries = { (path: String) in
+            StubProtocol.seen.filter { $0.url?.path() == path }.compactMap { request in
+                URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "country" }?.value
+            }
+        }
+        let app = #"{"results":[{"wrapperType":"software","trackId":1234567890,"trackName":"Lumen","bundleId":"c"}]}"#
+
+        StubProtocol.reset(["itunes.apple.com/search": (200, app)])
+        #expect(try await client.find("lumen", home: "cn").map(\.id) == ["1234567890"])
+        #expect(Set(countries("/search")) == ["cn", "us"], "searched where the phone is and in the US together")
+
+        StubProtocol.reset(["itunes.apple.com/lookup": (200, app)])
+        #expect(try await client.find("https://apps.apple.com/jp/app/lumen/id1234567890", home: "cn").map(\.id) == ["1234567890"])
+        #expect(countries("/lookup") == ["jp"], "a link is looked up in its own storefront first")
+
+        StubProtocol.reset(["itunes.apple.com/": (403, "Forbidden")])
+        await #expect(throws: SourceError.rateLimited(.appStore)) { try await client.find("lumen", home: "cn") }
     }
 }
