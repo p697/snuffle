@@ -43,12 +43,25 @@ enum ProjectIcons {
 
     /// Saves a picture for the project and returns the version to store on it.
     static func save(_ image: UIImage, for project: Project) throws -> Int {
+        guard let staged = stage(image, for: project) else { throw CocoaError(.fileWriteUnknown) }
+        try write(staged.data, for: project.id, version: staged.version)
+        return staged.version
+    }
+
+    /// A picture for a project not saved yet: shown from memory under the next version, written by `write` once the
+    /// project is kept, so a project that is not leaves nothing behind.
+    static func stage(_ image: UIImage, for project: Project) -> (version: Int, data: Data)? {
         let version = (project.iconVersion ?? 0) + 1
-        let url = SharedContainer.projectIcon(project.id, version: version)
-        guard let data = squared(image).jpegData(compressionQuality: 0.85) else { throw CocoaError(.fileWriteUnknown) }
+        let square = squared(image)
+        guard let data = square.jpegData(compressionQuality: 0.85) else { return nil }
+        cache.setObject(square, forKey: "\(project.id.uuidString)-\(version)" as NSString)
+        return (version, data)
+    }
+
+    static func write(_ data: Data, for projectId: UUID, version: Int) throws {
+        let url = SharedContainer.projectIcon(projectId, version: version)
         try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try data.write(to: url, options: .atomic)
-        return version
     }
 
     /// The centre square, scaled down to `pixelSize`.

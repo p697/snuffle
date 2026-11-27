@@ -34,6 +34,8 @@ struct ProjectDetailView: View {
     /// One source or none: what is missing matters more than the charts, so the sources come right after the numbers.
     private var thin: Bool { current.platforms.count <= 1 }
     private var demo: Bool { model.settings.demoMode }
+    /// Something was brought over from a PostHog dashboard: its counting or its charts.
+    private var imported: Bool { current.metrics.dashboard != nil || !current.pins.isEmpty }
 
     var body: some View {
         ScrollView {
@@ -45,7 +47,7 @@ struct ProjectDetailView: View {
                 if let platforms = snapshot?.platforms, !platforms.isEmpty {
                     PlatformCard(platforms: platforms)
                 }
-                if !current.pins.isEmpty { pins }
+                if current.posthog != nil, !current.pins.isEmpty { pins }
                 if current.posthog != nil {
                     rangePicker
                     charts
@@ -93,7 +95,7 @@ struct ProjectDetailView: View {
             if current.posthog != nil {
                 Button("数字怎么算", systemImage: "chart.bar.xaxis") { editingCounting = true }
                     .accessibilityIdentifier("editCounting")
-                Button("从看板导入", systemImage: "square.grid.2x2") { importing = .menu }
+                Button(imported ? "管理看板" : "从看板导入", systemImage: "square.grid.2x2") { importing = .menu }
                     .accessibilityIdentifier("menuImportDashboard")
             }
             Divider()
@@ -133,7 +135,7 @@ struct ProjectDetailView: View {
     @ViewBuilder
     private var counting: some View {
         if let dashboard = current.metrics.dashboard {
-            countingChip(tag: String(localized: "按看板算"), text: String(localized: "「\(dashboard.name)」· 和网页一致"), strong: true)
+            countingChip(tag: String(localized: "按看板算"), text: String(localized: "「\(dashboard.name)」· 和网页一致"), strong: true) { importing = .counting }
         } else if !demo, case .dashboards(let count, let first) = offer {
             OfferBanner(
                 title: String(localized: "你在 PostHog 有 \(count) 个看板"),
@@ -156,14 +158,14 @@ struct ProjectDetailView: View {
                 close: { model.dismissDashboardOffer(for: current) }
             )
         } else {
-            countingChip(tag: nil, text: current.countingSummary, strong: false)
+            countingChip(tag: nil, text: current.countingSummary, strong: false) { editingCounting = true }
         }
     }
 
-    private func countingChip(tag: String?, text: String, strong: Bool) -> some View {
-        Button {
-            editingCounting = true
-        } label: {
+    /// The dashboard followed opens the dashboard sheet (switch it, stop following, its charts); Snuffle's own
+    /// counting opens the counting editor.
+    private func countingChip(tag: String?, text: String, strong: Bool, open: @escaping () -> Void) -> some View {
+        Button(action: open) {
             HStack(spacing: 10) {
                 if let tag {
                     Text(tag)
@@ -211,12 +213,20 @@ struct ProjectDetailView: View {
 
     // MARK: Charts
 
+    /// "走势": Snuffle's own charts, apart from the dashboard's, with the range they cover beside the heading.
     private var rangePicker: some View {
-        Picker("范围", selection: Binding(get: { days }, set: select)) {
-            Text("7 天").tag(7)
-            Text(canSeeMonth ? "30 天" : "30 天 · Pro").tag(30)
+        HStack(spacing: 12) {
+            Text("走势").font(.system(size: 18, weight: .heavy)).foregroundStyle(Palette.ink)
+            Spacer(minLength: 8)
+            Picker("范围", selection: Binding(get: { days }, set: select)) {
+                Text("7 天").tag(7)
+                Text(canSeeMonth ? "30 天" : "30 天 · Pro").tag(30)
+            }
+            .pickerStyle(.segmented)
+            .fixedSize()
         }
-        .pickerStyle(.segmented)
+        .padding(.top, current.pins.isEmpty ? 0 : 8)
+        .padding(.leading, 4)
     }
 
     private func select(_ next: Int) {

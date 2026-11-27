@@ -17,6 +17,9 @@ final class ConnectSession {
     var revenueCatProjects: [RevenueCatProject] = []
     var appStoreApps: [AppStoreApp] = []
     var googleApps: [GooglePlayApp] = []
+    /// The App Store icon fetched for a new project: shown at once, written to disk only when the project is saved.
+    @ObservationIgnored private var icon: (version: Int, data: Data)?
+    @ObservationIgnored private var iconTask: Task<Void, Never>?
 
     init(project: Project, isNewProject: Bool) {
         self.project = project
@@ -65,31 +68,54 @@ final class ConnectSession {
         return matches.count == 1 ? matches[0] : nil
     }
 
+    /// The candidates no other saved project reads, so linking on its own never makes a second project for a source.
+    func free<Item>(_ items: [Item], _ platform: Platform, id: (Item) -> String, in workspace: Workspace) -> [Item] {
+        items.filter { addedAs(platform, id: id($0), in: workspace) == nil }
+    }
+
+    /// The one PostHog project the account sees, to link without asking, unless another project reads it.
+    func onlyFreePostHogProject(in workspace: Workspace) -> PostHogProject? {
+        postHogProjects.count == 1 ? free(postHogProjects, .posthog, id: { String($0.id) }, in: workspace).first : nil
+    }
+
     /// Names a new project after a store listing, without its tagline.
     func name(fromStore listing: String) {
         if project.name.isEmpty { project.name = Project.shortName(listing) }
     }
 
-    /// Uses the App Store icon as the project's picture when it has none. Without a URL at hand (an app listed by a
-    /// key) the app is looked up by its id in the phone's storefront, then the US one.
-    func adoptIcon(_ url: URL?, appId: String) async {
-        guard project.iconVersion == nil else { return }
-        var found = url
-        if found == nil {
-            for country in [Locale.current.region?.identifier.lowercased(), "us"].compactMap({ $0 }) {
-                if let icon = try? await PublicAppStoreClient().lookup(appId: appId, country: country)?.icon {
-                    found = icon
-                    break
+    /// Uses the App Store icon as a new project's picture unless the person chose one. Without a URL at hand (an app
+    /// listed by a key) the app is looked up by its id in the phone's storefront, then the US one.
+    func adoptIcon(_ url: URL?, appId: String) {
+        guard isNewProject else { return }
+        iconTask?.cancel()
+        iconTask = Task {
+            var found = url
+            if found == nil {
+                for country in [Locale.current.region?.identifier.lowercased(), "us"].compactMap({ $0 }) {
+                    if let icon = try? await PublicAppStoreClient().lookup(appId: appId, country: country)?.icon {
+                        found = icon
+                        break
+                    }
                 }
             }
+            guard let found, let (data, _) = try? await URLSession.shared.data(from: found), let image = UIImage(data: data),
+                  !Task.isCancelled, project.appStore?.appId == appId, project.iconVersion == icon?.version,
+                  let staged = ProjectIcons.stage(image, for: project) else { return }
+            icon = staged
+            project.iconVersion = staged.version
         }
-        guard let found, let (data, _) = try? await URLSession.shared.data(from: found), let image = UIImage(data: data),
-              project.iconVersion == nil, let version = try? ProjectIcons.save(image, for: project) else { return }
-        project.iconVersion = version
     }
 
-    /// A new project that is not kept leaves no picture behind.
-    func discard() {
-        if isNewProject { SharedContainer.removeProjectIcons(project.id) }
+    /// Writes the fetched icon when the project is saved with it.
+    func keepIcon() {
+        iconTask?.cancel()
+        guard let icon, project.iconVersion == icon.version else { return }
+        if (try? ProjectIcons.write(icon.data, for: project.id, version: icon.version)) == nil { project.iconVersion = nil }
+    }
+
+    /// The project went into another one: its icon is not needed.
+    func dropIcon() {
+        iconTask?.cancel()
+        icon = nil
     }
 }

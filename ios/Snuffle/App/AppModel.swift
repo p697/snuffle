@@ -589,23 +589,27 @@ final class AppModel {
     }
 
     /// Whether a project's page offers its PostHog dashboards, looked up once per project while the app is open.
-    private var dashboardOffers: [UUID: DashboardOffer] = [:]
+    @ObservationIgnored private var dashboardOffers: [UUID: DashboardOffer] = [:]
 
+    /// Offered to projects still on Snuffle's own counting with nothing imported: counting set up by hand is the
+    /// person's choice already.
     func dashboardOffer(for project: Project) async -> DashboardOffer {
-        guard project.posthog != nil, project.metrics.dashboard == nil, project.pins.isEmpty,
+        guard project.posthog != nil, project.metrics.dashboard == nil, project.metrics.isStandardPeople, project.pins.isEmpty,
               !dismissedDashboardOffers.contains(project.id) else { return .none }
         if let known = dashboardOffers[project.id] { return known }
-        let offer: DashboardOffer
         do {
             let list = try await provider.dashboards(for: project)
-            offer = list.isEmpty ? .none : .dashboards(list.count, first: list[0].name)
+            let offer: DashboardOffer = list.isEmpty ? .none : .dashboards(list.count, first: list[0].name)
+            dashboardOffers[project.id] = offer
+            return offer
         } catch {
             let kind = FailureKind(error)
-            // Accounts connected before Snuffle read dashboards have to sign in again to allow it.
-            offer = kind == .forbidden || kind == .unauthorized ? .needsAccess : .none
+            // Accounts connected before Snuffle read dashboards have to sign in again to allow it. Anything else (the
+            // network) is asked again next time the page opens.
+            guard kind == .forbidden || kind == .unauthorized else { return .none }
+            dashboardOffers[project.id] = .needsAccess
+            return .needsAccess
         }
-        dashboardOffers[project.id] = offer
-        return offer
     }
 
     /// Projects whose dashboard offer the person closed, kept on this phone.

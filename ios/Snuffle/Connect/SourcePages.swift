@@ -383,6 +383,12 @@ struct PostHogPickPage: View {
 enum PostHogLinker {
     static func link(_ item: PostHogProject, account: Account, session: ConnectSession, model: AppModel) async {
         let zone = item.timezone ?? TimeZone.current.identifier
+        // Another PostHog project than the one picked before: its charts and dashboard counting are not this one's.
+        if let previous = session.project.posthog, previous.projectId != item.id {
+            session.project.pins = []
+            if session.project.metrics.dashboard != nil { session.project.metrics.countStandard() }
+            session.project.dashboardChecked = false
+        }
         session.project.posthog = PostHogLink(accountId: account.id, projectId: item.id, projectName: item.displayName, timeZone: zone)
         if session.project.name.isEmpty { session.project.name = item.displayName }
         session.postHogDashboards = nil
@@ -522,7 +528,7 @@ struct RevenueCatConnectPage: View {
     private func use(_ saved: Account, projects: [RevenueCatProject]) {
         account = saved
         session.revenueCatProjects = projects
-        if let only = session.obvious(projects, names: { [$0.name] }) { link(only) }
+        if let only = session.obvious(session.free(projects, .revenueCat, id: \.id, in: model.workspace), names: { [$0.name] }) { link(only) }
     }
 
     private func link(_ item: RevenueCatProject) {
@@ -675,7 +681,7 @@ struct AppStoreConnectPage: View {
     private func link(_ app: PublicApp) {
         session.project.appStore = AppStoreLink(accountId: nil, appId: app.id, appName: app.name, bundleId: app.bundleId)
         session.name(fromStore: app.name)
-        Task { await session.adoptIcon(app.icon, appId: app.id) }
+        session.adoptIcon(app.icon, appId: app.id)
         session.track(.appStore, .search, .succeeded)
         linked()
     }
@@ -859,7 +865,7 @@ struct AppStoreConnectPage: View {
         account = saved
         session.appStoreApps = apps
         let current = apps.first { $0.id == session.project.appStore?.appId }
-        if let app = current ?? session.obvious(apps, names: { [$0.name, $0.bundleId] }) { link(app) }
+        if let app = current ?? session.obvious(session.free(apps, .appStore, id: \.id, in: model.workspace), names: { [$0.name, $0.bundleId] }) { link(app) }
     }
 
     /// The same app keeps the storefronts it was read in.
@@ -868,7 +874,7 @@ struct AppStoreConnectPage: View {
         let countries = session.project.appStore?.appId == app.id ? session.project.appStore?.countries ?? [] : []
         session.project.appStore = AppStoreLink(accountId: account.id, appId: app.id, appName: app.name, bundleId: app.bundleId, countries: countries)
         session.name(fromStore: app.name)
-        Task { await session.adoptIcon(nil, appId: app.id) }
+        session.adoptIcon(nil, appId: app.id)
         linked()
     }
 }
@@ -1053,7 +1059,7 @@ struct GooglePlayConnectPage: View {
         do {
             let token = try await TokenBroker(store: model.credentials).googleToken(account.id)
             session.googleApps = try await GooglePlayClient { token }.apps()
-            if let only = session.obvious(session.googleApps, names: { [$0.displayName, $0.packageName] }) {
+            if let only = session.obvious(session.free(session.googleApps, .googlePlay, id: \.packageName, in: model.workspace), names: { [$0.displayName, $0.packageName] }) {
                 await link(only.packageName)
             }
         } catch {

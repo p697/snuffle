@@ -60,8 +60,9 @@ struct SourceRows: View {
                         .frame(minHeight: 34)
                         .overlay(Capsule().strokeBorder(Palette.line))
                         .frame(minHeight: 44)
-                } else if status == nil {
+                } else if line?.warn != true {
                     Image(systemName: "checkmark").font(.system(size: 14, weight: .heavy)).foregroundStyle(Palette.up)
+                        .accessibilityLabel("已连上")
                 }
             } else if let connect {
                 Button("接上") { connect(platform) }

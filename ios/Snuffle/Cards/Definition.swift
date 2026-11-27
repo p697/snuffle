@@ -335,7 +335,8 @@ private struct DashboardBanner: View {
             }
         }
         .sheet(isPresented: $reconnecting) {
-            ConnectSourceSheet(platform: .posthog, project: $project)
+            // Only the counting is saved from here, so the sign-in does not offer charts it would drop.
+            ConnectSourceSheet(platform: .posthog, project: $project, offersDashboards: false)
         }
     }
 

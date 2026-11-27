@@ -23,7 +23,6 @@ struct AddProjectFlow: View {
     var startsAt: Platform?
     @State private var session = ConnectSession(project: Project(name: "", tint: .ink), isNewProject: true)
     @State private var path: [ConnectRoute] = []
-    @State private var saved = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -38,10 +37,7 @@ struct AddProjectFlow: View {
             session.project.tint = ProjectTint.allCases.first { !used.contains($0) } ?? .ink
             if let startsAt { path = [.connect(startsAt)] }
         }
-        .onDisappear {
-            model.openConnectFlows -= 1
-            if !saved { session.discard() }
-        }
+        .onDisappear { model.openConnectFlows -= 1 }
         // A key file opened from Files or AirDrop while this flow is up: show the App Store page, which takes it.
         .onChange(of: model.openedKeyFile) { _, file in
             if file != nil, path.last != .connect(.appStore) { path.append(.connect(.appStore)) }
@@ -71,10 +67,10 @@ struct AddProjectFlow: View {
         }
     }
 
-    /// One PostHog project is obviously the one; several need a choice.
+    /// One PostHog project is obviously the one, unless another project reads it; otherwise a choice.
     private func postHogSignedIn() async {
-        if session.postHogProjects.count == 1, let account = session.postHogAccount {
-            await PostHogLinker.link(session.postHogProjects[0], account: account, session: session, model: model)
+        if let only = session.onlyFreePostHogProject(in: model.workspace), let account = session.postHogAccount {
+            await PostHogLinker.link(only, account: account, session: session, model: model)
             postHogLinked()
         } else {
             path.append(.pickPostHog)
@@ -100,7 +96,7 @@ struct AddProjectFlow: View {
     }
 
     private func finish() {
-        saved = true
+        session.keepIcon()
         model.save(project: session.finished)
         dismiss()
         Task { await model.refreshAll(trigger: .connect) }
@@ -108,6 +104,7 @@ struct AddProjectFlow: View {
 
     /// The new sources go into the project the person already had for this product, instead of a second one.
     private func merge(into twin: Project) {
+        session.dropIcon()
         let merged = twin.merging(session.finished)
         model.save(project: merged)
         dismiss()
@@ -254,16 +251,20 @@ private struct ConnectedPage: View {
 
     var body: some View {
         @Bindable var session = session
+        // Until the person says it is another product, the page asks one thing: whether this goes into the project
+        // they already have. Nothing on it saves a second one.
+        let twin = keepApart ? nil : model.workspace.sameProduct(as: session.project)
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     RoundIconButton(systemName: "xmark", label: String(localized: "不保存，关闭")) { confirmingCancel = true }
                     Spacer()
                 }
-                if !keepApart, let twin = model.workspace.sameProduct(as: session.project) {
+                if let twin {
                     MergeCard(twin: twin, adding: session.project.platforms, merge: { merge(twin) }, keepApart: { keepApart = true })
+                } else {
+                    PageTitle(title: String(localized: "项目建好了"), subtitle: session.project.name.isEmpty ? nil : String(localized: "这是 \(session.project.name) 刚刚读到的数。"))
                 }
-                PageTitle(title: String(localized: "项目建好了"), subtitle: session.project.name.isEmpty ? nil : String(localized: "这是 \(session.project.name) 今天到现在的数。"))
                 ProjectCard(project: session.finished, preview: preview, previewLoading: loading)
                 if session.project.posthog != nil { dashboardRow }
                 let complete = session.project.platforms.count == Platform.allCases.count
@@ -290,13 +291,15 @@ private struct ConnectedPage: View {
             .padding(16)
         }
         .safeAreaInset(edge: .bottom) {
-            Button("完成", action: finish)
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(session.project.name.trimmingCharacters(in: .whitespaces).isEmpty)
-                .accessibilityIdentifier("finishProject")
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .background(Palette.paper.opacity(0.95))
+            if twin == nil {
+                Button("完成", action: finish)
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(session.project.name.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .accessibilityIdentifier("finishProject")
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .background(Palette.paper.opacity(0.95))
+            }
         }
         .sheetPage()
         .navigationBarBackButtonHidden()
@@ -497,8 +500,8 @@ struct ConnectSourceSheet: View {
         switch platform {
         case .posthog:
             PostHogConnectPage {
-                if session.postHogProjects.count == 1, let account = session.postHogAccount {
-                    await PostHogLinker.link(session.postHogProjects[0], account: account, session: session, model: model)
+                if let only = session.onlyFreePostHogProject(in: model.workspace), let account = session.postHogAccount {
+                    await PostHogLinker.link(only, account: account, session: session, model: model)
                     postHogLinked()
                 } else {
                     path.append(.pickPostHog)
@@ -510,10 +513,10 @@ struct ConnectSourceSheet: View {
         }
     }
 
+    /// A newly linked PostHog project offers its dashboards; signing in again to the same one changes nothing else.
     private func postHogLinked() {
-        // Signing in again to the same PostHog project keeps what was imported from its dashboards.
         let sameProject = session.original?.posthog?.projectId == session.project.posthog?.projectId
-        if offersDashboards, !sameProject || session.project.pins.isEmpty, session.postHogDashboards?.isEmpty == false {
+        if offersDashboards, !sameProject, session.postHogDashboards?.isEmpty == false {
             path.append(.importBoard)
         } else {
             done()

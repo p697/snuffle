@@ -191,6 +191,8 @@ enum Analytics {
         case menu
         /// "管理" above the charts already placed.
         case charts
+        /// The "按看板算" line under the project's name.
+        case counting
     }
 
     /// The dashboard step or sheet ends: imported (charts placed and/or counting followed) or skipped. Counts only,

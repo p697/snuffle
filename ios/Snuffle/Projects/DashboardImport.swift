@@ -60,12 +60,15 @@ final class DashboardPicker {
     private(set) var needsAccess = false
     /// The dashboard the project counts like now.
     let followed: Int?
+    /// Counting the person set up by hand is not swapped for a dashboard's unless they turn it on.
+    private let countsByHand: Bool
     /// Charts picked by hand stay picked when another dashboard is shown.
     private var touched: Bool
 
     init(project: Project) {
         chosen = project.pins
         followed = project.metrics.dashboard?.id
+        countsByHand = project.metrics.dashboard == nil && !project.metrics.isStandardPeople
         touched = !project.pins.isEmpty
     }
 
@@ -76,13 +79,15 @@ final class DashboardPicker {
         selected.map { DashboardChoice(dashboard: $0.ref, counting: counting, follow: follow && counting != nil, pins: chosen) }
     }
 
-    func load(_ project: Project, provider: any DataProvider) async {
+    /// `known`: the list already read when the project was linked.
+    func load(_ project: Project, provider: any DataProvider, known: [DashboardSummary]? = nil) async {
         loading = true
         error = nil
         needsAccess = false
         defer { loading = false }
         do {
-            let list = try await provider.dashboards(for: project)
+            let list: [DashboardSummary]
+            if let known { list = known } else { list = try await provider.dashboards(for: project) }
             dashboards = list
             selected = list.first { $0.id == followed } ?? list.first { $0.id == chosen.first?.dashboard.id } ?? list.first
             await loadDetail(project, provider: provider)
@@ -118,7 +123,7 @@ final class DashboardPicker {
             }
         }
         guard selected?.id == summary.id, let detail = details[summary.id] else { return }
-        follow = DashboardReading.counting(detail) != nil
+        follow = DashboardReading.counting(detail) != nil && (!countsByHand || summary.id == followed)
         if !touched { chosen = Array(detail.tiles.filter(\.canDraw).prefix(Self.suggested)) }
     }
 
@@ -215,7 +220,7 @@ private struct DashboardForm: View {
                         Text("数字也按这个看板算")
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(Palette.stripText)
-                        Text(String(localized: "从看板里 \(counting.sources.count) 张数人的图读出，算出来的数和看板一样。"))
+                        Text(String(localized: "累计、活跃和新增都照 \(Self.names(counting.sources)) 的条件算，和看板一样。"))
                             .font(.system(size: 13))
                             .foregroundStyle(Palette.stripMuted)
                             .fixedSize(horizontal: false, vertical: true)
@@ -243,6 +248,13 @@ private struct DashboardForm: View {
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Palette.strip, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+    }
+
+    /// The charts the counting was read from, quoted: up to three, then how many more.
+    static func names(_ sources: [String]) -> String {
+        let quoted = sources.prefix(3).map { String(localized: "「\($0)」") }
+        let shown = ListFormatter.localizedString(byJoining: quoted)
+        return sources.count > 3 ? String(localized: "\(shown) 等 \(sources.count) 张图") : shown
     }
 
     /// The counting in a few words: the event, the conditions, people or installs, the platform property.
@@ -356,7 +368,7 @@ struct ImportBoardPage: View {
             guard picker == nil else { return }
             let picker = DashboardPicker(project: session.project)
             self.picker = picker
-            await picker.load(session.project, provider: model.provider)
+            await picker.load(session.project, provider: model.provider, known: session.postHogDashboards)
         }
     }
 
@@ -384,6 +396,7 @@ struct DashboardImportSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var picker: DashboardPicker
     @State private var reconnecting = false
+    @State private var imported = false
 
     init(project: Project, entry: Analytics.DashboardImportEntry) {
         self.project = project
@@ -396,10 +409,7 @@ struct DashboardImportSheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
-                        RoundIconButton(systemName: "xmark", label: String(localized: "取消")) {
-                            Analytics.dashboardImportResolved(entry, imported: false, charts: project.pins.count, followsCounting: project.metrics.dashboard != nil)
-                            dismiss()
-                        }
+                        RoundIconButton(systemName: "xmark", label: String(localized: "取消")) { dismiss() }
                         Spacer()
                     }
                     PageTitle(title: String(localized: "从看板导入"), subtitle: String(localized: "数字照看板的口径算，图表原样搬到手机上，每次刷新一起更新。"))
@@ -410,6 +420,7 @@ struct DashboardImportSheet: View {
             .safeAreaInset(edge: .bottom) {
                 ImportButton(picker: picker) {
                     guard let choice = picker.choice else { return }
+                    imported = true
                     model.importDashboard(choice, into: project, entry: entry)
                     dismiss()
                 }
@@ -419,6 +430,10 @@ struct DashboardImportSheet: View {
             }
             .sheetPage()
             .task { await picker.load(project, provider: model.provider) }
+            // Closed without importing, by the button or a swipe.
+            .onDisappear {
+                if !imported { Analytics.dashboardImportResolved(entry, imported: false, charts: project.pins.count, followsCounting: project.metrics.dashboard != nil) }
+            }
             .sheet(isPresented: $reconnecting, onDismiss: { Task { await picker.load(current, provider: model.provider) } }) {
                 ReconnectSheet(project: current, platform: .posthog, offersDashboards: false)
             }

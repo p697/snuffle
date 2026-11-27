@@ -60,11 +60,7 @@ enum DemoDashboards {
             return InsightResult(series: series(\.active), fetchedAt: now)
         case "BoldNumber":
             let today = Double(days.last.map { $0.new.values.reduce(0, +) } ?? 0)
-            let yesterday = Double(days.dropLast().last.map { $0.new.values.reduce(0, +) } ?? 0)
-            return InsightResult(series: [
-                InsightResult.Series(label: tile.name, total: today),
-                InsightResult.Series(label: tile.name, total: yesterday, isPrevious: true)
-            ], fetchedAt: now)
+            return InsightResult(series: [InsightResult.Series(label: tile.name, total: today)], fetchedAt: now)
         case "ActionsPie":
             let parts = snapshot?.platforms ?? []
             return InsightResult(series: parts.map { InsightResult.Series(label: $0.name, total: Double($0.count)) }, fetchedAt: now)
