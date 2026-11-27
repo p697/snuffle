@@ -15,8 +15,13 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
   includes, told apart by PostHog's `$lib`, `$os` and `$is_identified` (signed-out website visitors are left out when
   the product also has signed-in or app users). Weeks and months are whole days counting today, as PostHog's charts
   count them; the total reads the whole history once by platform and then adds each day's new people (`UserTally`).
-  `Projects/` holds the board (charts by platform, each number's definition, charts pinned from PostHog
-  dashboards, run with their own queries); one folder per tab. Google Play only returns the last week's reviews, so
+  Adding a project (`Connect/AddProjectFlow.swift`) connects one source, then offers the PostHog project's
+  dashboards (`Projects/DashboardImport.swift`: follow its counting and bring its charts over), then shows the card
+  with the missing sources one tap away (`SourceRows`); a project that goes by the name of a saved one missing those
+  sources is offered to go into it (`Workspace.sameProduct`). Store names drop their tagline and the App Store icon
+  becomes the project's picture. `Projects/` holds the board (how it counts or the offer to import its dashboards,
+  charts brought over from PostHog dashboards and run with their own queries, charts by platform, each number's
+  definition, its sources), with everything to change in one menu; one folder per tab. Google Play only returns the last week's reviews, so
   every refresh (app and widget) lands through `RefreshCache.land`, which keeps the ones read before (newest 500 per
   project), and older ones still waiting for a reply are looked up by id once a day, three per refresh, so a reply
   written in Play Console or a deleted review shows up (`Review.toLookUp`); its crash and ANR rates are Play
@@ -99,6 +104,8 @@ SNUFFLE_API_URL = http:/$()/127.0.0.1:8787   // a local `wrangler dev`, see serv
 - `-demo` starts in demo mode; `-scenario sale|quiet|failure` shapes the next demo refresh.
 - `-resetState` clears saved projects, settings and caches.
 - `-forcePro` unlocks Pro in debug builds only.
+- `-sampleWorkspace` (debug) makes the demo projects the person's own and reads them from the demo world, dashboards
+  included, so the project pages, editors and dashboard import can be tried without signing in.
 - `-storeShots` hides demo mode's "示例" marks and starts a new demo day at 21:30; `-tab money|reviews|projects` opens on that tab; `-refreshAfterLaunch`
   presses the refresh button two seconds in. `marketing/app-store/capture.sh` uses them for the App Store screenshots.
 - `-noAnalytics` keeps the PostHog SDK off (UI tests pass it; unit tests never start it).

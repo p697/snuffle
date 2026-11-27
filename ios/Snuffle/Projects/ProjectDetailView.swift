@@ -2,14 +2,16 @@ import Charts
 import SnuffleKit
 import SwiftUI
 
-/// One project's board, the phone version of its PostHog dashboard: the four people numbers (tap one for how it is
-/// counted), the platform split, a chart per number by platform, the charts picked from its own dashboards, and
-/// everything else it reads.
+/// One project's board, the phone version of its PostHog dashboard: how it counts (or the offer to count like its own
+/// dashboard), the four people numbers (tap one for how it is counted), the charts brought over from its dashboard, the
+/// platform split, a chart per number by platform, everything else it reads, and its sources with the missing ones a
+/// tap away. Everything to change sits in one menu.
 struct ProjectDetailView: View {
     var project: Project
     @Environment(AppModel.self) private var model
     @Environment(RootSheets.self) private var sheets
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accent) private var accent
     /// The range picked; until then 30 days with Pro, 7 without.
     @State private var picked: Int?
     @State private var loading = false
@@ -18,8 +20,10 @@ struct ProjectDetailView: View {
     @State private var editing = false
     @State private var editingCard = false
     @State private var editingCounting = false
-    @State private var pickingCharts = false
+    @State private var importing: Analytics.DashboardImportEntry?
+    @State private var connecting: Platform?
     @State private var sheetMetric: Metric?
+    @State private var offer = DashboardOffer.none
 
     /// The saved project, which the editors change after this page opened.
     private var current: Project { model.projects.first { $0.id == project.id } ?? project }
@@ -27,22 +31,27 @@ struct ProjectDetailView: View {
     private var board: ProjectBoard? { model.boards[project.id]?[days] }
     private var canSeeMonth: Bool { model.pro.isPro || model.settings.demoMode }
     private var days: Int { picked ?? (canSeeMonth ? 30 : 7) }
+    /// One source or none: what is missing matters more than the charts, so the sources come right after the numbers.
+    private var thin: Bool { current.platforms.count <= 1 }
+    private var demo: Bool { model.settings.demoMode }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 header
+                if current.posthog != nil { counting }
                 heroes
+                if thin { sources }
                 if let platforms = snapshot?.platforms, !platforms.isEmpty {
                     PlatformCard(platforms: platforms)
                 }
+                if !current.pins.isEmpty { pins }
                 if current.posthog != nil {
                     rangePicker
                     charts
-                    pins
                 }
                 others
-                sources
+                if !thin { sources }
             }
             .padding(16)
         }
@@ -50,15 +59,7 @@ struct ProjectDetailView: View {
         .background(Palette.paper)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if !model.settings.demoMode {
-                if current.posthog != nil {
-                    Button("口径") { editingCounting = true }
-                        .accessibilityIdentifier("editCounting")
-                }
-                Button("调整卡片", systemImage: "slider.horizontal.3") { editingCard = true }
-                    .accessibilityIdentifier("editCard")
-                Button("编辑") { editing = true }
-            }
+            if !demo { menu }
         }
         .refreshable {
             await model.refresh([current], trigger: .project)
@@ -66,7 +67,8 @@ struct ProjectDetailView: View {
         .sheet(isPresented: $editing) { ProjectEditor(project: current) }
         .sheet(isPresented: $editingCard) { CardEditor(project: current) }
         .sheet(isPresented: $editingCounting) { CountingEditor(project: current) }
-        .sheet(isPresented: $pickingCharts) { ChartPicker(project: current) }
+        .sheet(item: $importing) { entry in DashboardImportSheet(project: current, entry: entry) }
+        .sheet(item: $connecting) { platform in ReconnectSheet(project: current, platform: platform) }
         .sheet(item: $sheetMetric) { metric in MetricSheet(project: current, metric: metric) }
         // Deleted from the editor: leave the page instead of showing an empty one.
         .onChange(of: model.workspace.projects.contains { $0.id == project.id }) { _, exists in
@@ -74,10 +76,35 @@ struct ProjectDetailView: View {
         }
         .task(id: BoardKey(days: days, refreshed: model.lastRefresh, counting: current.metrics)) { await loadBoard() }
         .task(id: PinsKey(refreshed: model.lastRefresh, pins: current.pins.map(\.id))) { await runPins() }
+        .task(id: OfferKey(link: current.posthog, counting: current.metrics.dashboard, pins: current.pins.count, dismissed: model.dismissedDashboardOffers.contains(project.id))) {
+            offer = demo ? .none : await model.dashboardOffer(for: current)
+        }
     }
 
     private struct BoardKey: Equatable { var days: Int; var refreshed: Date?; var counting: MetricSettings }
     private struct PinsKey: Equatable { var refreshed: Date?; var pins: [Int] }
+    private struct OfferKey: Equatable { var link: PostHogLink?; var counting: DashboardRef?; var pins: Int; var dismissed: Bool }
+
+    /// The one place to change the project: its card, its counting, its dashboard, its settings.
+    private var menu: some View {
+        Menu {
+            Button("调整总览里的卡片", systemImage: "slider.horizontal.3") { editingCard = true }
+                .accessibilityIdentifier("editCard")
+            if current.posthog != nil {
+                Button("数字怎么算", systemImage: "chart.bar.xaxis") { editingCounting = true }
+                    .accessibilityIdentifier("editCounting")
+                Button("从看板导入", systemImage: "square.grid.2x2") { importing = .menu }
+                    .accessibilityIdentifier("menuImportDashboard")
+            }
+            Divider()
+            Button("项目设置", systemImage: "gearshape") { editing = true }
+                .accessibilityIdentifier("projectSettings")
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .accessibilityLabel("更多")
+        .accessibilityIdentifier("projectMenu")
+    }
 
     // MARK: Header and numbers
 
@@ -94,12 +121,75 @@ struct ProjectDetailView: View {
         }
     }
 
-    /// "刚刚更新 · 按 UTC 计日 · 按看板「Launch」算".
+    /// "刚刚更新 · 按 UTC 计日".
     private var statusLine: String {
         var parts = [snapshot.map { String(localized: "更新于 \(Format.ago($0.fetchedAt))") } ?? String(localized: "还没刷新过")]
         if let zone = current.dayZoneLabel { parts.append(String(localized: "按 \(zone) 计日")) }
-        if current.posthog != nil { parts.append(current.countingSummary) }
         return parts.joined(separator: " · ")
+    }
+
+    /// How the people numbers are counted, always in sight under the name: the dashboard followed, or the offer to
+    /// follow one the project has, or Snuffle's own counting. Each opens what changes it.
+    @ViewBuilder
+    private var counting: some View {
+        if let dashboard = current.metrics.dashboard {
+            countingChip(tag: String(localized: "按看板算"), text: String(localized: "「\(dashboard.name)」· 和网页一致"), strong: true)
+        } else if !demo, case .dashboards(let count, let first) = offer {
+            OfferBanner(
+                title: String(localized: "你在 PostHog 有 \(count) 个看板"),
+                message: String(localized: "现在的数按 Snuffle 默认口径算，可能和你平时看的不一样。导入后，数字照看板算，图表也一起搬过来。"),
+                action: String(localized: "导入看板"),
+                example: String(localized: "比如「\(first)」"),
+                run: { importing = .offer },
+                close: {
+                    model.dismissDashboardOffer(for: current)
+                    Analytics.dashboardImportResolved(.offer, imported: false, charts: 0, followsCounting: false)
+                }
+            )
+        } else if !demo, offer == .needsAccess {
+            OfferBanner(
+                title: String(localized: "要导入你的 PostHog 看板？"),
+                message: String(localized: "这个账号连上时，Snuffle 还不读看板。重新连一次 PostHog，就能把看板的口径和图表带过来。"),
+                action: String(localized: "重新连 PostHog"),
+                example: nil,
+                run: { connecting = .posthog },
+                close: { model.dismissDashboardOffer(for: current) }
+            )
+        } else {
+            countingChip(tag: nil, text: current.countingSummary, strong: false)
+        }
+    }
+
+    private func countingChip(tag: String?, text: String, strong: Bool) -> some View {
+        Button {
+            editingCounting = true
+        } label: {
+            HStack(spacing: 10) {
+                if let tag {
+                    Text(tag)
+                        .font(.system(size: 12, weight: .heavy))
+                        .foregroundStyle(Palette.onAccent)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(accent, in: Capsule())
+                }
+                Text(verbatim: text)
+                    .font(.system(size: 14, weight: strong ? .bold : .medium))
+                    .foregroundStyle(strong ? Palette.ink : Palette.ink2)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Image(systemName: "chevron.forward").font(.system(size: 12, weight: .bold)).foregroundStyle(strong ? Palette.ink : Palette.faint)
+            }
+            .padding(.horizontal, 12)
+            .frame(minHeight: 44)
+            .background(Palette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(strong ? Palette.ink : Palette.line, lineWidth: strong ? 1.5 : 1))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(demo)
+        .accessibilityHint("看数字怎么算")
+        .accessibilityIdentifier("countingChip")
     }
 
     /// The four people numbers, or for a project without PostHog whatever its card shows.
@@ -204,17 +294,19 @@ struct ProjectDetailView: View {
 
     // MARK: Charts from the project's dashboards
 
-    @ViewBuilder
+    /// The charts brought over from its PostHog dashboards, right under the numbers: they are the person's own view.
     private var pins: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("来自你的看板").font(.system(size: 18, weight: .heavy)).foregroundStyle(Palette.ink)
-                    Text("原样跑你在 PostHog 里写的查询").font(.system(size: 12)).foregroundStyle(Palette.ink2)
+                    Text(verbatim: ListFormatter.localizedString(byJoining: Array(Set(current.pins.map(\.dashboard.name))).sorted()))
+                        .font(.system(size: 12))
+                        .foregroundStyle(Palette.ink2)
                 }
                 Spacer()
-                if !model.settings.demoMode {
-                    Button(current.pins.isEmpty ? String(localized: "添加") : String(localized: "管理")) { pickingCharts = true }
+                if !demo {
+                    Button(String(localized: "管理")) { importing = .charts }
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Palette.ink)
                         .frame(minHeight: 44)
@@ -223,20 +315,6 @@ struct ProjectDetailView: View {
             }
             .padding(.top, 8)
             .padding(.horizontal, 4)
-            if current.pins.isEmpty {
-                Button { pickingCharts = true } label: {
-                    VStack(spacing: 6) {
-                        Image(systemName: "square.grid.2x2").font(.system(size: 22)).foregroundStyle(Palette.ink2)
-                        Text("把 PostHog 看板里的图放到这里").font(.system(size: 14, weight: .semibold)).foregroundStyle(Palette.ink)
-                        Text("比如付费转化、崩溃率这些只有你的项目才有的图").font(.system(size: 12)).foregroundStyle(Palette.ink2)
-                    }
-                    .frame(maxWidth: .infinity, minHeight: 120)
-                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Palette.faint, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4])))
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .disabled(model.settings.demoMode)
-            }
             ForEach(current.pins) { tile in
                 InsightCard(project: current, tile: tile, result: model.insightResults[tile.id], failure: pinFailures[tile.id])
             }
@@ -274,36 +352,91 @@ struct ProjectDetailView: View {
         }
     }
 
+    /// Where the numbers come from, and the sources still missing with what each would add, connected right here.
     private var sources: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel(String(localized: "数据来自"))
-            CardGroup {
-                ForEach(current.platforms) { platform in
-                    let failure = snapshot?.failures.first { $0.platform == platform }
-                    HStack(spacing: 12) {
-                        PlatformLogo(platform: platform, size: 32)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(platform.displayName).font(.system(size: 15, weight: .semibold))
-                            Text(failure?.message ?? detail(platform))
-                                .font(.system(size: 12))
-                                .foregroundStyle(failure == nil ? Palette.ink2 : Palette.warn)
-                        }
-                        Spacer()
-                    }
-                    .padding(.vertical, 10)
-                }
-            }
+            SectionLabel(thin && !demo ? String(localized: "数据来源 · 接上更多，数更全") : String(localized: "数据来源"))
+            SourceRows(project: current, status: status, connect: demo ? nil : { connecting = $0 })
         }
-        .padding(.top, 8)
+        .padding(.top, thin ? 0 : 8)
+    }
+
+    private func status(_ platform: Platform) -> (text: String, warn: Bool)? {
+        if let failure = snapshot?.failures.first(where: { $0.platform == platform }) { return (failure.message, true) }
+        return (detail(platform), false)
     }
 
     private func detail(_ platform: Platform) -> String {
         switch platform {
         case .posthog: current.posthog.map { String(localized: "项目 \($0.projectName) · 时区 \($0.timeZone)") } ?? ""
         case .revenueCat: current.revenueCat.map { String(localized: "项目 \($0.projectName)") } ?? ""
-        case .appStore: current.appStore.map { [$0.appName, $0.bundleId, $0.hasKey ? nil : String(localized: "不用密钥，只看评分和评论")].compactMap { $0 }.joined(separator: " · ") } ?? ""
+        case .appStore: current.appStore.map { [$0.appName, $0.hasKey ? nil : String(localized: "不用密钥，只看评分和评论")].compactMap { $0 }.joined(separator: " · ") } ?? ""
         case .googlePlay: current.googlePlay.map { $0.packageName + " · " + String(localized: "保留连接以来的评论") } ?? ""
         }
+    }
+}
+
+extension Analytics.DashboardImportEntry: Identifiable {
+    var id: String { rawValue }
+}
+
+/// A dark note at the top of a project's page offering one step that changes its numbers, which can be closed for good.
+private struct OfferBanner: View {
+    var title: String
+    var message: String
+    var action: String
+    var example: String?
+    var run: () -> Void
+    var close: () -> Void
+    @Environment(\.accent) private var accent
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title).font(.system(size: 17, weight: .heavy)).foregroundStyle(Palette.stripText)
+                    Text(message)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Palette.stripMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Button(action: close) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(Palette.stripMuted)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, -12)
+                .padding(.trailing, -12)
+                .accessibilityLabel("不再提示")
+            }
+            HStack(spacing: 10) {
+                Button(action: run) {
+                    Text(action)
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundStyle(Palette.onAccent)
+                        .padding(.horizontal, 18)
+                        .frame(minHeight: 40)
+                        .background(accent, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("offerAction")
+                if let example {
+                    Text(verbatim: example)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Palette.stripMuted)
+                        .lineLimit(1)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Palette.strip, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("dashboardOffer")
     }
 }
 
@@ -361,7 +494,7 @@ private struct PlatformCard: View {
                             Circle().fill(PlatformStyle.color(part.name)).frame(width: 9, height: 9)
                             Text(PlatformStyle.name(part.name)).font(.system(size: 13, weight: .semibold)).foregroundStyle(Palette.ink)
                         }
-                        Text(Format.number(part.count)).font(Typeface.number(26)).foregroundStyle(Palette.ink)
+                        Text(Format.number(part.count)).font(Typeface.number(26)).foregroundStyle(Palette.ink).lineLimit(1).minimumScaleFactor(0.5)
                         Text(Format.percent(Double(part.count) / Double(total))).font(.system(size: 12)).foregroundStyle(Palette.ink2)
                     }
                 }

@@ -171,7 +171,7 @@ struct StoreDonePage: View {
                     Text("条评论待回复").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
                 }
                 Spacer(minLength: 4)
-                if !loading {
+                if !loading, !reviews.isEmpty {
                     Text(platform == .googlePlay ? "近 7 天 \(reviews.count) 条" : "读到 \(reviews.count) 条")
                         .font(.system(size: 13))
                         .foregroundStyle(Palette.ink2)

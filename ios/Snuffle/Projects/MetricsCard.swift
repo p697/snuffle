@@ -1,8 +1,8 @@
 import SnuffleKit
 import SwiftUI
 
-/// How a project's numbers are counted, in the project editor: who counts as a user (its own page) and revenue.
-/// Which numbers the card shows is the card editor's.
+/// How a project's numbers are counted, in project settings and the connect flow: who counts as a user (its own
+/// page) and revenue. Which numbers the card shows is the card editor's.
 struct MetricsCard: View {
     @Binding var project: Project
     @State private var editingCounting = false
@@ -12,7 +12,7 @@ struct MetricsCard: View {
         VStack(alignment: .leading, spacing: 16) {
             if project.posthog != nil {
                 VStack(alignment: .leading, spacing: 8) {
-                    SectionLabel(String(localized: "用户"))
+                    SectionLabel(String(localized: "用户怎么算"))
                     CardGroup {
                         Button { editingCounting = true } label: {
                             HStack(spacing: 12) {
@@ -32,7 +32,7 @@ struct MetricsCard: View {
                 }
             }
             VStack(alignment: .leading, spacing: 8) {
-                SectionLabel(String(localized: "收入"))
+                SectionLabel(String(localized: "收入用哪边的数"))
                 CountingChoices(kind: .revenue, project: $project)
             }
         }

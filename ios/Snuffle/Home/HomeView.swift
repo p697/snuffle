@@ -97,7 +97,7 @@ struct HomeView: View {
             Button {
                 showSettings = true
             } label: {
-                Image(systemName: "person")
+                Image(systemName: "gearshape")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Palette.ink)
                     .frame(width: 44, height: 44)

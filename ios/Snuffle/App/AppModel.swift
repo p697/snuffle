@@ -420,6 +420,8 @@ final class AppModel {
             workspace.projects.append(project)
         }
         SharedContainer.workspace.save(workspace)
+        // Its sources or counting may have changed: look at its dashboards again next time its page opens.
+        dashboardOffers[project.id] = nil
         syncAnalytics()
         Analytics.projectSaved(project, isNew: index == nil, projectCount: workspace.projects.count)
         SharedContainer.removeProjectIcons(project.id, keeping: project.iconVersion)
@@ -567,10 +569,51 @@ final class AppModel {
     /// Places charts on a project's board, in the order given.
     func pin(_ tiles: [InsightTile], on project: Project) {
         guard var current = workspace.projects.first(where: { $0.id == project.id }) else { return }
-        let added = tiles.filter { tile in !current.pins.contains { $0.id == tile.id } }
         current.pins = tiles
         save(project: current)
-        if !added.isEmpty { Analytics.chartsPinned(added.count, total: tiles.count) }
+    }
+
+    /// What a dashboard import chose for a saved project, in one save: its charts, and its counting when that
+    /// changed, which reads the project again.
+    func importDashboard(_ choice: DashboardChoice, into project: Project, entry: Analytics.DashboardImportEntry) {
+        guard var current = workspace.projects.first(where: { $0.id == project.id }) else { return }
+        let before = current.metrics
+        choice.apply(to: &current)
+        save(project: current)
+        Analytics.dashboardImportResolved(entry, imported: true, charts: current.pins.count, followsCounting: current.metrics.dashboard != nil)
+        guard current.metrics != before else { return }
+        boards[project.id] = nil
+        dashboardOffers[project.id] = nil
+        Analytics.countingChanged(current.metrics.dashboard != nil ? .dashboard : .standard, settings: current.metrics)
+        Task { await refresh([current], trigger: .project) }
+    }
+
+    /// Whether a project's page offers its PostHog dashboards, looked up once per project while the app is open.
+    private var dashboardOffers: [UUID: DashboardOffer] = [:]
+
+    func dashboardOffer(for project: Project) async -> DashboardOffer {
+        guard project.posthog != nil, project.metrics.dashboard == nil, project.pins.isEmpty,
+              !dismissedDashboardOffers.contains(project.id) else { return .none }
+        if let known = dashboardOffers[project.id] { return known }
+        let offer: DashboardOffer
+        do {
+            let list = try await provider.dashboards(for: project)
+            offer = list.isEmpty ? .none : .dashboards(list.count, first: list[0].name)
+        } catch {
+            let kind = FailureKind(error)
+            // Accounts connected before Snuffle read dashboards have to sign in again to allow it.
+            offer = kind == .forbidden || kind == .unauthorized ? .needsAccess : .none
+        }
+        dashboardOffers[project.id] = offer
+        return offer
+    }
+
+    /// Projects whose dashboard offer the person closed, kept on this phone.
+    private(set) var dismissedDashboardOffers = Set((UserDefaults.standard.stringArray(forKey: "dismissedDashboardOffers") ?? []).compactMap(UUID.init(uuidString:)))
+
+    func dismissDashboardOffer(for project: Project) {
+        dismissedDashboardOffers.insert(project.id)
+        UserDefaults.standard.set(dismissedDashboardOffers.map(\.uuidString), forKey: "dismissedDashboardOffers")
     }
 
     /// Counts a project's people another way and reads its numbers again under it.
@@ -694,6 +737,8 @@ final class AppModel {
                 try? FileManager.default.removeItem(at: store)
             }
             UserDefaults.standard.removeObject(forKey: RevenuePeriod.storageKey)
+            UserDefaults.standard.removeObject(forKey: "dismissedDashboardOffers")
+            dismissedDashboardOffers = []
             settings = AppSettings()
             workspace = Workspace()
             cache = RefreshCache()
@@ -708,11 +753,17 @@ final class AppModel {
             cache = SharedContainer.demoCache.load() ?? RefreshCache()
         }
         #if DEBUG
-        // UI tests of the project pages outside demo mode: the sample projects as the person's own, no accounts.
+        // UI tests of the project pages outside demo mode: the sample projects as the person's own, no accounts, read
+        // from the demo world (numbers, boards, dashboards) since there is nothing to sign in to.
         if arguments.contains("-sampleWorkspace") {
             settings.refreshOnOpen = false
             workspace = Workspace(projects: DemoWorld.projects)
             SharedContainer.workspace.save(workspace)
+            UserDefaults.standard.removeObject(forKey: "dismissedDashboardOffers")
+            dismissedDashboardOffers = []
+            if demo == nil {
+                demo = DemoProvider(world: SharedContainer.demoWorld.load(), lateInDay: Self.storeShots, persist: { SharedContainer.demoWorld.save($0) })
+            }
         }
         #endif
         if let index = arguments.firstIndex(of: "-scenario"), index + 1 < arguments.count,

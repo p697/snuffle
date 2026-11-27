@@ -116,7 +116,7 @@ final class SnuffleUITests: XCTestCase {
         let row = app.buttons["projectRow-Pocket Ferry"]
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
-        XCTAssertTrue(app.staticTexts["数据来自"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["数据来源"].waitForExistence(timeout: 5))
         // The 收入 tab has a 7 天 button too.
         app.segmentedControls.buttons["7 天"].tap()
         XCTAssertTrue(app.staticTexts["每日新增 · 按平台"].waitForExistence(timeout: 5))
@@ -242,6 +242,8 @@ final class SnuffleUITests: XCTestCase {
         app.buttons["startConnecting"].tap()
         XCTAssertTrue(app.buttons["posthogSignIn"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["startDemo"].exists)
+        // The first page says what a project is before asking for anything.
+        XCTAssertTrue(app.staticTexts["添加你的第一个项目"].exists)
         attach(app, name: "connect-start")
         app.buttons["connect-revenueCat"].tap()
         XCTAssertTrue(app.staticTexts["连接 RevenueCat"].waitForExistence(timeout: 5))
@@ -270,11 +272,61 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "accounts")
         app.buttons["返回"].tap()
         row.tap()
-        app.buttons["编辑"].tap()
+        // Everything to change sits in one menu; sources missing from the project are connected on the page itself.
+        XCTAssertTrue(app.buttons["addSource-revenueCat"].waitForExistence(timeout: 5))
+        app.buttons["projectMenu"].tap()
+        XCTAssertTrue(app.buttons["调整总览里的卡片"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["数字怎么算"].exists)
+        attach(app, name: "project-menu")
+        app.buttons["项目设置"].tap()
         XCTAssertTrue(app.buttons["projectIcon"].waitForExistence(timeout: 5))
         attach(app, name: "editor")
         app.swipeUp()
         attach(app, name: "editor-metrics")
+    }
+
+    /// A project whose PostHog has dashboards offers them at the top of its page; importing one counts the numbers
+    /// its way and brings its charts under them.
+    func testDashboardImportFromTheOffer() {
+        let app = makeApp(["-resetState", "-sampleWorkspace"])
+        app.launch()
+        let card = app.buttons["card-Lumen Notes"]
+        XCTAssertTrue(card.waitForExistence(timeout: 5))
+        card.tap()
+        let offer = app.buttons["offerAction"]
+        XCTAssertTrue(offer.waitForExistence(timeout: 10), "the dashboards are offered")
+        attach(app, name: "dashboard-offer")
+        offer.tap()
+        let importButton = app.buttons["importDashboard"]
+        XCTAssertTrue(importButton.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.descendants(matching: .any)["followCounting"].waitForExistence(timeout: 5), "a dashboard with people charts brings its counting")
+        // Charts that draw are picked for the person; the funnel cannot be.
+        XCTAssertTrue(importButton.label.contains("4"), importButton.label)
+        attach(app, name: "dashboard-import")
+        app.buttons["dashboard-102"].tap()
+        XCTAssertTrue(importButton.label.contains("4"), "charts picked stay picked: \(importButton.label)")
+        app.buttons["dashboard-101"].tap()
+        importButton.tap()
+        let chip = app.buttons["countingChip"]
+        XCTAssertTrue(chip.waitForExistence(timeout: 10))
+        XCTAssertTrue(chip.label.contains("Product health"), chip.label)
+        XCTAssertFalse(offer.exists, "the offer is gone once a dashboard is followed")
+        XCTAssertTrue(app.staticTexts["来自你的看板"].waitForExistence(timeout: 5))
+        attach(app, name: "dashboard-imported")
+        // "管理" opens the same sheet with the charts placed.
+        app.buttons["pickCharts"].tap()
+        XCTAssertTrue(importButton.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts["现在按它算"].waitForExistence(timeout: 5))
+        app.buttons["取消"].tap()
+
+        // Closing the offer on another project keeps it closed.
+        app.buttons["返回"].firstMatch.tap()
+        app.buttons["card-Pocket Ferry"].tap()
+        let close = app.buttons["不再提示"]
+        XCTAssertTrue(close.waitForExistence(timeout: 10))
+        close.tap()
+        XCTAssertTrue(chip.waitForExistence(timeout: 5), "Snuffle's own counting is said instead")
+        XCTAssertFalse(offer.exists)
     }
 
     /// Holding a number drags it: onto another number the two trade places, onto "再加一行数" it starts a second row,

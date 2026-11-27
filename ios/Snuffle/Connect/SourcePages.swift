@@ -30,6 +30,8 @@ struct ChoiceRow: View {
     var title: String
     var detail: String?
     var busy = false
+    /// Another project reads this one already: said instead of the detail, and the row is greyed out.
+    var addedAs: String?
     var action: () -> Void
 
     var body: some View {
@@ -37,13 +39,20 @@ struct ChoiceRow: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.ink)
-                    if let detail {
-                        Text(detail).font(.system(size: 13)).foregroundStyle(Palette.ink2).lineLimit(1)
+                    if let line = addedAs.map({ String(localized: "已添加为项目「\($0)」") }) ?? detail {
+                        Text(line).font(.system(size: 13)).foregroundStyle(Palette.ink2).lineLimit(1)
                     }
                 }
                 Spacer(minLength: 8)
                 if busy {
                     ProgressView()
+                } else if addedAs != nil {
+                    Text("已添加")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Palette.ink2)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Palette.pill, in: Capsule())
                 } else {
                     Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
                 }
@@ -52,6 +61,14 @@ struct ChoiceRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .opacity(addedAs == nil ? 1 : 0.55)
+    }
+}
+
+extension ConnectSession {
+    /// The name of another saved project that already reads this source, to mark it in a list.
+    func addedAs(_ platform: Platform, id: String, in workspace: Workspace) -> String? {
+        workspace.project(reading: platform, id: id).flatMap { $0.id == project.id ? nil : $0.name }
     }
 }
 
@@ -313,7 +330,7 @@ struct PostHogPickPage: View {
                     Spacer()
                     SuccessBadge(text: String(localized: "PostHog 已登录"))
                 }
-                PageTitle(title: String(localized: "选一个产品"), subtitle: subtitle)
+                PageTitle(title: String(localized: "这个产品在 PostHog 里是哪个项目？"), subtitle: subtitle)
                 if session.postHogProjects.isEmpty {
                     Text("这个账号下还没有项目。先在 PostHog 里建一个，或换一个账号登录。")
                         .font(.system(size: 15))
@@ -323,15 +340,21 @@ struct PostHogPickPage: View {
                     CardGroup {
                         ForEach(Array(session.postHogProjects.enumerated()), id: \.element.id) { index, item in
                             if index > 0 { RowDivider() }
-                            ChoiceRow(title: item.displayName, detail: detail(item), busy: busyId == item.id) {
+                            let added = session.addedAs(.posthog, id: String(item.id), in: model.workspace)
+                            ChoiceRow(title: item.displayName, detail: detail(item), busy: busyId == item.id, addedAs: added) {
                                 Task { await choose(item) }
                             }
-                            .disabled(busyId != nil)
+                            .disabled(busyId != nil || added != nil)
                             .accessibilityIdentifier("posthogProject-\(item.id)")
                         }
                     }
                 }
                 ErrorText(text: error)
+                Text("不在这个账号里？公司和个人的 PostHog 账号可以都登上：返回后换一个账号登录，以后加项目时两个都能直接用。")
+                    .font(.system(size: 12))
+                    .foregroundStyle(Palette.ink2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 4)
             }
             .padding(16)
         }
@@ -339,7 +362,7 @@ struct PostHogPickPage: View {
     }
 
     private var subtitle: String {
-        [session.postHogAccount?.title, String(localized: "\(session.postHogProjects.count) 个项目")].compactMap { $0 }.joined(separator: " · ")
+        [session.postHogAccount?.title, String(localized: "\(session.postHogProjects.count) 个 PostHog 项目")].compactMap { $0 }.joined(separator: " · ")
     }
 
     private func detail(_ item: PostHogProject) -> String {
@@ -362,15 +385,24 @@ enum PostHogLinker {
         let zone = item.timezone ?? TimeZone.current.identifier
         session.project.posthog = PostHogLink(accountId: account.id, projectId: item.id, projectName: item.displayName, timeZone: zone)
         if session.project.name.isEmpty { session.project.name = item.displayName }
+        session.postHogDashboards = nil
         // Keep the standard defaults if the checks fail.
         guard let (host, token) = try? await TokenBroker(store: model.credentials).posthogToken(account.id) else { return }
         let client = PostHogClient(host: host, token: { token })
+        // Listed for the dashboard step that follows.
+        async let dashboards = try? client.dashboards(projectId: item.id)
+        // Signing in again to the project it already reads keeps how it counts and the charts it shows.
+        guard session.original?.posthog?.projectId != item.id else {
+            session.postHogDashboards = await dashboards
+            return
+        }
         let query = PostHogQueries.eventsSeen([MetricSettings.signupEvent], since: Date().addingTimeInterval(-30 * 86_400))
         async let rows = try? client.query(projectId: item.id, query, name: "snuffle-defaults")
         // Nil when the dashboards could not be read: the first refresh looks again (`AppModel.followDashboards`).
         async let counting: DashboardReading.Counting?? = {
             do { return .some(try await client.dashboardCounting(projectId: item.id)) } catch { return .none }
         }()
+        session.postHogDashboards = await dashboards
         if let rows = await rows { session.project.adoptDefaults(seenEvents: PostHogParsing.eventNames(rows)) }
         guard let checked = await counting else { return }
         session.project.dashboardChecked = true
@@ -419,7 +451,7 @@ struct RevenueCatConnectPage: View {
 
     private var steps: some View {
         VStack(alignment: .leading, spacing: 14) {
-            NumberedStep(number: 1, text: "在 RevenueCat 切到**这个产品的项目**，打开 **项目设置 → API keys**，新建一把 **V2 密钥**。")
+            NumberedStep(number: 1, text: "在 RevenueCat 后台切到这个产品对应的 **RevenueCat 项目**，打开 **项目设置 → API keys**，新建一把 **V2 密钥**。")
             NumberedStep(number: 2, text: "权限只开 **Charts metrics** 和 **Project configuration: projects** 的读取，其他保持关闭。")
             NumberedStep(number: 3, text: "复制密钥，回到这里粘贴。")
             OutLink(title: String(localized: "打开 RevenueCat"), url: URL(string: "https://app.revenuecat.com")!)
@@ -593,7 +625,9 @@ struct AppStoreConnectPage: View {
                     CardGroup {
                         ForEach(Array(found.enumerated()), id: \.element.id) { index, app in
                             if index > 0 { RowDivider() }
-                            PublicAppRow(app: app) { link(app) }
+                            let added = session.addedAs(.appStore, id: app.id, in: model.workspace)
+                            PublicAppRow(app: app, addedAs: added) { link(app) }
+                                .disabled(added != nil)
                         }
                     }
                 }
@@ -640,7 +674,8 @@ struct AppStoreConnectPage: View {
     /// The storefronts it is read in are chosen on the next page, which shows them.
     private func link(_ app: PublicApp) {
         session.project.appStore = AppStoreLink(accountId: nil, appId: app.id, appName: app.name, bundleId: app.bundleId)
-        if session.project.name.isEmpty { session.project.name = app.name }
+        session.name(fromStore: app.name)
+        Task { await session.adoptIcon(app.icon, appId: app.id) }
         session.track(.appStore, .search, .succeeded)
         linked()
     }
@@ -761,7 +796,9 @@ struct AppStoreConnectPage: View {
             CardGroup {
                 ForEach(Array(session.appStoreApps.enumerated()), id: \.element.id) { index, app in
                     if index > 0 { RowDivider() }
-                    ChoiceRow(title: app.name, detail: app.bundleId) { link(app) }
+                    let added = session.addedAs(.appStore, id: app.id, in: model.workspace)
+                    ChoiceRow(title: app.name, detail: app.bundleId, addedAs: added) { link(app) }
+                        .disabled(added != nil)
                 }
             }
         }
@@ -830,7 +867,8 @@ struct AppStoreConnectPage: View {
         guard let account else { return }
         let countries = session.project.appStore?.appId == app.id ? session.project.appStore?.countries ?? [] : []
         session.project.appStore = AppStoreLink(accountId: account.id, appId: app.id, appName: app.name, bundleId: app.bundleId, countries: countries)
-        if session.project.name.isEmpty { session.project.name = app.name }
+        session.name(fromStore: app.name)
+        Task { await session.adoptIcon(nil, appId: app.id) }
         linked()
     }
 }
@@ -838,6 +876,7 @@ struct AppStoreConnectPage: View {
 /// An app found on the public App Store: icon, name, developer and rating.
 private struct PublicAppRow: View {
     var app: PublicApp
+    var addedAs: String?
     var action: () -> Void
 
     var body: some View {
@@ -863,11 +902,13 @@ private struct PublicAppRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .opacity(addedAs == nil ? 1 : 0.55)
         .accessibilityIdentifier("publicApp-\(app.id)")
     }
 
     private var detail: String {
-        [app.developer, app.rating.map { "★ " + Format.rating($0) }].compactMap { $0 }.joined(separator: " · ")
+        if let addedAs { return String(localized: "已添加为项目「\(addedAs)」") }
+        return [app.developer, app.rating.map { "★ " + Format.rating($0) }].compactMap { $0 }.joined(separator: " · ")
     }
 }
 
@@ -971,10 +1012,11 @@ struct GooglePlayConnectPage: View {
             CardGroup {
                 ForEach(Array(session.googleApps.enumerated()), id: \.element.id) { index, app in
                     if index > 0 { RowDivider() }
-                    ChoiceRow(title: app.displayName, detail: app.packageName, busy: busyApp == app.packageName) {
+                    let added = session.addedAs(.googlePlay, id: app.packageName, in: model.workspace)
+                    ChoiceRow(title: app.displayName, detail: app.packageName, busy: busyApp == app.packageName, addedAs: added) {
                         Task { await link(app.packageName) }
                     }
-                    .disabled(busyApp != nil)
+                    .disabled(busyApp != nil || added != nil)
                 }
             }
             if !manualEntry {
@@ -1057,9 +1099,7 @@ struct GooglePlayConnectPage: View {
             let token = try await TokenBroker(store: model.credentials).googleToken(account.id)
             _ = try await GooglePlayClient { token }.reviews(packageName: name, projectId: session.project.id)
             session.project.googlePlay = GooglePlayLink(accountId: account.id, packageName: name)
-            if session.project.name.isEmpty {
-                session.project.name = session.googleApps.first { $0.packageName == name }?.displayName ?? name
-            }
+            session.name(fromStore: session.googleApps.first { $0.packageName == name }?.displayName ?? name)
             linked()
         } catch {
             self.error = describe(error)

@@ -81,17 +81,22 @@ public actor DemoProvider: DataProvider {
         return world.board(for: project.id, days: days, total: total)
     }
 
-    /// The demo projects have no PostHog dashboards.
-    public func dashboards(for project: Project) async throws -> [DashboardSummary] { [] }
-
-    public func dashboard(_ ref: DashboardRef, for project: Project) async throws -> DashboardDetail {
-        DashboardDetail(ref: ref, tiles: [])
+    public func dashboards(for project: Project) async throws -> [DashboardSummary] {
+        try? await Task.sleep(for: latency)
+        return DemoDashboards.list(for: project.id)
     }
 
+    public func dashboard(_ ref: DashboardRef, for project: Project) async throws -> DashboardDetail {
+        try? await Task.sleep(for: latency)
+        return DemoDashboards.detail(ref)
+    }
+
+    /// Never followed on its own, so the demo shows what importing a dashboard changes.
     public func dashboardCounting(for project: Project) async throws -> DashboardReading.Counting? { nil }
 
     public func run(_ tile: InsightTile, for project: Project) async throws -> InsightResult {
-        InsightResult(fetchedAt: Date())
+        try? await Task.sleep(for: latency)
+        return DemoDashboards.result(tile, board: world.board(for: project.id, days: 7, total: nil), snapshot: world.snapshot(for: project), now: Date())
     }
 
     public func check(condition: String, for project: Project) async throws -> (kept: Int, total: Int) { (0, 0) }
