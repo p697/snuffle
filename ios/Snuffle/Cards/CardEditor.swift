@@ -144,7 +144,7 @@ struct CardEditor: View {
             editing.layout.big.count
         } set: { count in
             // A second big number: one from the card's rows first, then a common one.
-            editing.setBigCount(count, candidates: (editing.layout.small + [.activeToday, .activeWeek, .revenue, .mrr, .reviewsToAnswer, .newUsers]).filter { $0.isAvailable(in: draft) })
+            editing.setBigCount(count, candidates: (editing.layout.small + [.activeToday, .activeWeek, .revenue, .mrr, .reviewsToAnswer, .rating, .newUsers]).filter { $0.isAvailable(in: draft) })
         }
     }
 

@@ -4,7 +4,8 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
 
 ## Layout
 
-- `Packages/SnuffleKit` — models, the PostHog / RevenueCat / App Store Connect / Google Play clients, OAuth (PKCE),
+- `Packages/SnuffleKit` — models, the PostHog / RevenueCat / App Store Connect / Google Play clients, the public App
+  Store (search, ratings and reviews without a key), OAuth (PKCE),
   Keychain storage, the demo world and the refresh logic. Builds for macOS too, so its tests run with `swift test`.
 - `Snuffle/` — the app. `App/AppModel.swift` owns state and the refresh choreography (numbers stay on screen; the
   digits that change roll up and the rise is marked); `Design/` holds the odometer, the cat and the refresh button;

@@ -6,6 +6,8 @@ struct ReviewsView: View {
     @Environment(AppModel.self) private var model
     @State private var filter = Filter.toAnswer
     @State private var replying: Review?
+    /// A project whose App Store is read without a key, being given one to reply with.
+    @State private var addingKey: Project?
 
     enum Filter: CaseIterable, Identifiable {
         case toAnswer, all
@@ -21,24 +23,30 @@ struct ReviewsView: View {
 
     private var reviews: [Review] {
         let all = model.allReviews
-        return filter == .toAnswer ? all.filter(\.needsReply) : all
+        return filter == .toAnswer && answers ? all.filter(\.needsReply) : all
     }
+
+    /// Whether any store says which reviews wait for a reply; without one there is nothing to filter by.
+    private var answers: Bool { model.projects.contains(where: \.answersReviews) }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ScreenTitle(title: String(localized: "评论"), subtitle: subtitle)
-                    Picker("显示", selection: $filter) {
-                        ForEach(Filter.allCases) { Text($0.title).tag($0) }
+                    if answers {
+                        Picker("显示", selection: $filter) {
+                            ForEach(Filter.allCases) { Text($0.title).tag($0) }
+                        }
+                        .pickerStyle(.segmented)
                     }
-                    .pickerStyle(.segmented)
                     if reviews.isEmpty {
                         empty
                     }
                     ForEach(reviews) { review in
-                        ReviewCard(review: review, project: model.projects.first { $0.id == review.projectId }) {
-                            replying = review
+                        let project = model.projects.first { $0.id == review.projectId }
+                        ReviewCard(review: review, project: project) {
+                            if review.canReply { replying = review } else { addingKey = project }
                         }
                     }
                 }
@@ -54,15 +62,20 @@ struct ReviewsView: View {
             .sheet(item: $replying) { review in
                 ReplyView(review: review)
             }
+            .sheet(item: $addingKey) { project in
+                ReconnectSheet(project: project, platform: .appStore)
+            }
         }
     }
 
     private var subtitle: String {
         let toAnswer = model.allReviews.filter(\.needsReply).count
-        let stores = Set(model.projects.flatMap { [$0.appStore != nil ? Platform.appStore : nil, $0.googlePlay != nil ? .googlePlay : nil].compactMap { $0 } })
-        var parts = [String(localized: "\(toAnswer) 条待回复")]
-        if stores.contains(.appStore) { parts.append(String(localized: "App Store 最近 200 条")) }
-        if stores.contains(.googlePlay) { parts.append(String(localized: "Google Play 连接以来")) }
+        let projects = model.projects
+        var parts: [String] = []
+        if answers { parts.append(String(localized: "\(toAnswer) 条待回复")) }
+        if projects.contains(where: { $0.appStore?.hasKey == true }) { parts.append(String(localized: "App Store 最近 200 条")) }
+        if projects.contains(where: { $0.appStore?.hasKey == false }) { parts.append(String(localized: "App Store 各地区最近 50 条")) }
+        if projects.contains(where: { $0.googlePlay != nil }) { parts.append(String(localized: "Google Play 连接以来")) }
         return parts.joined(separator: " · ")
     }
 
@@ -70,10 +83,10 @@ struct ReviewsView: View {
 
     private var empty: some View {
         VStack(spacing: 8) {
-            Text(!hasStore ? "还没有连接商店" : filter == .all ? "还没有评论" : "都回复完了")
+            Text(!hasStore ? "还没有连接商店" : filter == .all || !answers ? "还没有评论" : "都回复完了")
                 .font(.system(size: 17, weight: .bold))
             Text(!hasStore ? "在项目里连接 App Store Connect 或 Google Play，评论会汇总到这里，可以直接回复。"
-                 : filter == .all ? (model.projects.contains { $0.googlePlay != nil } ? "Google Play 只提供近 7 天的评论，Snuffle 会把读到的留下来。新的评论会在刷新后出现在这里。" : "新的评论会在刷新后出现在这里。")
+                 : filter == .all || !answers ? (model.projects.contains { $0.googlePlay != nil } ? "Google Play 只提供近 7 天的评论，Snuffle 会把读到的留下来。新的评论会在刷新后出现在这里。" : "新的评论会在刷新后出现在这里。")
                  : "新的评论会在下次刷新时出现在这里。")
                 .font(.system(size: 14))
                 .foregroundStyle(Palette.ink2)
@@ -125,7 +138,7 @@ struct ReviewCard: View {
                 .padding(12)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Palette.pill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            } else {
+            } else if review.canReply {
                 Button(action: onReply) {
                     Text("回复")
                         .font(.system(size: 15, weight: .bold))
@@ -135,6 +148,25 @@ struct ReviewCard: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("reply-\(review.storeId)")
+            } else {
+                // Read without a key: whether it was answered is unknown, and answering takes a key.
+                HStack(spacing: 10) {
+                    Text("没导入密钥，看不到是否回复过")
+                        .font(.system(size: 12))
+                        .foregroundStyle(Palette.ink2)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Button(action: onReply) {
+                        Text("导入密钥")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(Palette.ink)
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: 36)
+                            .overlay(Capsule().strokeBorder(Palette.ink, lineWidth: 1.5))
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier("addKey-\(review.storeId)")
+                }
             }
         }
         .padding(16)
@@ -153,7 +185,8 @@ struct ReviewCard: View {
 }
 
 extension Review {
-    /// Where a Google Play review was written: "v3.4.1 · Samsung Galaxy S23 · Android 14 · 12 人觉得有用".
+    /// What a review was written on: "v3.4.1 · Samsung Galaxy S23 · Android 14 · 12 人觉得有用" on Google Play, the
+    /// version for an App Store review read without a key.
     var details: String? {
         let parts = [
             appVersion.map { "v" + $0 },

@@ -301,7 +301,7 @@ struct ProjectDetailView: View {
         switch platform {
         case .posthog: current.posthog.map { String(localized: "项目 \($0.projectName) · 时区 \($0.timeZone)") } ?? ""
         case .revenueCat: current.revenueCat.map { String(localized: "项目 \($0.projectName)") } ?? ""
-        case .appStore: current.appStore.map { "\($0.appName) · \($0.bundleId)" } ?? ""
+        case .appStore: current.appStore.map { [$0.appName, $0.bundleId, $0.hasKey ? nil : String(localized: "不用密钥，只看评分和评论")].compactMap { $0 }.joined(separator: " · ") } ?? ""
         case .googlePlay: current.googlePlay.map { $0.packageName + " · " + String(localized: "保留连接以来的评论") } ?? ""
         }
     }

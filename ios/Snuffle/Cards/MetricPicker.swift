@@ -59,13 +59,15 @@ struct MetricRow: View {
 private struct MissingSourceRow: View {
     var titles: String
     var platform: Platform
+    /// Why it cannot be read yet, when the source is connected but not the way this number needs.
+    var reason: String?
     var connect: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: titles).font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink2)
-                Text("这个项目还没连 \(platform.displayName)").font(.system(size: 12)).foregroundStyle(Palette.ink2)
+                Text(verbatim: reason ?? String(localized: "这个项目还没连 \(platform.displayName)")).font(.system(size: 12)).foregroundStyle(Palette.ink2)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Button("去连接", action: connect)
@@ -224,10 +226,20 @@ struct CardMetricPicker: View {
         VStack(alignment: .leading, spacing: 8) {
             SectionLabel(String(localized: "商店"))
             CardGroup {
-                if project.hasStore {
+                if project.answersReviews {
                     row(.reviewsToAnswer)
                 } else {
-                    MissingSourceRow(titles: Metric.reviewsToAnswer.title, platform: .appStore) { connecting = .appStore }
+                    MissingSourceRow(
+                        titles: Metric.reviewsToAnswer.title,
+                        platform: .appStore,
+                        reason: project.appStore == nil ? nil : String(localized: "App Store 导入密钥后才知道哪些没回复")
+                    ) { connecting = .appStore }
+                }
+                RowDivider()
+                if project.appStore != nil {
+                    row(.rating)
+                } else {
+                    MissingSourceRow(titles: Metric.rating.title, platform: .appStore) { connecting = .appStore }
                 }
                 RowDivider()
                 if project.googlePlay != nil {

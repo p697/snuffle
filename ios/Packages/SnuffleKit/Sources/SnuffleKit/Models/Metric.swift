@@ -25,6 +25,9 @@ public enum Metric: Hashable, Sendable, Identifiable {
     /// RevenueCat's subscription overview.
     case mrr, activeSubscriptions, activeTrials, revenueLast28Days
     case reviewsToAnswer
+    /// The App Store's average rating in the app's storefronts (`AppStoreLink.countries`), weighted by how many
+    /// ratings each has. Public, so it needs no key.
+    case rating
     /// Google Play's Android vitals: the share of people who met a crash, or an ANR (the app not responding), while
     /// using the app, averaged over the last 28 days Google has posted, as Play Console shows them.
     case crashRate, anrRate
@@ -57,6 +60,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case .activeTrials: "active_trials"
         case .revenueLast28Days: "revenue_28d"
         case .reviewsToAnswer: "reviews_to_answer"
+        case .rating: "app_store_rating"
         case .crashRate: "crash_rate"
         case .anrRate: "anr_rate"
         }
@@ -79,7 +83,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
     public static let fixed: [Metric] = [
         .newUsers, .activeToday, .activeWeek, .activeMonth, .newWeek, .totalUsers, .online, .pageviews,
         .revenue, .orders, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days,
-        .reviewsToAnswer, .crashRate, .anrRate
+        .reviewsToAnswer, .rating, .crashRate, .anrRate
     ]
 
     /// What analytics may say about a choice: the kind, never an event name the person typed.
@@ -91,7 +95,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
     // MARK: Behaviour
 
     public enum Source: Sendable, Equatable {
-        case posthog, revenueCat, stores, googlePlay
+        case posthog, revenueCat, stores, appStore, googlePlay
         /// Today's revenue comes from whichever source the project counts it with.
         case revenueSetting
     }
@@ -102,17 +106,19 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case .revenue: .revenueSetting
         case .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days: .revenueCat
         case .reviewsToAnswer: .stores
+        case .rating: .appStore
         case .crashRate, .anrRate: .googlePlay
         }
     }
 
-    /// The sources this number is read from in `project`: one, or each store connected for the reviews to answer.
+    /// The sources this number is read from in `project`: one, or each store that tells the reviews to answer.
     public func platforms(in project: Project) -> [Platform] {
         switch source {
         case .posthog: [.posthog]
         case .revenueCat: [.revenueCat]
+        case .appStore: [.appStore]
         case .googlePlay: [.googlePlay]
-        case .stores: [project.appStore != nil ? .appStore : nil, project.googlePlay != nil ? .googlePlay : nil].compactMap { $0 }
+        case .stores: [project.appStore?.hasKey == true ? .appStore : nil, project.googlePlay != nil ? .googlePlay : nil].compactMap { $0 }
         case .revenueSetting:
             switch project.metrics.revenue {
             case .posthogEvent: [.posthog]
@@ -136,7 +142,8 @@ public enum Metric: Hashable, Sendable, Identifiable {
             switch source {
             case .posthog: project.posthog != nil
             case .revenueCat: project.revenueCat != nil
-            case .stores: project.hasStore
+            case .stores: project.answersReviews
+            case .appStore: project.appStore?.countries.isEmpty == false
             case .googlePlay: project.googlePlay != nil
             case .revenueSetting: false
             }
@@ -147,7 +154,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
     /// recalculates now and then (Google posts vitals once a day). Everything else is read on every refresh.
     public var isHourly: Bool {
         switch self {
-        case .activeMonth, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days, .crashRate, .anrRate: true
+        case .activeMonth, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days, .rating, .crashRate, .anrRate: true
         default: false
         }
     }
@@ -217,7 +224,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
     public var rise: Rise {
         switch self {
         case .reviewsToAnswer: .note
-        case .online, .crashRate, .anrRate: .ignore
+        case .online, .rating, .crashRate, .anrRate: .ignore
         default: .celebrate
         }
     }
@@ -248,15 +255,17 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case .activeTrials: String(localized: "试用中", bundle: .module)
         case .revenueLast28Days: String(localized: "近 28 天收入", bundle: .module)
         case .reviewsToAnswer: String(localized: "待回复评论", bundle: .module)
+        case .rating: String(localized: "App Store 评分", bundle: .module)
         case .crashRate: String(localized: "崩溃率", bundle: .module)
         case .anrRate: String(localized: "ANR 率", bundle: .module)
         }
     }
 
-    /// The number as shown: dollars for money, "0.27%" for a rate, whole counts otherwise.
+    /// The number as shown: dollars for money, "0.27%" for a rate, "4.7" for a rating, whole counts otherwise.
     public func format(_ value: Double) -> String {
         if isMoney { return Format.money(value) }
         if isRate { return Format.rate(value) }
+        if self == .rating { return Format.rating(value) }
         return Format.number(Int(value.rounded()))
     }
 }
@@ -404,10 +413,12 @@ public struct CardLayout: Codable, Hashable, Sendable {
     }
 
     /// The card a project starts with. With PostHog: everyone counted, with today's, the week's and the week's new
-    /// people beneath; otherwise the reviews waiting for a reply, or revenue.
+    /// people beneath; otherwise the reviews waiting for a reply, the App Store rating when no store tells those, or
+    /// revenue.
     public static func standard(for project: Project) -> CardLayout {
         guard project.posthog != nil else {
-            return CardLayout(big: [project.hasStore ? .reviewsToAnswer : .revenue], rows: project.revenueCat != nil && project.hasStore ? [[.mrr]] : [])
+            let store: Metric? = project.answersReviews ? .reviewsToAnswer : Metric.rating.isAvailable(in: project) ? .rating : nil
+            return CardLayout(big: [store ?? .revenue], rows: project.revenueCat != nil && store != nil ? [[.mrr]] : [])
         }
         return CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .newWeek]])
     }
