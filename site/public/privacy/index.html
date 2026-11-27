@@ -21,6 +21,7 @@
     <li>PostHog、RevenueCat、App Store Connect、Google Play 的登录凭据和密钥，存放在 iPhone 钥匙串里。</li>
     <li>新增用户、收入、订单、评论、崩溃率等数据，由 App 从手机直接请求这些平台读取，缓存在手机里，供 App 和桌面小组件显示。</li>
     <li>你在 PostHog 里建的看板和图表：App 在手机上读取它们的查询并运行，用来按看板的口径计算数字、显示你挑选的图。</li>
+    <li>不导入密钥连接 App Store 时，App 从手机直接向 Apple 的公开接口搜索 App、读取评分和评论，发出去的只有你搜索的文字、App 编号和地区。</li>
     <li>回复评论时，App 从手机直接把你写的回复发到 App Store 或 Google Play。</li>
   </ul>
   <p>删除 App 或在 App 里移除账号，就会删除对应的数据和密钥。这些平台按各自的隐私政策处理你在它们那里的数据。</p>

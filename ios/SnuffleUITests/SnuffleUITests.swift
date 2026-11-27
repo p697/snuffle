@@ -185,7 +185,8 @@ final class SnuffleUITests: XCTestCase {
         app.launch()
         app.buttons["startConnecting"].tap()
         app.buttons["connect-appStore"].tap()
-        // This key is a team key: switch to the team-key form.
+        // The page starts by searching the public App Store; this key is a team key: switch to the team-key form.
+        app.buttons["ascUseKey"].tap()
         app.buttons["ascTeamKey"].tap()
 
         let keyField = app.textFields["ascKeyId"]
@@ -244,6 +245,7 @@ final class SnuffleUITests: XCTestCase {
         app.buttons["返回"].tap()
         app.buttons["connect-appStore"].tap()
         XCTAssertTrue(app.staticTexts["连接 App Store"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["ascSearch"].exists, "the App Store starts without a key")
         attach(app, name: "connect-appstore")
         app.buttons["返回"].tap()
         app.buttons["startDemo"].tap()

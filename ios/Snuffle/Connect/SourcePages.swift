@@ -501,13 +501,18 @@ struct RevenueCatConnectPage: View {
 
 // MARK: App Store Connect
 
-/// App Store Connect has no sign-in for other apps, so it takes a key file. The default is an individual key from
-/// the person's own profile: the file alone is enough (its name carries the key ID, and individual keys need no
-/// issuer ID). A team key, with its issuer ID, is still accepted.
+/// App Store Connect has no sign-in for other apps. Without a key the app is found on the public App Store, which
+/// gives its rating and newest reviews but no replies; a new link starts there. A key file adds replies and
+/// replying: an individual key from the person's own profile is enough on its own (its name carries the key ID, and
+/// individual keys need no issuer ID); a team key, with its issuer ID, is still accepted.
 struct AppStoreConnectPage: View {
     @Environment(ConnectSession.self) private var session
     @Environment(AppModel.self) private var model
     var linked: () -> Void
+    /// Importing a key rather than searching: for a project already reading the App Store, a key file handed over,
+    /// or a key already on this phone. Decided once, so coming back from the next page keeps the search.
+    @State private var useKey = false
+    @State private var decided = false
     @State private var account: Account?
     @State private var teamKey = false
     @State private var issuerId = ""
@@ -517,37 +522,22 @@ struct AppStoreConnectPage: View {
     @State private var busy = false
     @State private var busyAccount: UUID?
     @State private var error: String?
+    @State private var term = ""
+    /// Search results; nil before a search.
+    @State private var found: [PublicApp]?
+    @State private var searching = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 BackButton()
-                SourceHeader(platform: .appStore, title: String(localized: "连接 App Store"), subtitle: String(localized: "全部评论和回复状态，在这里直接回复"))
+                SourceHeader(platform: .appStore, title: String(localized: "连接 App Store"), subtitle: useKey ? String(localized: "全部评论和回复状态，在这里直接回复") : String(localized: "找到你的 App 就能看评分和评论"))
                 if account != nil, !session.appStoreApps.isEmpty {
                     appList
+                } else if useKey {
+                    keyForm
                 } else {
-                    SavedAccounts(platform: .appStore, busyId: busyAccount) { saved in Task { await reuse(saved) } }
-                    steps
-                    fileButton
-                    if teamKey || (!pem.isEmpty && keyId.isEmpty) {
-                        fields
-                        Button(busy ? "验证中…" : "导入并读取 App 列表") { Task { await connect() } }
-                            .buttonStyle(PrimaryButtonStyle())
-                            .disabled(busy || pem.isEmpty || keyId.isEmpty || (teamKey && issuerId.isEmpty))
-                    }
-                    ErrorText(text: error)
-                    Button(teamKey ? "改用个人密钥" : "已有团队密钥？用团队密钥") {
-                        teamKey.toggle()
-                        error = nil
-                    }
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(Palette.ink2)
-                    .frame(minHeight: 36)
-                    .padding(.horizontal, 4)
-                    .accessibilityIdentifier("ascTeamKey")
-                    FinePrint(text: teamKey
-                              ? "团队密钥在 **用户和访问 → 集成 → 团队密钥** 生成，需要管理员权限；Issuer ID 在同一页最上方。"
-                              : "个人密钥的权限和你的账号一样：能读评论，回复需要账号有管理员或客户支持权限。密钥只存在这台 iPhone 上，手机直接向 Apple 请求，不会经过我们的服务器。")
+                    searchForm
                 }
             }
             .padding(16)
@@ -561,8 +551,138 @@ struct AppStoreConnectPage: View {
             }
             use(file)
         }
-        .task { takeOpenedFile() }
+        .onAppear {
+            if !decided {
+                decided = true
+                useKey = session.project.appStore != nil || model.openedKeyFile != nil || model.workspace.accounts.contains { $0.platform == .appStore }
+                if !useKey, let name = session.knownNames.first { term = name }
+            }
+            takeOpenedFile()
+        }
         .onChange(of: model.openedKeyFile) { takeOpenedFile() }
+    }
+
+    // MARK: Without a key
+
+    private var searchForm: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass").font(.system(size: 16, weight: .semibold)).foregroundStyle(Palette.ink2)
+                TextField("App 名称或 App Store 链接", text: $term)
+                    .font(.system(size: 16))
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(.search)
+                    .frame(minHeight: 44)
+                    .accessibilityIdentifier("ascSearch")
+                if searching { ProgressView() }
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 6)
+            .background(Palette.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+            if let found {
+                if found.isEmpty {
+                    Text("没找到。试试 App Store 上的完整名称，或者粘贴 App 的 App Store 链接。")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Palette.ink2)
+                        .padding(.horizontal, 4)
+                } else {
+                    CardGroup {
+                        ForEach(Array(found.enumerated()), id: \.element.id) { index, app in
+                            if index > 0 { RowDivider() }
+                            PublicAppRow(app: app) { link(app) }
+                        }
+                    }
+                }
+            }
+            ErrorText(text: error)
+            Button("要回复评论？改用密钥连接") {
+                useKey = true
+                error = nil
+            }
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Palette.ink2)
+            .frame(minHeight: 36)
+            .padding(.horizontal, 4)
+            .accessibilityIdentifier("ascUseKey")
+            FinePrint(text: "不用登录，只读 App Store 上公开的评分和评论，看不到哪些回复过，也不能回复；需要时随时改用密钥。手机直接向 Apple 请求，不会经过我们的服务器。")
+        }
+        .task(id: term) { await search() }
+    }
+
+    /// Searches the phone's storefront as the person types, then the US one when that finds nothing (an app not
+    /// sold in the phone's country).
+    private func search() async {
+        let query = term.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard query.count >= 2 else {
+            found = nil
+            return
+        }
+        try? await Task.sleep(for: .milliseconds(400))
+        guard !Task.isCancelled else { return }
+        searching = true
+        defer { searching = false }
+        do {
+            let client = PublicAppStoreClient()
+            let home = PublicAppStoreClient.candidates(region: Locale.current.region?.identifier)[0]
+            var apps = try await client.search(query, country: home)
+            if apps.isEmpty, home != "us" { apps = try await client.search(query, country: "us") }
+            guard !Task.isCancelled else { return }
+            found = apps
+            error = nil
+        } catch {
+            guard !Task.isCancelled, !(error is CancellationError) else { return }
+            session.track(.appStore, .search, .failed(error))
+            self.error = describe(error)
+        }
+    }
+
+    /// The storefronts it is read in are chosen on the next page, which shows them.
+    private func link(_ app: PublicApp) {
+        session.project.appStore = AppStoreLink(accountId: nil, appId: app.id, appName: app.name, bundleId: app.bundleId)
+        if session.project.name.isEmpty { session.project.name = app.name }
+        session.track(.appStore, .search, .succeeded)
+        linked()
+    }
+
+    // MARK: With a key
+
+    private var keyForm: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            SavedAccounts(platform: .appStore, busyId: busyAccount) { saved in Task { await reuse(saved) } }
+            steps
+            fileButton
+            if teamKey || (!pem.isEmpty && keyId.isEmpty) {
+                fields
+                Button(busy ? "验证中…" : "导入并读取 App 列表") { Task { await connect() } }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(busy || pem.isEmpty || keyId.isEmpty || (teamKey && issuerId.isEmpty))
+            }
+            ErrorText(text: error)
+            Button(teamKey ? "改用个人密钥" : "已有团队密钥？用团队密钥") {
+                teamKey.toggle()
+                error = nil
+            }
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(Palette.ink2)
+            .frame(minHeight: 36)
+            .padding(.horizontal, 4)
+            .accessibilityIdentifier("ascTeamKey")
+            if session.project.appStore?.hasKey != true {
+                Button("不用密钥，只看评分和评论") {
+                    useKey = false
+                    error = nil
+                }
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Palette.ink2)
+                .frame(minHeight: 36)
+                .padding(.horizontal, 4)
+                .accessibilityIdentifier("ascNoKey")
+            }
+            FinePrint(text: teamKey
+                      ? "团队密钥在 **用户和访问 → 集成 → 团队密钥** 生成，需要管理员权限；Issuer ID 在同一页最上方。"
+                      : "个人密钥的权限和你的账号一样：能读评论，回复需要账号有管理员或客户支持权限。密钥只存在这台 iPhone 上，手机直接向 Apple 请求，不会经过我们的服务器。")
+        }
     }
 
     private var steps: some View {
@@ -651,6 +771,7 @@ struct AppStoreConnectPage: View {
     private func takeOpenedFile() {
         guard let file = model.openedKeyFile else { return }
         model.openedKeyFile = nil
+        useKey = true
         use(file)
     }
 
@@ -696,17 +817,57 @@ struct AppStoreConnectPage: View {
         }
     }
 
+    /// The app the project already reads without a key, or the one that is obviously it, is picked straight away.
     private func use(_ saved: Account, apps: [AppStoreApp]) {
         account = saved
         session.appStoreApps = apps
-        if let only = session.obvious(apps, names: { [$0.name, $0.bundleId] }) { link(only) }
+        let current = apps.first { $0.id == session.project.appStore?.appId }
+        if let app = current ?? session.obvious(apps, names: { [$0.name, $0.bundleId] }) { link(app) }
     }
 
+    /// The same app keeps the storefronts it was read in.
     private func link(_ app: AppStoreApp) {
         guard let account else { return }
-        session.project.appStore = AppStoreLink(accountId: account.id, appId: app.id, appName: app.name, bundleId: app.bundleId)
+        let countries = session.project.appStore?.appId == app.id ? session.project.appStore?.countries ?? [] : []
+        session.project.appStore = AppStoreLink(accountId: account.id, appId: app.id, appName: app.name, bundleId: app.bundleId, countries: countries)
         if session.project.name.isEmpty { session.project.name = app.name }
         linked()
+    }
+}
+
+/// An app found on the public App Store: icon, name, developer and rating.
+private struct PublicAppRow: View {
+    var app: PublicApp
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                AsyncImage(url: app.icon) { image in
+                    image.resizable().scaledToFill()
+                } placeholder: {
+                    Palette.pill
+                }
+                .frame(width: 44, height: 44)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: app.name).font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.ink).lineLimit(1)
+                    if !detail.isEmpty {
+                        Text(verbatim: detail).font(.system(size: 13)).foregroundStyle(Palette.ink2).lineLimit(1)
+                    }
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
+            }
+            .frame(minHeight: 64)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("publicApp-\(app.id)")
+    }
+
+    private var detail: String {
+        [app.developer, app.rating.map { "★ " + Format.rating($0) }].compactMap { $0 }.joined(separator: " · ")
     }
 }
 

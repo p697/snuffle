@@ -108,6 +108,8 @@ enum Analytics {
 
     enum ConnectMethod: String {
         case oauth, key
+        /// The App Store without a key: an app found by search.
+        case search
         /// An account already on this phone.
         case saved
     }

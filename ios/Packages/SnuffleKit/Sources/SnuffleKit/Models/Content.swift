@@ -18,14 +18,16 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
     /// When Google Play last saw the review written or edited; App Store's creation date.
     public var createdAt: Date
     public var reply: ReviewReply?
-    /// Google Play only: the app version and phone it was written on ("Samsung Galaxy S23", "Android 14"), and how
-    /// many people found it helpful.
+    /// The app version it was written on (Google Play, and the App Store without a key); Google Play only: the phone
+    /// ("Samsung Galaxy S23", "Android 14"), and how many people found it helpful.
     public var appVersion: String?
     public var device: String?
     public var system: String?
     public var helpful: Int?
     /// Google Play only: when the review, older than the week Google lists, was last looked up by its id.
     public var checkedAt: Date?
+    /// Read from the public App Store without a key: whether it was answered is unknown, and answering needs a key.
+    public var keyless: Bool?
 
     public init(
         storeId: String,
@@ -43,7 +45,8 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
         device: String? = nil,
         system: String? = nil,
         helpful: Int? = nil,
-        checkedAt: Date? = nil
+        checkedAt: Date? = nil,
+        keyless: Bool? = nil
     ) {
         self.storeId = storeId
         self.platform = platform
@@ -61,9 +64,12 @@ public struct Review: Codable, Identifiable, Hashable, Sendable {
         self.system = system
         self.helpful = helpful
         self.checkedAt = checkedAt
+        self.keyless = keyless
     }
 
-    public var needsReply: Bool { reply == nil }
+    public var canReply: Bool { keyless != true }
+
+    public var needsReply: Bool { reply == nil && canReply }
 
     /// Google Play reviews kept from before the week Google lists that still wait for a reply, not looked up in the
     /// last day, least recently looked up first, at most `limit`: a reply written in Play Console, or a review its

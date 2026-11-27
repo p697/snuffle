@@ -117,6 +117,9 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
 
     public var hasStore: Bool { appStore != nil || googlePlay != nil }
 
+    /// Whether a store tells this project which reviews wait for a reply: the App Store only with a key.
+    public var answersReviews: Bool { appStore?.hasKey == true || googlePlay != nil }
+
     /// Disconnects a platform. Revenue counted by RevenueCat stops being counted rather than counting nothing.
     public mutating func unlink(_ platform: Platform) {
         switch platform {
@@ -164,18 +167,38 @@ public struct RevenueCatLink: Codable, Hashable, Sendable {
     }
 }
 
+/// An App Store app, read with an App Store Connect key (`accountId`: the newest reviews with their replies, and
+/// replying) or without one (the public App Store's newest reviews in `countries`, which carry no replies).
 public struct AppStoreLink: Codable, Hashable, Sendable {
-    public var accountId: UUID
+    public var accountId: UUID?
     public var appId: String
     public var appName: String
     public var bundleId: String
+    /// Storefronts (lowercase ISO 3166 alpha-2) the rating is read in, and without a key the reviews; at most
+    /// `maxCountries`. Empty while the app is not on the public App Store, or for links from before ratings.
+    public var countries: [String]
 
-    public init(accountId: UUID, appId: String, appName: String, bundleId: String) {
+    /// Each country costs a request per refresh.
+    public static let maxCountries = 5
+
+    public init(accountId: UUID?, appId: String, appName: String, bundleId: String, countries: [String] = []) {
         self.accountId = accountId
         self.appId = appId
         self.appName = appName
         self.bundleId = bundleId
+        self.countries = Array(countries.prefix(Self.maxCountries))
     }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        accountId = try container.decodeIfPresent(UUID.self, forKey: .accountId)
+        appId = try container.decode(String.self, forKey: .appId)
+        appName = try container.decode(String.self, forKey: .appName)
+        bundleId = try container.decode(String.self, forKey: .bundleId)
+        countries = try container.decodeIfPresent([String].self, forKey: .countries) ?? []
+    }
+
+    public var hasKey: Bool { accountId != nil }
 }
 
 public struct GooglePlayLink: Codable, Hashable, Sendable {

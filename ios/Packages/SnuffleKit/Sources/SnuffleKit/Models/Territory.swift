@@ -1,10 +1,20 @@
 import Foundation
 
-/// App Store Connect reports review territories as ISO 3166 alpha-3 codes; Foundation only names alpha-2 regions.
+/// The App Store's storefronts. App Store Connect reports review territories as ISO 3166 alpha-3 codes; the public
+/// App Store and Foundation use alpha-2.
 public enum Territory {
     public static func alpha2(fromAlpha3 code: String) -> String? {
         table[code.uppercased()]
     }
+
+    public static func alpha3(fromAlpha2 code: String) -> String? {
+        byAlpha2[code.uppercased()]
+    }
+
+    /// Every storefront, as the public App Store names them in its URLs: lowercase alpha-2.
+    public static let storefronts: [String] = table.values.map { $0.lowercased() }.sorted()
+
+    static let byAlpha2: [String: String] = Dictionary(table.map { ($0.value, $0.key) }, uniquingKeysWith: { a, _ in a })
 
     static let table: [String: String] = {
         let pairs = """

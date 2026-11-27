@@ -105,6 +105,9 @@ struct StoreDonePage: View {
     @State private var result: RefreshResult?
     @State private var loading = true
     @State private var showAll = false
+    /// The App Store app whose storefronts were looked for, so an app on none is not looked for again.
+    @State private var probed: String?
+    @State private var pickingCountries = false
 
     var body: some View {
         ScrollView {
@@ -112,17 +115,33 @@ struct StoreDonePage: View {
                 SuccessBadge(text: badge)
                 SourceHeader(platform: platform, title: String(localized: "\(platform.displayName) 连上了"), subtitle: String(localized: "已选 \(appName)"))
                 reviewsCard
-                if apps.count > 1 { switcher }
+                if platform == .appStore { countriesCard }
+                if !keyless, apps.count > 1 { switcher }
             }
             .padding(16)
         }
         .safeAreaInset(edge: .bottom) { ContinueBar(action: next) }
         .sheetPage()
-        .task(id: appKey) { await load() }
+        .task(id: readKey) { await load() }
+        .sheet(isPresented: $pickingCountries) {
+            CountryPicker(selection: Binding(
+                get: { session.project.appStore?.countries ?? [] },
+                set: { session.project.appStore?.countries = $0 }
+            ))
+        }
     }
 
+    /// Read without a key: the rating and the public reviews, no replies.
+    private var keyless: Bool { platform == .appStore && session.project.appStore?.hasKey == false }
+
+    private var countries: [String] { session.project.appStore?.countries ?? [] }
+
+    /// Reads again when the app or its storefronts change.
+    private var readKey: String { appKey + "|" + countries.joined(separator: ",") }
+
     private var badge: String {
-        platform == .appStore ? String(localized: "密钥没问题 · 读到 \(session.appStoreApps.count) 个 App") : String(localized: "已登录 · \(session.googleApps.count) 个 App")
+        if keyless { return String(localized: "不用密钥 · 读公开的评分和评论") }
+        return platform == .appStore ? String(localized: "密钥没问题 · 读到 \(session.appStoreApps.count) 个 App") : String(localized: "已登录 · \(session.googleApps.count) 个 App")
     }
 
     private var appName: String {
@@ -142,9 +161,15 @@ struct StoreDonePage: View {
     private var reviewsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Odometer(text: result?.snapshot.reviewsToAnswer.map(Format.number) ?? "–", size: 56)
-                    .opacity(loading && result == nil ? 0.35 : 1)
-                Text("条评论待回复").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
+                if keyless {
+                    Odometer(text: result?.snapshot[.rating].map(Format.rating) ?? "–", size: 56)
+                        .opacity(loading && result == nil ? 0.35 : 1)
+                    Text("App Store 评分").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
+                } else {
+                    Odometer(text: result?.snapshot.reviewsToAnswer.map(Format.number) ?? "–", size: 56)
+                        .opacity(loading && result == nil ? 0.35 : 1)
+                    Text("条评论待回复").font(.system(size: 15, weight: .bold)).foregroundStyle(Palette.ink)
+                }
                 Spacer(minLength: 4)
                 if !loading {
                     Text(platform == .googlePlay ? "近 7 天 \(reviews.count) 条" : "读到 \(reviews.count) 条")
@@ -178,6 +203,41 @@ struct StoreDonePage: View {
         }
         .padding(18)
         .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+
+    /// Where the rating, and without a key the reviews, are read.
+    private var countriesCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionLabel(keyless ? String(localized: "读这些地区的评分和评论") : String(localized: "读这些地区的评分"))
+            VStack(alignment: .leading, spacing: 12) {
+                if countries.isEmpty {
+                    Text(loading ? "正在找 App 在哪些地区有评分…" : "在 App Store 上还没找到这个 App。已经上架的话，自己选地区。")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Palette.ink2)
+                } else {
+                    FlowLayout(spacing: 8) {
+                        ForEach(countries, id: \.self) { code in
+                            Text(verbatim: Format.place(code) ?? code.uppercased())
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(Palette.ink)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 7)
+                                .background(Palette.pill, in: Capsule())
+                        }
+                    }
+                }
+                if !loading || !countries.isEmpty {
+                    Button(countries.isEmpty ? "选择地区" : "修改地区") { pickingCountries = true }
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Palette.ink)
+                        .frame(minHeight: 36)
+                        .accessibilityIdentifier("pickCountries")
+                }
+            }
+            .padding(18)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
     }
 
     private var switcher: some View {
@@ -221,14 +281,26 @@ struct StoreDonePage: View {
         guard id != appKey else { return }
         if platform == .appStore, let app = session.appStoreApps.first(where: { $0.id == id }), let link = session.project.appStore {
             session.project.appStore = AppStoreLink(accountId: link.accountId, appId: app.id, appName: app.name, bundleId: app.bundleId)
+            probed = nil
         } else if platform == .googlePlay, let link = session.project.googlePlay {
             session.project.googlePlay = GooglePlayLink(accountId: link.accountId, packageName: id)
         }
     }
 
+    /// An App Store app is first looked for in the large storefronts, once, to read it where it has the most ratings;
+    /// the storefronts found read it again.
     private func load() async {
         loading = true
         defer { loading = false }
+        if platform == .appStore, let link = session.project.appStore, link.countries.isEmpty, probed != link.appId {
+            probed = link.appId
+            let found = await PublicAppStoreClient().storefronts(appId: link.appId, candidates: PublicAppStoreClient.candidates(region: Locale.current.region?.identifier))
+            guard !Task.isCancelled, session.project.appStore?.appId == link.appId else { return }
+            if !found.isEmpty {
+                session.project.appStore?.countries = found
+                return
+            }
+        }
         let probe = session.probe(platform)
         result = await model.provider.refresh(probe, metrics: Set(CardLayout.standard(for: probe).metrics), previous: nil)
     }

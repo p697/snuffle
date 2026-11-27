@@ -108,6 +108,11 @@ extension Metric {
         case .activeTrials: return String(localized: "RevenueCat 试用中的人 · 每小时更新")
         case .revenueLast28Days: return String(localized: "RevenueCat 近 28 天收入 · 每小时更新")
         case .reviewsToAnswer: return String(localized: "App Store 最近 200 条 + Google Play 连接以来")
+        case .rating:
+            let places = (project.appStore?.countries ?? []).compactMap(Format.place)
+            return places.isEmpty
+                ? String(localized: "重新连接 App Store，选好读哪些地区")
+                : String(localized: "\(places.formatted(.list(type: .and))) 的平均分，按评分数加权 · 每小时更新")
         case .crashRate: return String(localized: "Google Play · 近 28 天使用时遇到崩溃的人占比")
         case .anrRate: return String(localized: "Google Play · 近 28 天使用时遇到无响应的人占比")
         }

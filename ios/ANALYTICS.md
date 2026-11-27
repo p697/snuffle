@@ -40,7 +40,7 @@ Business charts use `client_app = 'snuffle_ios' AND app_environment = 'release' 
 | `tab_viewed` | The person switches tab | `tab`: today, money, reviews, projects |
 | `demo_mode_changed` | Demo mode turned on or off, from anywhere | `enabled` |
 | `add_project_opened` | The add-project flow opens | `source`: welcome, home, projects, key_file (a `.p8` opened in Snuffle) |
-| `source_connect_resolved` | A sign-in or key check against a platform ends | `platform`, `method` (oauth, key, saved), `flow` (new_project, existing_project), `outcome` (succeeded, failed, cancelled), `error_kind` on failure |
+| `source_connect_resolved` | A sign-in or key check against a platform ends, or an App Store app found without a key is picked (or its search fails) | `platform`, `method` (oauth, key, search, saved), `flow` (new_project, existing_project), `outcome` (succeeded, failed, cancelled), `error_kind` on failure |
 | `project_saved` | A project is created or edited | `is_new`, `source_count`, `has_posthog`, `has_revenuecat`, `has_app_store`, `has_google_play`, `project_count`, `excluded_surfaces` (the kinds of traffic left out of people numbers: `ios`, `android`, `web`, `visitors`, `other`; empty without PostHog) |
 | `project_deleted` | A project is deleted | `source_count`, `project_count` |
 | `card_layout_saved` | "完成" in the card editor | `big`, `small` (metric kinds in order, rows one after another, e.g. `total_users`, `active_week`, `installs`; any other event is `event`, never its name), `rows` (how many small numbers each row holds, e.g. `[3, 2]`), `trend` (14-day bars shown), `split` (platform split shown), `everywhere` (applied to every project), `dragged` (a number was moved by dragging) |

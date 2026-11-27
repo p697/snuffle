@@ -158,9 +158,24 @@ public struct LiveProvider: DataProvider {
             if reviews, let link = project.appStore {
                 group.addTask {
                     do {
-                        return [.reviews(.appStore, try await self.appStore(link.accountId).reviews(appId: link.appId, projectId: project.id))]
+                        if let accountId = link.accountId {
+                            return [.reviews(.appStore, try await self.appStore(accountId).reviews(appId: link.appId, projectId: project.id))]
+                        }
+                        guard !link.countries.isEmpty else { return [] }
+                        return [.reviews(.appStore, try await PublicAppStoreClient(http: self.http).reviews(appId: link.appId, countries: link.countries, projectId: project.id))]
                     } catch {
                         return [.failure(Self.failure(.appStore, error))]
+                    }
+                }
+            }
+            if readHourly, wanted.contains(.rating), let link = project.appStore {
+                group.addTask {
+                    do {
+                        let rating = try await PublicAppStoreClient(http: self.http).rating(appId: link.appId, countries: link.countries)
+                        return [.values(rating.map { [.rating: $0] } ?? [:])]
+                    } catch {
+                        // Like the other hourly numbers, the card keeps the last rating and the next hour tries again.
+                        return [.failure(Self.failure(.appStore, error)), .hourlyFailed]
                     }
                 }
             }
@@ -465,8 +480,8 @@ public struct LiveProvider: DataProvider {
     public func reply(to review: Review, text: String, in project: Project) async throws {
         switch review.platform {
         case .appStore:
-            guard let link = project.appStore else { throw SourceError.missingCredential(.appStore) }
-            try await appStore(link.accountId).reply(reviewId: review.storeId, text: text)
+            guard let accountId = project.appStore?.accountId else { throw SourceError.missingCredential(.appStore) }
+            try await appStore(accountId).reply(reviewId: review.storeId, text: text)
         case .googlePlay:
             guard let link = project.googlePlay else { throw SourceError.missingCredential(.googlePlay) }
             try await withGoogle(link.accountId) { try await $0.reply(packageName: link.packageName, reviewId: review.storeId, text: text) }
