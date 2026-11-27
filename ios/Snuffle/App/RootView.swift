@@ -11,14 +11,10 @@ struct RootView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.scenePhase) private var scenePhase
     @State private var tab = Self.launchTab
-    @State private var paywall = Self.launchPaywall
+    @State private var sheets = RootSheets(paywall: Self.launchPaywall)
     @State private var barHeight: CGFloat = 0
     /// A connect flow opened by a key file from Files or AirDrop.
     @State private var keyFlow = false
-    /// A project's sources, opened from a number that stopped.
-    @State private var sources: SourcesRequest?
-    /// Signing in to a source again, from the note about failed sources.
-    @State private var signIn: SignInRequest?
 
     /// Debug builds launched with `-paywall history` open on the paywall for that reason, so UI tests reach
     /// the entries demo mode leaves unlocked.
@@ -48,8 +44,6 @@ struct RootView: View {
                 tabs
             }
         }
-        .environment(\.openPaywall) { paywall = $0 }
-        .environment(\.openSources) { sources = SourcesRequest(id: $0) }
         .onOpenURL { url in
             guard url.isFileURL, let file = KeyFile(url: url) else { return }
             model.openedKeyFile = file
@@ -60,9 +54,9 @@ struct RootView: View {
             }
         }
         .sheet(isPresented: $keyFlow) { AddProjectFlow(startsAt: .appStore) }
-        .sheet(item: $paywall) { reason in PaywallView(reason: reason) }
-        .sheet(item: $sources) { request in SourcesSheet(projectId: request.id) }
-        .sheet(item: $signIn) { request in ReconnectSheet(project: request.project, platform: request.platform) }
+        .sheet(item: $sheets.paywall) { reason in PaywallView(reason: reason) }
+        .sheet(item: $sheets.sources) { request in SourcesSheet(projectId: request.id) }
+        .sheet(item: $sheets.signIn) { request in ReconnectSheet(project: request.project, platform: request.platform) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.refreshOnOpenIfNeeded() } }
         }
@@ -80,6 +74,8 @@ struct RootView: View {
             #endif
             await model.refreshOnOpenIfNeeded()
         }
+        // Outermost, so the sheets presented here can read it too.
+        .environment(sheets)
     }
 
     /// The bar floats over the pages. A bottom safe-area inset does not reach the scroll views inside each tab's
@@ -97,7 +93,7 @@ struct RootView: View {
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { barHeight = $0 }
                 .ignoresSafeArea(.keyboard)
             // Clear of the cat's ears at rest; it only comes out further while a refresh runs.
-            RefreshNoticeBar { project, platform in signIn = SignInRequest(project: project, platform: platform) }
+            RefreshNoticeBar()
                 .padding(.horizontal, 12)
                 .padding(.bottom, barHeight + 16)
                 .ignoresSafeArea(.keyboard)
@@ -168,6 +164,27 @@ private struct TabBar: View {
     }
 }
 
+/// The sheets any screen can open over the tabs. Screens ask through the environment (`@Environment(RootSheets.self)`)
+/// and RootView presents them: a model rather than closures in the environment, which SwiftUI cannot compare and so
+/// would redraw every reader on each update.
+@MainActor
+@Observable
+final class RootSheets {
+    var paywall: PaywallReason?
+    /// A project's sources, opened from a number that stopped.
+    var sources: SourcesRequest?
+    /// Signing in to a source again, from the note about failed sources.
+    var signIn: SignInRequest?
+
+    init(paywall: PaywallReason? = nil) {
+        self.paywall = paywall
+    }
+
+    func openPaywall(_ reason: PaywallReason) { paywall = reason }
+    func openSources(_ projectId: UUID) { sources = SourcesRequest(id: projectId) }
+    func openSignIn(to platform: Platform, of project: Project) { signIn = SignInRequest(project: project, platform: platform) }
+}
+
 struct SourcesRequest: Identifiable {
     var id: UUID
 }
@@ -184,9 +201,6 @@ enum PaywallReason: String, Identifiable {
 }
 
 extension EnvironmentValues {
-    @Entry var openPaywall: (PaywallReason) -> Void = { _ in }
-    /// Opens a project's sources (`SourcesSheet`).
-    @Entry var openSources: (UUID) -> Void = { _ in }
     /// Height of the floating tab bar, including the room above it for the cat. Zero outside the tabs.
     @Entry var tabBarClearance: CGFloat = 0
 }

@@ -4,7 +4,7 @@ import SwiftUI
 /// 总览: one card per project, every number the way the project counts it. The refresh button lives in the tab bar.
 struct HomeView: View {
     @Environment(AppModel.self) private var model
-    @Environment(\.openPaywall) private var openPaywall
+    @Environment(RootSheets.self) private var sheets
     @State private var showSettings = false
     @State private var adding = false
     @State private var editingCard: Project?
@@ -82,7 +82,7 @@ struct HomeView: View {
                         adding = true
                         Analytics.addProjectOpened(.home)
                     } else {
-                        openPaywall(.projects)
+                        sheets.openPaywall(.projects)
                     }
                 } label: {
                     Image(systemName: "plus")
