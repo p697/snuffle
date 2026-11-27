@@ -3,7 +3,8 @@ import SwiftUI
 
 /// One project on the home screen: a big number with what it is set against and the last 14 days beside it, up to
 /// two rows of smaller numbers, and the platform split. Every row has a fixed height and every number stays on screen
-/// while refreshing: a line sweeps along the top, then the digits that changed roll up and the rise is marked.
+/// while refreshing: a short stroke runs round the card's outline, then the digits that changed roll up and the rise
+/// is marked.
 struct ProjectCard: View {
     @Environment(AppModel.self) private var model
     @Environment(\.accent) private var accent
@@ -38,10 +39,8 @@ struct ProjectCard: View {
         .padding(.top, 14)
         .padding(.bottom, 16)
         .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(alignment: .top) {
-            if stage == .loading {
-                SweepLine().clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            }
+        .overlay {
+            if stage == .loading { OutlineTrace(cornerRadius: 24) }
         }
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -417,24 +416,47 @@ private struct DragTile: View {
     }
 }
 
-/// The line that sweeps along a card's top while its numbers are read.
-private struct SweepLine: View {
-    @State private var phase: CGFloat = 0
+/// A short ink stroke running round a card's outline while its numbers are read. It follows the card's own rounded
+/// shape, so it turns with the corners instead of running past them. With Reduce Motion the whole outline is drawn, still.
+private struct OutlineTrace: View {
+    var cornerRadius: CGFloat
+    @State private var phase: Double = 0
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        GeometryReader { geometry in
-            Capsule()
-                .fill(Palette.ink)
-                .frame(width: geometry.size.width * 0.38, height: 3)
-                .offset(x: reduceMotion ? geometry.size.width * 0.31 : -geometry.size.width * 0.4 + phase * geometry.size.width * 1.4)
-        }
-        .frame(height: 3)
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: false)) { phase = 1 }
-        }
-        .accessibilityHidden(true)
+        TraceSegment(phase: phase, length: reduceMotion ? 1 : 0.16, cornerRadius: cornerRadius, inset: 1.25)
+            .stroke(Palette.ink, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) { phase = 1 }
+            }
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+}
+
+/// The part of a rounded rectangle's outline from `phase` to `phase + length`, wrapping past the start.
+nonisolated private struct TraceSegment: Shape {
+    var phase: Double
+    var length: Double
+    var cornerRadius: CGFloat
+    /// Half the stroke width, so the stroke stays inside the card.
+    var inset: CGFloat
+
+    var animatableData: Double {
+        get { phase }
+        set { phase = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        let outline = RoundedRectangle(cornerRadius: cornerRadius - inset, style: .continuous)
+            .path(in: rect.insetBy(dx: inset, dy: inset))
+        guard length < 1 else { return outline }
+        let start = phase - phase.rounded(.down)
+        let end = start + length
+        var path = outline.trimmedPath(from: start, to: min(end, 1))
+        if end > 1 { path.addPath(outline.trimmedPath(from: 0, to: end - 1)) }
+        return path
     }
 }
 
