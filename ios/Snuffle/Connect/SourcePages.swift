@@ -192,7 +192,10 @@ struct PostHogSignIn: View {
             let callback = try await webAuth.authenticate(
                 using: PostHogOAuth.authorizeURL(region: region, pkce: pkce),
                 callback: .https(host: PostHogOAuth.callbackHost, path: PostHogOAuth.callbackPath),
-                preferredBrowserSession: .shared,
+                // PostHog's consent page has no account switcher and rejects prompt=login, so a shared session
+                // always lands on whoever is signed in to Safari. Once an account is saved (it has its own
+                // continue button), signing in means adding another one: start without Safari's cookies.
+                preferredBrowserSession: model.workspace.accounts.contains { $0.platform == .posthog } ? .ephemeral : .shared,
                 additionalHeaderFields: [:]
             )
             let code = try PostHogOAuth.code(from: callback, pkce: pkce)

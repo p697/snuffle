@@ -132,7 +132,8 @@ public enum GoogleOAuth {
             URLQueryItem(name: "code_challenge_method", value: "S256"),
             URLQueryItem(name: "state", value: pkce.state),
             URLQueryItem(name: "access_type", value: "offline"),
-            URLQueryItem(name: "prompt", value: "consent")
+            // select_account shows Google's account chooser even when Safari is signed in, so another account can be added.
+            URLQueryItem(name: "prompt", value: "select_account consent")
         ])
     }
 
