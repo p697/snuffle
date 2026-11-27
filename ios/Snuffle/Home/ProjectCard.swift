@@ -89,7 +89,7 @@ struct ProjectCard: View {
     @ViewBuilder
     private var stateLabel: some View {
         if stage == .loading {
-            Text("正在闻…")
+            Text("闻一闻…")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(Palette.ink)
         } else if let failure = snapshot?.failures.first, editing == nil {
