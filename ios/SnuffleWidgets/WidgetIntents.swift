@@ -9,6 +9,7 @@ enum WidgetMetric: String, AppEnum {
     case reviewsToAnswer
     /// Added after the others: saved widget configurations keep their raw values.
     case newWeek
+    case revenueWeek, revenueMonth
 
     static let typeDisplayRepresentation: TypeDisplayRepresentation = "数字"
 
@@ -22,6 +23,8 @@ enum WidgetMetric: String, AppEnum {
         .online: "此刻在线",
         .pageviews: "页面浏览",
         .revenue: "收入",
+        .revenueWeek: "近 7 天收入",
+        .revenueMonth: "近 30 天收入",
         .orders: "订单",
         .mrr: "MRR",
         .activeSubscriptions: "活跃订阅",
@@ -40,6 +43,8 @@ enum WidgetMetric: String, AppEnum {
         case .online: .online
         case .pageviews: .pageviews
         case .revenue: .revenue
+        case .revenueWeek: .revenueWeek
+        case .revenueMonth: .revenueMonth
         case .orders: .orders
         case .mrr: .mrr
         case .activeSubscriptions: .activeSubscriptions
@@ -93,7 +98,7 @@ struct TodayWidgetIntent: WidgetConfigurationIntent {
     @Parameter(title: "大数", default: .newUsers)
     var primary: WidgetMetric
 
-    @Parameter(title: "下面一行", default: .revenue)
+    @Parameter(title: "下面一行", default: .revenueMonth)
     var secondary: WidgetMetric?
 
     @Parameter(title: "项目", default: ProjectEntity.everyProject)

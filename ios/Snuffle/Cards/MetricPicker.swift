@@ -204,6 +204,10 @@ struct CardMetricPicker: View {
                     MissingSourceRow(titles: String(localized: "收入 · MRR · 订阅"), platform: .revenueCat) { connecting = .revenueCat }
                 } else {
                     row(.revenue, counting: .revenue)
+                    RowDivider()
+                    row(.revenueWeek)
+                    RowDivider()
+                    row(.revenueMonth)
                     if Metric.orders.isAvailable(in: project) {
                         RowDivider()
                         row(.orders)

@@ -239,16 +239,17 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             countedAs: project.metrics.inEffect,
             userTally: UserTally(byPlatform: shares.mapValues { Int(((previous[.totalUsers] ?? 0) * $0).rounded()) }, before: dayStart)
         )
-        switch project.metrics.revenue {
-        case .posthogEvent:
-            snapshot[.revenue] = book.revenue
-            snapshot[.orders] = Double(book.sales)
-            snapshot.revenueSource = .posthog
-        case .revenueCat:
-            snapshot[.revenue] = book.revenue
-            snapshot.revenueSource = .revenueCat
-        case .none:
-            break
+        if project.metrics.revenue != .none {
+            // The made-up history before today, with today's own sales: orders worked back from the typical order.
+            let history = board(for: project.id, days: SalesWindows.lookbackDays, total: nil).days.dropLast().reversed().map(\.revenue)
+            let days = [(book.revenue, Double(book.sales))] + history.map { revenue -> (Double, Double) in
+                let amount = revenue ?? 0
+                return (amount, book.pace.averageOrder > 0 ? (amount / book.pace.averageOrder).rounded() : 0)
+            }
+            let windows = SalesWindows(newestFirst: days.map { (revenue: $0.0, orders: Optional($0.1)) })
+            snapshot.values.merge(windows.values) { $1 }
+            snapshot.previous.merge(windows.previous) { $1 }
+            snapshot.revenueSource = project.metrics.revenue == .revenueCat ? .revenueCat : .posthog
         }
         if project.revenueCat != nil {
             snapshot[.mrr] = 87

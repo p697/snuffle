@@ -89,8 +89,11 @@ final class SnuffleUITests: XCTestCase {
         let app = launch()
         refresh(app)
         app.buttons["tab-money"].tap()
-        XCTAssertTrue(app.staticTexts["今天的订单"].waitForExistence(timeout: 5))
+        // The last 30 days by default: a day often has no sale.
+        XCTAssertTrue(app.staticTexts["近 30 天的订单"].waitForExistence(timeout: 5))
         attach(app, name: "money")
+        app.buttons["今天"].tap()
+        XCTAssertTrue(app.staticTexts["今天的订单"].waitForExistence(timeout: 5))
         app.buttons["tab-reviews"].tap()
         let reply = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'reply-'")).firstMatch
         XCTAssertTrue(reply.waitForExistence(timeout: 5))
@@ -114,7 +117,8 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
         XCTAssertTrue(app.staticTexts["数据来自"].waitForExistence(timeout: 5))
-        app.buttons["7 天"].tap()
+        // The 收入 tab has a 7 天 button too.
+        app.segmentedControls.buttons["7 天"].tap()
         XCTAssertTrue(app.staticTexts["每日新增 · 按平台"].waitForExistence(timeout: 5))
         attach(app, name: "project-detail-week")
         // Each number says how it is counted.

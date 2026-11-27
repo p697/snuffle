@@ -1,12 +1,15 @@
 import SnuffleKit
 import SwiftUI
 
-/// 收入: today's total, how it splits across projects, today's orders and RevenueCat's subscription overview.
+/// 收入: the total over the chosen days (the last 30 by default, as a day often has no sale), how it splits across
+/// projects, the orders behind it and RevenueCat's subscription overview.
 struct MoneyView: View {
     @Environment(AppModel.self) private var model
+    @AppStorage(RevenuePeriod.storageKey) private var period: RevenuePeriod = .month
     @State private var orders: [Order] = []
     @State private var overviews: [UUID: SubscriptionOverview] = [:]
-    @State private var loadError: String?
+    @State private var ordersError: String?
+    @State private var overviewError: String?
 
     private var revenueProjects: [Project] {
         model.projects.filter { $0.metrics.revenue != .none }
@@ -16,7 +19,9 @@ struct MoneyView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    ScreenTitle(title: String(localized: "收入"), subtitle: String(localized: "今天 · 全部项目 · 美元"))
+                    ScreenTitle(title: String(localized: "收入"), subtitle: period.subtitle + " · " + String(localized: "全部项目 · 美元"))
+                    ChoiceBar(options: RevenuePeriod.allCases.map { ($0, $0.label) }, selection: $period)
+                        .accessibilityIdentifier("revenuePeriod")
                     hero
                     if !revenueProjects.isEmpty { split }
                     ordersSection
@@ -30,19 +35,21 @@ struct MoneyView: View {
             .clearsTabBar()
             .background(Palette.paper)
             .toolbar(.hidden, for: .navigationBar)
-            .task(id: model.lastRefresh) { await load() }
+            .task(id: OrdersRead(refresh: model.lastRefresh, days: period.days)) { await loadOrders() }
+            .task(id: model.lastRefresh) { await loadOverviews() }
             .refreshable { await model.refreshAll() }
         }
     }
 
     private var hero: some View {
-        let rise = model.marksFading ? nil : model.refreshMark?[.revenue]
-        return VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Odometer(text: Metric.revenue.text(model.total(.revenue)), size: 64)
-                DeltaChip(text: rise.map(Metric.revenue.delta), visible: rise != nil, size: 15)
+        VStack(alignment: .leading, spacing: 6) {
+            // A month's total runs long: the number gets smaller before the "+$" beside it is squeezed.
+            ViewThatFits(in: .horizontal) {
+                total(size: 64)
+                total(size: 50)
+                total(size: 38)
             }
-            Text(revenueProjects.isEmpty ? String(localized: "还没有项目连接收入来源，可以在项目设置里选择 PostHog 付费事件或 RevenueCat。") : String(localized: "\(salesCount) 笔订单") + " · " + String(localized: "\(revenueProjects.count) 个项目有收入来源"))
+            summary
                 .font(.system(size: 13))
                 .foregroundStyle(Palette.ink2)
         }
@@ -51,12 +58,41 @@ struct MoneyView: View {
         .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
-    private var salesCount: Int {
-        revenueProjects.compactMap { model.snapshot($0.id)?.orders }.reduce(0, +)
+    private func total(size: CGFloat) -> some View {
+        let rise = model.marksFading ? nil : model.refreshMark?[period.revenue]
+        return HStack(alignment: .firstTextBaseline, spacing: 10) {
+            Odometer(text: period.revenue.text(model.total(period.revenue)), size: size)
+            DeltaChip(text: rise.map(period.revenue.delta), visible: rise != nil, size: 15).fixedSize()
+        }
+    }
+
+    /// "13 笔订单 · 比前 30 天 ▼ 17% · 2 个项目有收入来源": each part only when it is known.
+    private var summary: Text {
+        guard !revenueProjects.isEmpty else {
+            return Text("还没有项目连接收入来源，可以在项目设置里选择 PostHog 付费事件或 RevenueCat。")
+        }
+        var parts: [Text] = []
+        let counts = revenueProjects.compactMap { model.snapshot($0.id)?[period.orders] }
+        if !counts.isEmpty { parts.append(Text("\(Int(counts.reduce(0, +))) 笔订单")) }
+        if let comparison = period.comparison, let change {
+            parts.append(Text(comparison) + Text(verbatim: " ") + Text(change.text).fontWeight(.semibold).foregroundStyle(change.tone.color))
+        }
+        parts.append(Text("\(revenueProjects.count) 个项目有收入来源"))
+        return parts.dropFirst().reduce(parts[0]) { $0 + Text(verbatim: " · ") + $1 }
+    }
+
+    /// The change on the same number of days before, across the projects that know both.
+    private var change: Metric.ReferenceText? {
+        let pairs = revenueProjects.compactMap { project -> (now: Double, before: Double)? in
+            guard let snapshot = model.snapshot(project.id), let now = snapshot[period.revenue], let before = snapshot.previous[period.revenue] else { return nil }
+            return (now, before)
+        }
+        guard !pairs.isEmpty else { return nil }
+        return Metric.change(pairs.reduce(0) { $0 + $1.now }, from: pairs.reduce(0) { $0 + $1.before })
     }
 
     private var split: some View {
-        let values = revenueProjects.map { ($0, model.snapshot($0.id)?.revenue ?? 0) }
+        let values = revenueProjects.map { ($0, model.snapshot($0.id)?[period.revenue] ?? 0) }
         let peak = max(1, values.map(\.1).max() ?? 1)
         return VStack(alignment: .leading, spacing: 10) {
             SectionLabel(String(localized: "按项目"))
@@ -72,11 +108,12 @@ struct MoneyView: View {
                         GeometryReader { proxy in
                             Capsule().fill(Palette.pill)
                                 .overlay(alignment: .leading) {
-                                    Capsule().fill(Palette.ink).frame(width: max(6, proxy.size.width * revenue / peak))
+                                    // A refund can leave the days below nothing.
+                                    Capsule().fill(Palette.ink).frame(width: max(6, proxy.size.width * max(0, revenue) / peak))
                                 }
                         }
                         .frame(height: 8)
-                        Text(project.metrics.revenue == .revenueCat ? "来自 RevenueCat 当日总额" : "来自 PostHog 付费事件")
+                        source(of: project)
                             .font(.system(size: 12))
                             .foregroundStyle(Palette.ink2)
                     }
@@ -87,14 +124,22 @@ struct MoneyView: View {
         }
     }
 
+    /// "来自 RevenueCat · 3 笔".
+    private func source(of project: Project) -> Text {
+        let from = project.metrics.revenue == .revenueCat ? Text("来自 RevenueCat") : Text("来自 PostHog 付费事件")
+        guard let count = model.snapshot(project.id)?[period.orders] else { return from }
+        return from + Text(verbatim: " · ") + Text("\(Int(count)) 笔", comment: "Number of sales, after the revenue amount.")
+    }
+
     @ViewBuilder
     private var ordersSection: some View {
-        if !orders.isEmpty || loadError != nil {
+        let error = ordersError ?? overviewError
+        if !orders.isEmpty || error != nil {
             VStack(alignment: .leading, spacing: 10) {
-                SectionLabel(String(localized: "今天的订单"))
+                SectionLabel(period.ordersTitle)
                 CardGroup {
-                    if let loadError {
-                        Text(loadError).font(.system(size: 14)).foregroundStyle(Palette.bad).padding(.vertical, 12)
+                    if let error {
+                        Text(error).font(.system(size: 14)).foregroundStyle(Palette.bad).padding(.vertical, 12)
                     }
                     ForEach(orders.prefix(30)) { order in
                         OrderRow(order: order, project: model.projects.first { $0.id == order.projectId })
@@ -137,21 +182,89 @@ struct MoneyView: View {
         }
     }
 
-    private func load() async {
-        loadError = nil
+    private func loadOrders() async {
+        ordersError = nil
         var collected: [Order] = []
-        var collectedOverviews: [UUID: SubscriptionOverview] = [:]
         for project in model.refreshable where project.metrics.revenue != .none {
             do {
-                collected += try await model.provider.orders(for: project)
-                if let overview = try await model.provider.overview(for: project) { collectedOverviews[project.id] = overview }
+                collected += try await model.provider.orders(for: project, days: period.days)
             } catch {
-                loadError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                ordersError = describe(error)
             }
         }
         orders = collected.sorted { $0.date > $1.date }
-        overviews = collectedOverviews
     }
+
+    private func loadOverviews() async {
+        overviewError = nil
+        var collected: [UUID: SubscriptionOverview] = [:]
+        for project in model.refreshable where project.metrics.revenue != .none {
+            do {
+                if let overview = try await model.provider.overview(for: project) { collected[project.id] = overview }
+            } catch {
+                overviewError = describe(error)
+            }
+        }
+        overviews = collected
+    }
+}
+
+/// The days the 收入 tab adds up, counting today.
+enum RevenuePeriod: String, CaseIterable {
+    case today, week, month
+
+    /// The choice is kept on the phone, in the standard defaults.
+    static let storageKey = "revenuePeriod"
+
+    var days: Int {
+        switch self {
+        case .today: 1
+        case .week: 7
+        case .month: 30
+        }
+    }
+
+    var revenue: Metric { Metric.revenues[Self.allCases.firstIndex(of: self)!] }
+    var orders: Metric { Metric.ordersByWindow[Self.allCases.firstIndex(of: self)!] }
+
+    var label: LocalizedStringKey {
+        switch self {
+        case .today: "今天"
+        case .week: "7 天"
+        case .month: "30 天"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .today: String(localized: "今天")
+        case .week: String(localized: "近 7 天")
+        case .month: String(localized: "近 30 天")
+        }
+    }
+
+    /// What the change is against; today is set against nothing.
+    var comparison: LocalizedStringKey? {
+        switch self {
+        case .today: nil
+        case .week: "比前 7 天"
+        case .month: "比前 30 天"
+        }
+    }
+
+    var ordersTitle: String {
+        switch self {
+        case .today: String(localized: "今天的订单")
+        case .week: String(localized: "近 7 天的订单")
+        case .month: String(localized: "近 30 天的订单")
+        }
+    }
+}
+
+/// What the orders list was read for: it is read again after a refresh or when the days change.
+private struct OrdersRead: Equatable {
+    var refresh: Date?
+    var days: Int
 }
 
 private struct OrderRow: View {
@@ -160,7 +273,8 @@ private struct OrderRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(Format.clock(order.date))
+            // The time today, with the day in front on an earlier day.
+            Text(Format.moment(order.date))
                 .font(.system(size: 13, weight: .semibold).monospacedDigit())
                 .foregroundStyle(Palette.ink2)
                 .fixedSize()

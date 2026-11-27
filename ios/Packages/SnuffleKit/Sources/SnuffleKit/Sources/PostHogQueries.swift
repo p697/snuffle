@@ -100,8 +100,10 @@ public enum PostHogQueries {
 
     /// What one column of `counts` holds.
     public enum CountsColumn: Hashable, Sendable {
-        case newToday, newYesterday, newWeek, newWeekBefore, revenue, orders
+        case newToday, newYesterday, newWeek, newWeekBefore
         case metric(Metric)
+        /// What `metric` is set against (`ProjectSnapshot.previous`).
+        case previous(Metric)
     }
 
     /// People who did `event` while `condition` holds: a person who signs up twice is still one new user.
@@ -110,8 +112,9 @@ public enum PostHogQueries {
     }
 
     /// Event-based counts in one scan: new users by their event (today, yesterday by now and, when `week`, the last
-    /// 7 days and the 7 before), revenue and orders when an event carries revenue, and each event metric in
-    /// `events`. The columns say what each position holds.
+    /// 7 days and the 7 before), revenue and orders today and over the last 7 and 30 days (revenue also over the 7 and
+    /// 30 before) when an event carries revenue, and each event metric in `events`. Only the revenue event is read 60
+    /// days back; the others from yesterday or 14 days back. The columns say what each position holds.
     public static func counts(settings: MetricSettings, events: [Metric], week: Bool, clock: ProjectClock) -> (sql: String, columns: [CountsColumn])? {
         let today = at(clock.todayStart)
         let days = clock.dayStarts(days: recentDays)
@@ -127,10 +130,23 @@ public enum PostHogQueries {
                 columns.append((.newWeekBefore, people(did: name, "timestamp >= \(at(days[0])) AND timestamp < \(at(days[7]))")))
             }
         }
+        var revenueEvent: String?
         if case .posthogEvent(let name, let valueProperty) = settings.revenue {
-            names.insert(name)
-            columns.append((.revenue, "sumIf(toFloat(\(property(valueProperty))), event = \(literal(name)) AND timestamp >= \(today))"))
-            columns.append((.orders, "countIf(event = \(literal(name)) AND timestamp >= \(today))"))
+            revenueEvent = name
+            func during(_ from: Int, _ to: Int?) -> String {
+                "event = \(literal(name)) AND timestamp >= \(at(clock.historyStart(days: from)))" + (to.map { " AND timestamp < \(at(clock.historyStart(days: $0)))" } ?? "")
+            }
+            let amount = "toFloat(\(property(valueProperty)))"
+            columns += [
+                (.metric(.revenue), "sumIf(\(amount), \(during(1, nil)))"),
+                (.metric(.revenueWeek), "sumIf(\(amount), \(during(7, nil)))"),
+                (.previous(.revenueWeek), "sumIf(\(amount), \(during(14, 7)))"),
+                (.metric(.revenueMonth), "sumIf(\(amount), \(during(30, nil)))"),
+                (.previous(.revenueMonth), "sumIf(\(amount), \(during(SalesWindows.lookbackDays, 30)))"),
+                (.metric(.orders), "countIf(\(during(1, nil)))"),
+                (.metric(.ordersWeek), "countIf(\(during(7, nil)))"),
+                (.metric(.ordersMonth), "countIf(\(during(30, nil)))")
+            ]
         }
         for metric in events {
             guard case .event(let name, let byPeople) = metric else { continue }
@@ -140,9 +156,16 @@ public enum PostHogQueries {
         }
         guard !columns.isEmpty else { return nil }
         let start = columns.contains { $0.0 == .newWeek } ? days[0] : clock.yesterdayStart
-        let eventList = names.sorted().map(literal).joined(separator: ", ")
+        var reads: [String] = []
+        if let revenueEvent { names.remove(revenueEvent) }
+        if !names.isEmpty {
+            reads.append("(timestamp >= \(at(start)) AND event IN (\(names.sorted().map(literal).joined(separator: ", "))))")
+        }
+        if let revenueEvent {
+            reads.append("(timestamp >= \(at(clock.historyStart(days: SalesWindows.lookbackDays))) AND event = \(literal(revenueEvent)))")
+        }
         let select = columns.enumerated().map { "\($1.1) AS c\($0)" }.joined(separator: ", ")
-        return ("SELECT \(select) FROM events WHERE timestamp >= \(at(start)) AND event IN (\(eventList))", columns.map(\.0))
+        return ("SELECT \(select) FROM events WHERE \(reads.joined(separator: " OR "))", columns.map(\.0))
     }
 
     /// Which of these events the project sent since `since`, to choose defaults when a project is added.
@@ -272,7 +295,7 @@ public enum PostHogQueries {
         "SELECT countIf(\(condition)), count() FROM events WHERE timestamp >= \(at(clock.now.addingTimeInterval(-86_400)))"
     }
 
-    /// Today's orders, newest first. Product names come from whichever common property the event carries.
+    /// Orders since `since`, newest first. Product names come from whichever common property the event carries.
     public static func orders(event: String, valueProperty: String, since: Date, limit: Int = 50) -> String {
         let fields = ["product_name", "product", "plan", "plan_tier", "billing_interval", "product_id", "sku"]
             .map { "toString(\(property($0)))" }
@@ -320,7 +343,7 @@ public enum PostHogParsing {
         public var previous: [Metric: Double] = [:]
     }
 
-    /// Reads a `counts` row by its columns: new users, revenue and orders land under their metrics.
+    /// Reads a `counts` row by its columns: new users, revenue and orders land under their metrics or references.
     public static func counts(_ row: [JSONValue], columns: [PostHogQueries.CountsColumn]) -> Counts {
         var counts = Counts()
         for (column, value) in zip(columns, row) {
@@ -329,9 +352,8 @@ public enum PostHogParsing {
             case .newYesterday: counts.previous[.newUsers] = value.double
             case .newWeek: counts.values[.newWeek] = value.double
             case .newWeekBefore: counts.previous[.newWeek] = value.double
-            case .revenue: counts.values[.revenue] = value.double ?? 0
-            case .orders: counts.values[.orders] = value.double ?? 0
             case .metric(let metric): counts.values[metric] = value.double ?? 0
+            case .previous(let metric): counts.previous[metric] = value.double ?? 0
             }
         }
         return counts

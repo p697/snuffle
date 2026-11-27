@@ -139,7 +139,7 @@ final class AppModel {
         return cache.reviews.filter { ids.contains($0.key) }.flatMap(\.value).sorted { $0.createdAt > $1.createdAt }
     }
 
-    /// `metric` added up across projects (today's revenue on the 收入 tab); nil when no project has it.
+    /// `metric` added up across projects (the revenue on the 收入 tab); nil when no project has it.
     func total(_ metric: Metric) -> Double? {
         let values = projects.compactMap { project in metric.isAvailable(in: project) ? cache.snapshots[project.id]?[metric] : nil }
         return values.isEmpty ? nil : values.reduce(0, +)
@@ -219,7 +219,7 @@ final class AppModel {
             let snapshot = cache.land(result, for: project)
             let layout = self.layout(project)
             // A sale is always celebrated and shown on the 收入 tab, wherever revenue is placed (or not).
-            let change = SnapshotChange(from: previous, to: snapshot, metrics: layout.metrics + MetricsInUse.board + [.revenue, .orders])
+            let change = SnapshotChange(from: previous, to: snapshot, metrics: layout.metrics + MetricsInUse.board + Metric.sales)
             stages[project.id] = .landed
 
             let headline = layout.big[0]
@@ -693,6 +693,7 @@ final class AppModel {
             for store in [SharedContainer.liveCache.url, SharedContainer.demoCache.url, SharedContainer.demoWorld.url, SharedContainer.workspace.url, SharedContainer.settings.url] {
                 try? FileManager.default.removeItem(at: store)
             }
+            UserDefaults.standard.removeObject(forKey: RevenuePeriod.storageKey)
             settings = AppSettings()
             workspace = Workspace()
             cache = RefreshCache()

@@ -22,7 +22,7 @@ nonisolated struct TodayEntry: TimelineEntry {
     var demo: Bool
     var accent: AppSettings.Accent
     var primary: Metric = .newUsers
-    var secondary: Metric? = .revenue
+    var secondary: Metric? = .revenueMonth
     /// The one project picked in the configuration; nil adds up every project.
     var projectName: String?
 
@@ -37,7 +37,7 @@ nonisolated struct TodayEntry: TimelineEntry {
         [demo ? String(localized: "示例") : nil, primary.title, projectName].compactMap { $0 }.joined(separator: " · ")
     }
 
-    static func load(now: Date = .now, primary: Metric = .newUsers, secondary: Metric? = .revenue, project: UUID? = nil) -> TodayEntry {
+    static func load(now: Date = .now, primary: Metric = .newUsers, secondary: Metric? = .revenueMonth, project: UUID? = nil) -> TodayEntry {
         let settings = SharedContainer.settings.load() ?? AppSettings()
         let cache = (settings.demoMode ? SharedContainer.demoCache : SharedContainer.liveCache).load() ?? RefreshCache()
         let all = settings.demoMode ? DemoWorld.projects : (SharedContainer.workspace.load()?.projects ?? [])
@@ -60,8 +60,8 @@ nonisolated struct TodayEntry: TimelineEntry {
     static let placeholder = TodayEntry(
         date: .now,
         rows: [
-            Row(id: UUID(), name: "Lumen Notes", monogram: "L", tint: .ink, values: [.newUsers: 3_406, .revenue: 940], failed: false),
-            Row(id: UUID(), name: "Pocket Ferry", monogram: "P", tint: .coral, values: [.newUsers: 17, .revenue: 3.28], failed: false),
+            Row(id: UUID(), name: "Lumen Notes", monogram: "L", tint: .ink, values: [.newUsers: 3_406, .revenueMonth: 26_480], failed: false),
+            Row(id: UUID(), name: "Pocket Ferry", monogram: "P", tint: .coral, values: [.newUsers: 17, .revenueMonth: 142.5], failed: false),
             Row(id: UUID(), name: "Quiet Atlas", monogram: "Q", tint: .cocoa, values: [.newUsers: 45], failed: false)
         ],
         lastRefresh: .now.addingTimeInterval(-900),

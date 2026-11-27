@@ -31,7 +31,7 @@ struct DemoTests {
         #expect(lumen.reviewsToAnswer == 5)
         let ferry = world.snapshot(for: self.ferry)!
         #expect(ferry.revenue == 3.28)
-        #expect(ferry.orders == nil)
+        #expect(ferry.orders == 1, "RevenueCat counts transactions too")
         #expect(ferry[.mrr] == 87)
         // Every number on the demo cards has a value.
         for project in DemoWorld.projects {

@@ -67,7 +67,7 @@ public actor DemoProvider: DataProvider {
         return world.eventStats(for: project.id)
     }
 
-    public func orders(for project: Project) async throws -> [Order] {
+    public func orders(for project: Project, days: Int) async throws -> [Order] {
         world.books.first { $0.projectId == project.id && project.metrics.revenue != .revenueCat }?.orders ?? []
     }
 

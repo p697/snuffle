@@ -35,11 +35,22 @@ struct PostHogTests {
         // New users are people, not events: someone whose signup is sent twice still counts once.
         #expect(sql.hasPrefix("SELECT uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795132800)) AS c0, uniqExactIf(person_id, event = 'user_signed_up' AND timestamp >= fromUnixTimestamp(1795046400)"))
         #expect(sql.contains("sumIf(toFloat(properties['value']), event = 'purchase' AND timestamp >= fromUnixTimestamp(1795132800)) AS c2"))
-        #expect(sql.contains("countIf(event = 'Application Installed' AND timestamp >= fromUnixTimestamp(1795132800)) AS c4"))
-        #expect(sql.contains("uniqExactIf(person_id, event = 'paywall_viewed' AND timestamp >= fromUnixTimestamp(1795132800)) AS c5"))
-        #expect(!sql.contains("AS c6"))
-        #expect(sql.contains("WHERE timestamp >= fromUnixTimestamp(1795046400) AND event IN ('Application Installed', 'paywall_viewed', 'purchase', 'user_signed_up')"))
-        #expect(query.columns == [.newToday, .newYesterday, .revenue, .orders, .metric(.installs), .metric(.event("paywall_viewed", people: true))])
+        // The last 7 days and the 7 before them, the last 30 and the 30 before (from 60 days back).
+        #expect(sql.contains("sumIf(toFloat(properties['value']), event = 'purchase' AND timestamp >= fromUnixTimestamp(1794614400)) AS c3"))
+        #expect(sql.contains("sumIf(toFloat(properties['value']), event = 'purchase' AND timestamp >= fromUnixTimestamp(1794009600) AND timestamp < fromUnixTimestamp(1794614400)) AS c4"))
+        #expect(sql.contains("sumIf(toFloat(properties['value']), event = 'purchase' AND timestamp >= fromUnixTimestamp(1790035200) AND timestamp < fromUnixTimestamp(1792627200)) AS c6"))
+        #expect(sql.contains("countIf(event = 'purchase' AND timestamp >= fromUnixTimestamp(1792627200)) AS c9"))
+        #expect(sql.contains("countIf(event = 'Application Installed' AND timestamp >= fromUnixTimestamp(1795132800)) AS c10"))
+        #expect(sql.contains("uniqExactIf(person_id, event = 'paywall_viewed' AND timestamp >= fromUnixTimestamp(1795132800)) AS c11"))
+        #expect(!sql.contains("AS c12"))
+        // Only the revenue event is read 60 days back.
+        #expect(sql.hasSuffix("WHERE (timestamp >= fromUnixTimestamp(1795046400) AND event IN ('Application Installed', 'paywall_viewed', 'user_signed_up')) OR (timestamp >= fromUnixTimestamp(1790035200) AND event = 'purchase')"))
+        #expect(query.columns == [
+            .newToday, .newYesterday,
+            .metric(.revenue), .metric(.revenueWeek), .previous(.revenueWeek), .metric(.revenueMonth), .previous(.revenueMonth),
+            .metric(.orders), .metric(.ordersWeek), .metric(.ordersMonth),
+            .metric(.installs), .metric(.event("paywall_viewed", people: true))
+        ])
         // Yesterday "by now" ends at the same wall-clock time yesterday.
         #expect(sql.contains("timestamp < fromUnixTimestamp(\(Int(clock.sameTimeYesterday.timeIntervalSince1970)))"))
 
@@ -47,10 +58,11 @@ struct PostHogTests {
         let week = try #require(PostHogQueries.counts(settings: settings, events: [], week: true, clock: clock))
         let start = Int(clock.historyStart(days: 14).timeIntervalSince1970)
         #expect(week.columns.prefix(4) == [.newToday, .newYesterday, .newWeek, .newWeekBefore])
-        #expect(week.sql.contains("WHERE timestamp >= fromUnixTimestamp(\(start))"))
-        let counts = PostHogParsing.counts([.number(17), .number(5), .number(120), .number(100), .number(940), .number(15)], columns: week.columns)
-        #expect(counts.values == [.newUsers: 17, .newWeek: 120, .revenue: 940, .orders: 15])
-        #expect(counts.previous == [.newUsers: 5, .newWeek: 100])
+        #expect(week.sql.contains("WHERE (timestamp >= fromUnixTimestamp(\(start)) AND event IN ('user_signed_up'))"))
+        let row: [JSONValue] = ([17, 5, 120, 100, 940, 3000, 2500, 9000, 8000, 15, 60, 200] as [Double]).map { .number($0) }
+        let counts = PostHogParsing.counts(row, columns: week.columns)
+        #expect(counts.values == [.newUsers: 17, .newWeek: 120, .revenue: 940, .revenueWeek: 3000, .revenueMonth: 9000, .orders: 15, .ordersWeek: 60, .ordersMonth: 200])
+        #expect(counts.previous == [.newUsers: 5, .newWeek: 100, .revenueWeek: 2500, .revenueMonth: 8000])
     }
 
     @Test func countsQueryIsSkippedWhenNothingIsEventBased() {

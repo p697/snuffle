@@ -11,7 +11,7 @@ public struct RevenueCatProject: Codable, Hashable, Sendable, Identifiable {
 }
 
 /// RevenueCat API v2 with a secret key. Charts & Metrics allow 25 requests a minute, so a refresh makes one revenue call
-/// and the overview is only read on the 收入 tab.
+/// (the daily chart, which holds every window) and reads the overview at most once an hour.
 public struct RevenueCatClient: Sendable {
     public static let base = URL(string: "https://api.revenuecat.com/v2/")!
     public var secretKey: String
@@ -31,26 +31,23 @@ public struct RevenueCatClient: Sendable {
         return page.items.map { RevenueCatProject(id: $0.id, name: $0.name) }
     }
 
-    /// Gross revenue for the given calendar dates (inclusive), in USD.
-    public func revenue(projectId: String, from: String, to: String) async throws -> Double {
-        struct Metric: Decodable { let value: Double }
-        let metric: Metric = try await http.decode(Metric.self, request("projects/\(projectId)/metrics/revenue", query: [
-            URLQueryItem(name: "start_date", value: from),
-            URLQueryItem(name: "end_date", value: to),
-            URLQueryItem(name: "currency", value: "USD")
-        ]), platform: .revenueCat)
-        return metric.value
+    /// Gross revenue and transactions on one UTC calendar date, in USD.
+    public struct DaySales: Equatable, Sendable {
+        public var revenue: Double = 0
+        /// Nil when the chart has no transactions measure.
+        public var transactions: Double?
     }
 
-    /// Revenue per UTC calendar date from the Charts API, keyed "yyyy-MM-dd". One request for the whole range.
-    public func dailyRevenue(projectId: String, from: String, to: String) async throws -> [String: Double] {
+    /// Revenue and transactions per UTC calendar date from the Charts API, keyed "yyyy-MM-dd". One request for the
+    /// whole range; today, still incomplete, holds its running total, as the revenue metric does.
+    public func dailySales(projectId: String, from: String, to: String) async throws -> [String: DaySales] {
         let chart: Chart = try await http.decode(Chart.self, request("projects/\(projectId)/charts/revenue", query: [
             URLQueryItem(name: "start_date", value: from),
             URLQueryItem(name: "end_date", value: to),
             URLQueryItem(name: "resolution", value: "0"),
             URLQueryItem(name: "currency", value: "USD")
         ]), platform: .revenueCat)
-        return Self.dailyRevenue(from: chart)
+        return Self.dailySales(from: chart)
     }
 
     struct Chart: Decodable {
@@ -60,14 +57,31 @@ public struct RevenueCatClient: Sendable {
         let values: [Value]
     }
 
-    /// Values come as one row per day and measure; the revenue measure is found by name, falling back to the first.
-    static func dailyRevenue(from chart: Chart) -> [String: Double] {
-        let revenueMeasure = chart.measures?.firstIndex { $0.display_name.lowercased() == "revenue" } ?? 0
-        var byDay: [String: Double] = [:]
-        for value in chart.values where value.measure == revenueMeasure {
-            byDay[utcDate(Date(timeIntervalSince1970: value.cohort)), default: 0] += value.value ?? 0
+    /// Values come as one row per day and measure, found by name; revenue falls back to the first measure.
+    static func dailySales(from chart: Chart) -> [String: DaySales] {
+        let names = chart.measures?.map { $0.display_name.lowercased() } ?? []
+        let revenueMeasure = names.firstIndex(of: "revenue") ?? 0
+        let transactionsMeasure = names.firstIndex(of: "transactions")
+        var byDay: [String: DaySales] = [:]
+        for value in chart.values {
+            let day = utcDate(Date(timeIntervalSince1970: value.cohort))
+            if value.measure == revenueMeasure {
+                byDay[day, default: DaySales()].revenue += value.value ?? 0
+            } else if value.measure == transactionsMeasure {
+                byDay[day, default: DaySales()].transactions = (byDay[day]?.transactions ?? 0) + (value.value ?? 0)
+            }
         }
         return byDay
+    }
+
+    /// The windows (`SalesWindows`) of the UTC dates through `today`, from `dailySales` reaching
+    /// `SalesWindows.lookbackDays` back.
+    static func windows(_ byDay: [String: DaySales], today: Date) -> SalesWindows {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        let days = (0..<SalesWindows.lookbackDays).map { byDay[utcDate(calendar.date(byAdding: .day, value: -$0, to: today)!)] ?? DaySales() }
+        let counted = days.contains { $0.transactions != nil }
+        return SalesWindows(newestFirst: days.map { ($0.revenue, counted ? $0.transactions ?? 0 : nil) })
     }
 
     public func overview(projectId: String) async throws -> SubscriptionOverview {
