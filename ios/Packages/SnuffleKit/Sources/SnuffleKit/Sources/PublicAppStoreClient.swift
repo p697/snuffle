@@ -36,11 +36,36 @@ public struct PublicAppStoreClient: Sendable {
         self.http = http
     }
 
-    /// Apps matching `term` in `country`'s storefront. An App Store link or an app id finds that one app.
-    public func search(_ term: String, country: String) async throws -> [PublicApp] {
-        if let id = Self.appId(in: term) {
-            return try await lookup(appId: id, country: country).map { [$0] } ?? []
+    /// The apps for what the person typed. A name is searched in the phone's storefront (`home`) and the US one
+    /// together, since many apps are not sold everywhere (AI apps often not in mainland China, where a search still
+    /// lists look-alikes); names containing it come first. An App Store link is looked up in the storefront it names
+    /// first, then like an app id typed on its own: in `home`, then the US.
+    public func find(_ text: String, home: String) async throws -> [PublicApp] {
+        let stores = Self.unique([home, "us"])
+        if let id = Self.appId(in: text) {
+            for country in Self.unique([Self.storefront(in: text)].compactMap { $0 } + stores) {
+                if let app = try await lookup(appId: id, country: country) { return [app] }
+            }
+            return []
         }
+        let results = await withTaskGroup(of: (Int, Result<[PublicApp], Error>).self) { group in
+            for (index, country) in stores.enumerated() {
+                group.addTask {
+                    do { return (index, .success(try await search(text, country: country))) } catch { return (index, .failure(error)) }
+                }
+            }
+            var results: [(Int, Result<[PublicApp], Error>)] = []
+            for await result in group { results.append(result) }
+            return results.sorted { $0.0 < $1.0 }.map(\.1)
+        }
+        let lists = results.compactMap { try? $0.get() }
+        // Only when every storefront failed is there nothing to show.
+        if lists.isEmpty, case .failure(let error)? = results.first { throw error }
+        return Self.merge(lists, term: text)
+    }
+
+    /// Up to 25 apps matching `term` in `country`'s storefront, as Apple ranks them.
+    func search(_ term: String, country: String) async throws -> [PublicApp] {
         let data = try await send(Self.base.appending(path: "search").appendingQuery([
             URLQueryItem(name: "term", value: term),
             URLQueryItem(name: "entity", value: "software"),
@@ -107,8 +132,17 @@ public struct PublicAppStoreClient: Sendable {
     /// The phone's storefront first, then the large ones.
     public static func candidates(region: String?) -> [String] {
         let own = region.map { $0.lowercased() }.flatMap { Territory.storefronts.contains($0) ? $0 : nil }
+        return unique([own].compactMap { $0 } + largeStorefronts)
+    }
+
+    /// Each storefront's results in turn, each app once (as the first storefront lists it), at most 25; the ones whose
+    /// name contains `term` first.
+    static func merge(_ lists: [[PublicApp]], term: String) -> [PublicApp] {
         var seen = Set<String>()
-        return ([own].compactMap { $0 } + largeStorefronts).filter { seen.insert($0).inserted }
+        let all = lists.joined().filter { seen.insert($0.id).inserted }
+        let term = term.trimmingCharacters(in: .whitespacesAndNewlines)
+        let named = { (app: PublicApp) in app.name.range(of: term, options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive]) != nil }
+        return Array((all.filter(named) + all.filter { !named($0) }).prefix(25))
     }
 
     /// The id in an App Store link ("apps.apple.com/cn/app/name/id1234567890") or typed on its own.
@@ -117,6 +151,18 @@ public struct PublicAppStoreClient: Sendable {
         if trimmed.count >= 6, trimmed.allSatisfy(\.isASCIIDigit) { return trimmed }
         guard trimmed.contains("apple.com"), let match = trimmed.firstMatch(of: #/\/id(\d{6,})/#) else { return nil }
         return String(match.1)
+    }
+
+    /// The storefront an App Store link names ("apps.apple.com/jp/app/…"), if any.
+    static func storefront(in text: String) -> String? {
+        guard let match = text.firstMatch(of: #/(?:apps|itunes)\.apple\.com\/([a-zA-Z]{2})\//#) else { return nil }
+        let code = match.1.lowercased()
+        return Territory.storefronts.contains(code) ? code : nil
+    }
+
+    private static func unique(_ codes: [String]) -> [String] {
+        var seen = Set<String>()
+        return codes.filter { seen.insert($0).inserted }
     }
 
     static func reviewsFeed(appId: String, country: String) -> URL? {

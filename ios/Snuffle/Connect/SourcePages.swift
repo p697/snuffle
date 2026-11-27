@@ -613,8 +613,7 @@ struct AppStoreConnectPage: View {
         .task(id: term) { await search() }
     }
 
-    /// Searches the phone's storefront as the person types, then the US one when that finds nothing (an app not
-    /// sold in the phone's country).
+    /// Searches as the person types: the phone's storefront and the US one (see `PublicAppStoreClient.find`).
     private func search() async {
         let query = term.trimmingCharacters(in: .whitespacesAndNewlines)
         guard query.count >= 2 else {
@@ -626,10 +625,8 @@ struct AppStoreConnectPage: View {
         searching = true
         defer { searching = false }
         do {
-            let client = PublicAppStoreClient()
             let home = PublicAppStoreClient.candidates(region: Locale.current.region?.identifier)[0]
-            var apps = try await client.search(query, country: home)
-            if apps.isEmpty, home != "us" { apps = try await client.search(query, country: "us") }
+            let apps = try await PublicAppStoreClient().find(query, home: home)
             guard !Task.isCancelled else { return }
             found = apps
             error = nil
