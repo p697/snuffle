@@ -4,11 +4,12 @@ import SwiftUI
 /// One project on the home screen: a big number with what it is set against and the last 14 days beside it, up to
 /// two rows of smaller numbers, and the platform split. Every row has a fixed height and every number stays on screen
 /// while refreshing: a short stroke runs round the card's outline, then the digits that changed roll up and the rise
-/// is marked.
+/// is marked. A number whose source did not answer stays where it was, greyed, with when it stopped under it.
 struct ProjectCard: View {
     @Environment(AppModel.self) private var model
     @Environment(\.accent) private var accent
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.openSources) private var openSources
     var project: Project
     /// Numbers for a project that is not saved yet (the connect flow's "连上了" page); nil on the home screen.
     var preview: ProjectSnapshot?
@@ -42,24 +43,24 @@ struct ProjectCard: View {
         .overlay {
             if stage == .loading { OutlineTrace(cornerRadius: 24) }
         }
-        .overlay {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(failed ? Palette.badLine : .clear, lineWidth: 2)
-        }
         .shadow(color: Palette.shadow.opacity(stage == .loading ? (colorScheme == .dark ? 0.6 : 0.16) : 0), radius: 17, y: 14)
         .scaleEffect(stage == .loading ? 1.02 : 1)
         .zIndex(stage == .loading ? 1 : 0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: stage)
-        .modifier(Shake.Driver(trigger: model.shakes[project.id] ?? 0))
         .overlay {
             if !isPreview, model.isLocked(project) { LockedOverlay() }
         }
         .modifier(CardDropArea(editing: editing))
         .accessibilityElement(children: editing == nil ? .combine : .contain)
         .accessibilityIdentifier("card-\(project.name)")
+        .modifier(SourcesAction(available: !isPreview && !(snapshot?.failures.isEmpty ?? true)) { openSources(project.id) })
     }
 
-    private var failed: Bool { editing == nil && !(snapshot?.failures.isEmpty ?? true) && stage != .loading }
+    /// "停在 10:42" under a number whose source failed, in the editor and previews too, but tappable only on 总览.
+    private func staleMark(_ metric: Metric, size: CGFloat = 12) -> StaleMark? {
+        guard let note = snapshot?.staleNote(for: metric, in: project) else { return nil }
+        return StaleMark(text: note, size: size, action: isPreview ? nil : { openSources(project.id) })
+    }
 
     // MARK: Header
 
@@ -91,18 +92,6 @@ struct ProjectCard: View {
             Text("闻一闻…")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(Palette.ink)
-        } else if let failure = snapshot?.failures.first, editing == nil {
-            Button {
-                Task { await model.refresh([project], trigger: .project) }
-            } label: {
-                Text("\(failure.platform.displayName) 没连上 · 重试")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Palette.bad)
-                    .frame(minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityHint(failure.message)
         } else if let online = snapshot?.online {
             HStack(spacing: 6) {
                 Circle().fill(online > 0 ? Palette.up : Palette.faint).frame(width: 7, height: 7)
@@ -145,12 +134,13 @@ struct ProjectCard: View {
     private func hero(_ metric: Metric, base: CGFloat) -> some View {
         let text = metric.text(snapshot?[metric])
         let rise = mark?[metric]
+        let stale = staleMark(metric)
         return VStack(alignment: .leading, spacing: 4) {
             caption(metric)
                 .font(.system(size: 12))
                 .frame(height: 16, alignment: .leading)
             HStack(alignment: .center, spacing: 8) {
-                Odometer(text: text, size: NumberSize.fit(text, base: base), color: rise != nil && colorScheme == .dark ? accent : Palette.ink)
+                Odometer(text: text, size: NumberSize.fit(text, base: base), color: numberColor(rise: rise != nil, stale: stale != nil))
                     .padding(.horizontal, 2)
                     .background(alignment: .bottomLeading) { Highlighter(on: rise != nil, fading: model.marksFading, height: base * 0.36) }
                     .layoutPriority(1)
@@ -161,21 +151,36 @@ struct ProjectCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// "累计用户 · 今天 +6": the name, then what the number is set against. Long languages drop the reference before
-    /// cutting the name.
+    /// "累计用户 · 今天 +6": the name, then what the number is set against, or when it stopped. Long languages drop
+    /// the reference before cutting the name.
     private func caption(_ metric: Metric) -> some View {
         let reference = referenceText(metric)
+        let stale = staleMark(metric)
         return ViewThatFits(in: .horizontal) {
             HStack(spacing: 0) {
                 Text(metric.title(in: project)).foregroundStyle(Palette.ink2)
-                if let reference {
+                if let stale {
+                    Text(verbatim: " · ").foregroundStyle(Palette.ink2)
+                    stale
+                } else if let reference {
                     Text(verbatim: " · ").foregroundStyle(Palette.ink2)
                     Text(reference.text).fontWeight(.semibold).foregroundStyle(reference.tone.color)
                 }
             }
             .fixedSize()
-            Text(metric.title(in: project)).foregroundStyle(Palette.ink2).lineLimit(1)
+            HStack(spacing: 0) {
+                Text(metric.title(in: project)).foregroundStyle(Palette.ink2).lineLimit(1)
+                if let stale {
+                    Text(verbatim: " · ").foregroundStyle(Palette.ink2)
+                    stale.fixedSize()
+                }
+            }
         }
+    }
+
+    /// Ink, the accent for a rise in dark mode, grey while its source fails.
+    private func numberColor(rise: Bool, stale: Bool) -> Color {
+        stale ? Palette.ink2 : rise && colorScheme == .dark ? accent : Palette.ink
     }
 
     /// The reference, or for numbers without one the detail that makes them readable.
@@ -217,6 +222,7 @@ struct ProjectCard: View {
         let text = metric.text(snapshot?[metric])
         let rise = mark?[metric]
         let reference = referenceText(metric, compact: true)
+        let stale = staleMark(metric)
         return VStack(alignment: .leading, spacing: 3) {
             // The rise sits beside the name: the number takes the column's whole width.
             HStack(spacing: 4) {
@@ -230,15 +236,19 @@ struct ProjectCard: View {
                     .layoutPriority(1)
             }
             .frame(height: 16, alignment: .leading)
-            Odometer(text: text, size: NumberSize.fit(text, base: 28), color: rise != nil && colorScheme == .dark ? accent : Palette.ink)
+            Odometer(text: text, size: NumberSize.fit(text, base: 28), color: numberColor(rise: rise != nil, stale: stale != nil))
                 .padding(.horizontal, 1)
                 .background(alignment: .bottomLeading) { Highlighter(on: rise != nil, fading: model.marksFading, height: 10) }
                 .frame(height: 30, alignment: .leading)
-            Text(reference?.text ?? " ")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(reference?.tone.color ?? Palette.ink2)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+            if let stale {
+                stale.frame(height: 16, alignment: .leading)
+            } else {
+                Text(reference?.text ?? " ")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(reference?.tone.color ?? Palette.ink2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -622,28 +632,16 @@ struct DeltaChip: View {
     }
 }
 
-struct Shake: GeometryEffect {
-    var trigger: Int
-    var animatableData: CGFloat
+/// VoiceOver reads a card as one element, so its marked numbers' sources are an action on the card.
+private struct SourcesAction: ViewModifier {
+    var available: Bool
+    var open: () -> Void
 
-    init(trigger: Int) {
-        self.trigger = trigger
-        animatableData = CGFloat(trigger)
-    }
-
-    func effectValue(size: CGSize) -> ProjectionTransform {
-        let progress = animatableData - animatableData.rounded(.down)
-        let offset = sin(progress * .pi * 2) * 6 * (progress == 0 ? 0 : 1)
-        return ProjectionTransform(CGAffineTransform(translationX: offset, y: 0))
-    }
-}
-
-extension Shake {
-    /// Drives the shake with a short animation whenever the trigger changes.
-    struct Driver: ViewModifier {
-        var trigger: Int
-        func body(content: Content) -> some View {
-            content.modifier(Shake(trigger: trigger)).animation(.easeInOut(duration: 0.3), value: trigger)
+    func body(content: Content) -> some View {
+        if available {
+            content.accessibilityAction(named: Text("看数据来源"), open)
+        } else {
+            content
         }
     }
 }

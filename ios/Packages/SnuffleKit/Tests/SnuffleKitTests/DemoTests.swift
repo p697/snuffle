@@ -77,9 +77,12 @@ struct DemoTests {
         #expect(saleAfter.orders == saleBefore.orders! + 1)
         #expect(SnapshotChange(from: saleBefore, to: saleAfter, metrics: lumen.card.metrics).hasSale)
 
+        // A failing RevenueCat answers nothing; the rest of Ferry and the other projects read as usual.
         world.scenario = .failure
-        #expect(world.snapshot(for: ferry)!.failures.map(\.platform) == [.revenueCat])
-        #expect(world.snapshot(for: lumen)!.failures.isEmpty)
+        let failed = world.failing(world.snapshot(for: ferry)!, for: ferry)
+        #expect(failed.failures.map(\.platform) == [.revenueCat])
+        #expect(failed.revenue == nil && failed.newUsers != nil)
+        #expect(world.failing(world.snapshot(for: lumen)!, for: lumen).failures.isEmpty)
     }
 
     @Test func midnightStartsAFreshDayAndKeepsTheScenario() {

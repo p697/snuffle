@@ -198,10 +198,12 @@ enum Analytics {
         case manual
         /// Coming to the front with "打开 App 时自动刷新" on.
         case open
-        /// One project: its card's retry, or its editor after the numbers changed.
+        /// One project: its editor after the numbers changed, or a source signed in to again.
         case project
         /// Right after a project was added.
         case connect
+        /// 重试 on the note about failed sources, or on a source in a project's sources.
+        case retry
     }
 
     static func refreshCompleted(trigger: RefreshTrigger, projects: Int, failedProjects: Int, wentUp: Bool, sale: Bool, duration: Duration) {

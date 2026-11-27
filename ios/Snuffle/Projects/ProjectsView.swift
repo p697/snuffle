@@ -187,8 +187,8 @@ private struct ProjectRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(project.name).font(.system(size: 17, weight: .bold)).foregroundStyle(Palette.ink).lineLimit(1)
                 Text(detail)
-                    .font(.system(size: 13, weight: failure == nil ? .regular : .semibold))
-                    .foregroundStyle(failure == nil ? Palette.ink2 : Palette.bad)
+                    .font(.system(size: 13, weight: needsSignIn ? .semibold : .regular))
+                    .foregroundStyle(needsSignIn ? Palette.warn : Palette.ink2)
                     .lineLimit(1)
             }
             Spacer(minLength: 8)
@@ -201,13 +201,20 @@ private struct ProjectRow: View {
         .contentShape(Rectangle())
     }
 
-    private var failure: Platform? {
-        model.snapshot(project.id)?.failures.first?.platform
+    /// The failure to name: a sign-in first; sources the person muted are not named.
+    private var failure: SourceFailure? {
+        let failures = model.snapshot(project.id)?.failures.filter { !model.settings.mutedSources.contains($0.platform) } ?? []
+        return failures.first { $0.kind?.needsSignIn == true } ?? failures.first
     }
 
-    /// Plain grey sources; red only when something needs attention.
+    private var needsSignIn: Bool { failure?.kind?.needsSignIn == true }
+
+    /// Plain grey sources, or the source that failed; coloured only when it needs signing in to again.
     private var detail: String {
-        if let failure { return String(localized: "\(failure.displayName) 没连上") }
+        if let failure {
+            let name = failure.platform.displayName
+            return needsSignIn ? String(localized: "\(name) 要重新登录") : String(localized: "\(name) 没连上")
+        }
         let sources = project.platforms.map(\.displayName).joined(separator: " · ")
         return project.includeInRefresh ? sources : sources + " · " + String(localized: "不参与一键刷新")
     }

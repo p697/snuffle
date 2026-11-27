@@ -37,11 +37,6 @@ final class Feedback {
         }
     }
 
-    func warning() {
-        guard hapticsOn else { return }
-        notice.notificationOccurred(.warning)
-    }
-
     func prepare() {
         medium.prepare()
         rigid.prepare()

@@ -47,7 +47,7 @@ Business charts use `client_app = 'snuffle_ios' AND app_environment = 'release' 
 | `counting_changed` | A project's people counting changes: read from a PostHog dashboard (also automatically when a project is added), edited by hand, or set back to Snuffle's own | `source` (dashboard, manual, standard), `has_activity_event`, `condition_count`, `unit` (person, install), `has_platform_property`, `has_since`. Never the event, the conditions, the property or the dashboard |
 | `charts_pinned` | Charts from a PostHog dashboard are placed on a project's board | `added`, `total` (counts only, never chart names) |
 | `account_removed` | A platform account is removed | `platform` |
-| `refresh_completed` | A refresh finishes revealing every card | `trigger` (manual, open, project, connect), `projects`, `failed_projects`, `went_up`, `sale`, `duration_ms` |
+| `refresh_completed` | A refresh finishes revealing every card | `trigger` (manual, open, project, connect, retry), `projects`, `failed_projects`, `went_up`, `sale`, `duration_ms` |
 | `refresh_source_failed` | One source could not be read in a refresh (one per source per refresh) | `platform`, `error_kind` |
 | `paywall_viewed` | The paywall opens | `reason`: projects, history, drafts, widgets, general |
 | `purchase_resolved` | The purchase sheet ends | `plan` (monthly, yearly, lifetime), `reason`, `trial`, `outcome` (purchased, pending, cancelled, failed) |

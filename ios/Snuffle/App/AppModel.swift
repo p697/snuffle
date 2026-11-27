@@ -53,13 +53,14 @@ final class AppModel {
     private(set) var marksFading = false
     /// Sum of this refresh's changes across projects, for the 收入 tab.
     private(set) var refreshMark: SnapshotChange?
-    /// Bumped when a card should shake for a failed source.
-    private(set) var shakes: [UUID: Int] = [:]
+    /// The note above the tab bar when a source failed (`SourceProblem`), or a retry under way or done.
+    private(set) var notice: RefreshNotice?
     private(set) var cat = CatState()
     /// Progress of the current refresh (0…1) for the ring around the button.
     private(set) var refreshProgress: Double = 0
 
     private var fadeTask: Task<Void, Never>?
+    private var noticeTask: Task<Void, Never>?
 
     // MARK: Connecting
 
@@ -186,6 +187,7 @@ final class AppModel {
 
         feedback.release()
         clearMarks()
+        if trigger != .retry { show(nil) }
         refreshProgress = 0
         cat = CatState(out: true, sniffing: true)
         for project in projects { stages[project.id] = .waiting }
@@ -239,9 +241,6 @@ final class AppModel {
             if !snapshot.failures.isEmpty {
                 failedProjects += 1
                 result.snapshot.failures.forEach(Analytics.refreshSourceFailed)
-                shakes[project.id, default: 0] += 1
-                react(.flat)
-                feedback.warning()
             }
             refreshProgress = Double(index + 1) / Double(fetches.count)
             try? await Task.sleep(for: .milliseconds(300))
@@ -257,13 +256,20 @@ final class AppModel {
         )
         WidgetCenter.shared.reloadAllTimelines()
         scheduleFade()
+        let problem = SourceProblem(projects: projects, snapshot: snapshot(_:), muted: settings.mutedSources)
 
         cat.sniffing = false
-        let finale: CatState.Reaction = anySale ? .cheer : total.isUp ? .glee : failedProjects > 0 ? .flat : .blink
+        let finale: CatState.Reaction = anySale ? .cheer : total.isUp ? .glee : problem != nil ? .flat : .blink
         react(finale)
         try? await Task.sleep(for: finale == .cheer ? .milliseconds(1250) : .milliseconds(900))
         cat = CatState()
         refreshProgress = 0
+        // Once the cat is back in, so it never covers the note.
+        if case .retrying(let tried) = notice, problem == nil {
+            show(.fixed(tried))
+        } else {
+            show(problem.map(RefreshNotice.problem))
+        }
     }
 
     /// Time for changed digits to roll up to their new value (`Odometer`).
@@ -308,6 +314,48 @@ final class AppModel {
             marks = [:]
             refreshMark = nil
             marksFading = false
+        }
+    }
+
+    // MARK: Failed sources
+
+    /// What failed in the last refresh of each project shown, for the status line and the dot on 项目.
+    var sourceProblem: SourceProblem? {
+        SourceProblem(projects: refreshable, snapshot: snapshot(_:), muted: settings.mutedSources)
+    }
+
+    private func show(_ next: RefreshNotice?) {
+        noticeTask?.cancel()
+        notice = next
+        guard let stay = next?.stay else { return }
+        noticeTask = Task {
+            try? await Task.sleep(for: stay)
+            guard !Task.isCancelled else { return }
+            notice = nil
+        }
+    }
+
+    func dismissNotice() { show(nil) }
+
+    /// 重试: reads again the projects the note is about, or `projectIds`, and says when their sources answer.
+    func retry(_ projectIds: [UUID]? = nil) async {
+        guard !isRefreshing else { return }
+        let current: SourceProblem? = if case .problem(let problem) = notice { problem } else { nil }
+        let ids = projectIds ?? current?.projects ?? []
+        let list = projects.filter { ids.contains($0.id) }
+        guard !list.isEmpty else { return }
+        let tried = projectIds == nil ? current : SourceProblem(projects: list, snapshot: snapshot(_:), muted: settings.mutedSources)
+        if let tried { show(.retrying(tried)) }
+        await refresh(list, trigger: .retry)
+    }
+
+    /// The person's choice to be told, or not, when `platform` fails. A note only about muted sources goes.
+    func setReminder(_ on: Bool, for platform: Platform) {
+        update { settings in
+            if on { settings.mutedSources.remove(platform) } else { settings.mutedSources.insert(platform) }
+        }
+        if case .problem(let problem) = notice, problem.kind != .offline, problem.platforms.allSatisfy(settings.mutedSources.contains) {
+            show(nil)
         }
     }
 

@@ -65,11 +65,17 @@ final class SnuffleUITests: XCTestCase {
         attach(app, name: "home-after-refresh")
     }
 
-    func testFailedSourceIsNamedOnTheCard() {
+    func testFailedSourceLeavesANoteThatCloses() {
         let app = launch(["-scenario", "failure"])
         refresh(app)
-        XCTAssertTrue(app.buttons["RevenueCat 没连上 · 重试"].waitForExistence(timeout: 5))
+        // One note for the refresh, and the status line keeps naming the source after it is closed.
+        XCTAssertTrue(app.staticTexts["RevenueCat 没连上"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["refreshStatus"].label.hasSuffix("RevenueCat 没连上"))
+        XCTAssertTrue(app.buttons["card-Pocket Ferry"].label.contains("停在"))
         attach(app, name: "home-failure")
+        app.buttons["noticeClose"].tap()
+        XCTAssertTrue(app.buttons["noticeClose"].waitForNonExistence(timeout: 3))
+        XCTAssertTrue(app.staticTexts["refreshStatus"].label.hasSuffix("RevenueCat 没连上"))
     }
 
     func testQuietRefreshSaysNothingChanged() {

@@ -19,6 +19,8 @@ enum Palette {
     static let bad = Color(light: 0x8C2413, dark: 0xFFC2B5)
     static let badSoft = Color(light: 0xFBE3DD, dark: 0x3A1A14)
     static let badLine = Color(light: 0xE3A99E, dark: 0x7A3A2E)
+    /// A source that did not answer: worth a look, not an alarm.
+    static let warn = Color(light: 0x9A5B00, dark: 0xF0B95C)
     static let cat = Color(light: 0x121210, dark: 0x5A5A52)
     static let onAccent = Color(hex: 0x121210)
     static let shadow = Color(light: 0x121210, dark: 0x000000)

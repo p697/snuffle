@@ -149,6 +149,13 @@ struct StoreTests {
         #expect(store.load() == nil)
     }
 
+    @Test func mutedSourcesAreSavedAndMissingFromOldSettings() throws {
+        var settings = AppSettings()
+        settings.mutedSources = [.googlePlay]
+        #expect(try JSONDecoder().decode(AppSettings.self, from: JSONEncoder().encode(settings)).mutedSources == [.googlePlay])
+        #expect(try JSONDecoder().decode(AppSettings.self, from: Data(#"{"sound":true}"#.utf8)).mutedSources.isEmpty)
+    }
+
     @Test func errorBodiesBecomeShortMessages() {
         #expect(HTTPClient.detail(from: Data(#"{"detail":"Permission denied"}"#.utf8)) == "Permission denied")
         #expect(HTTPClient.detail(from: Data(#"{"errors":[{"title":"Forbidden","detail":"Key lacks role"}]}"#.utf8)) == "Key lacks role")
