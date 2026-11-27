@@ -31,6 +31,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
     public var refreshOnOpen: Bool
     public var replyTone: ReplyTone
     public var replySignature: String
+    /// Sources the person asked not to be told about when they fail: the numbers read from them are still marked.
+    public var mutedSources: Set<Platform>
 
     public init(
         demoMode: Bool = false,
@@ -40,7 +42,8 @@ public struct AppSettings: Codable, Sendable, Equatable {
         sound: Bool = false,
         refreshOnOpen: Bool = true,
         replyTone: ReplyTone = .warm,
-        replySignature: String = ""
+        replySignature: String = "",
+        mutedSources: Set<Platform> = []
     ) {
         self.demoMode = demoMode
         self.theme = theme
@@ -50,10 +53,11 @@ public struct AppSettings: Codable, Sendable, Equatable {
         self.refreshOnOpen = refreshOnOpen
         self.replyTone = replyTone
         self.replySignature = replySignature
+        self.mutedSources = mutedSources
     }
 
     enum CodingKeys: String, CodingKey {
-        case demoMode, theme, accent, haptics, sound, refreshOnOpen, replyTone, replySignature
+        case demoMode, theme, accent, haptics, sound, refreshOnOpen, replyTone, replySignature, mutedSources
     }
 
     /// Every key is optional, so a setting added later never resets the others saved before it.
@@ -68,6 +72,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         refreshOnOpen = try container.decodeIfPresent(Bool.self, forKey: .refreshOnOpen) ?? standard.refreshOnOpen
         replyTone = (try? container.decodeIfPresent(ReplyTone.self, forKey: .replyTone)) ?? standard.replyTone
         replySignature = try container.decodeIfPresent(String.self, forKey: .replySignature) ?? standard.replySignature
+        mutedSources = Set((try container.decodeIfPresent([String].self, forKey: .mutedSources) ?? []).compactMap(Platform.init(rawValue:)))
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -80,6 +85,7 @@ public struct AppSettings: Codable, Sendable, Equatable {
         try container.encode(refreshOnOpen, forKey: .refreshOnOpen)
         try container.encode(replyTone, forKey: .replyTone)
         try container.encode(replySignature, forKey: .replySignature)
+        try container.encode(mutedSources.map(\.rawValue).sorted(), forKey: .mutedSources)
     }
 }
 
@@ -113,7 +119,8 @@ public struct RefreshCache: Codable, Sendable, Equatable {
     /// Keeps what a refresh of `project` read, and returns its snapshot as kept: gaps are filled from the last one
     /// (`ProjectSnapshot.fillingGaps`), and the count to answer covers every review kept. Each store that answered
     /// replaces its own reviews, except Google Play, which only returns the last week's: those are added to the ones
-    /// read before (an edited review replaces its old self), newest `GooglePlayClient.reviewLimit` kept. A store that
+    /// read before (an edited or looked-up review replaces its old self, a deleted one goes), newest
+    /// `GooglePlayClient.reviewLimit` kept. A store that
     /// failed keeps its last reviews; one no longer connected loses them.
     @discardableResult
     public mutating func land(_ result: RefreshResult, for project: Project) -> ProjectSnapshot {
@@ -125,15 +132,31 @@ public struct RefreshCache: Codable, Sendable, Equatable {
                 byStore[platform] = read
                 continue
             }
-            let ids = Set(read.map(\.storeId))
+            let ids = Set(read.map(\.storeId)).union(result.deletedReviews)
             let kept = read + (byStore[platform] ?? []).filter { !ids.contains($0.storeId) }
             byStore[platform] = Array(kept.sorted { $0.createdAt > $1.createdAt }.prefix(GooglePlayClient.reviewLimit))
         }
         let list = byStore.values.flatMap { $0 }
         reviews[project.id] = list.isEmpty ? nil : list
         if !result.reviews.isEmpty { snapshot[.reviewsToAnswer] = Double(list.filter(\.needsReply).count) }
+        snapshot.readAt = Self.readAt(snapshot, before: snapshots[project.id], platforms: project.platforms)
         snapshots[project.id] = snapshot
         return snapshot
+    }
+
+    /// Each source's last read without a failure: this one for the sources that answered, the one before for those
+    /// that failed. A cache from before these were kept gives the last refresh in which the source did not fail.
+    static func readAt(_ snapshot: ProjectSnapshot, before: ProjectSnapshot?, platforms: [Platform]) -> [Platform: Date] {
+        var readAt: [Platform: Date] = [:]
+        for platform in platforms {
+            guard snapshot.failures.contains(where: { $0.platform == platform }) else {
+                readAt[platform] = snapshot.fetchedAt
+                continue
+            }
+            readAt[platform] = before?.readAt[platform]
+                ?? before.flatMap { $0.failures.contains { $0.platform == platform } ? nil : $0.fetchedAt }
+        }
+        return readAt
     }
 
     /// Drops a project's reviews from one store, when the project is linked to another app there.

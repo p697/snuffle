@@ -48,6 +48,15 @@ public enum FailureKind: String, Codable, Sendable {
     case invalidKey = "invalid_key"
     case other
 
+    /// The source stays broken until the person signs in again or gives back the access it lost: trying again later
+    /// will not help.
+    public var needsSignIn: Bool {
+        switch self {
+        case .missingCredential, .unauthorized, .forbidden, .invalidKey: true
+        case .rateLimited, .clientError, .serverError, .network, .invalidResponse, .other: false
+        }
+    }
+
     public init(_ error: Error) {
         guard let error = error as? SourceError else {
             self = .other

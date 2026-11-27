@@ -26,8 +26,16 @@ public actor DemoProvider: DataProvider {
     /// Today's numbers without any wait, so demo mode opens with full cards instead of dashes.
     public func seed() -> [RefreshResult] {
         DemoWorld.projects.compactMap { project in
-            world.snapshot(for: project).map { RefreshResult(snapshot: $0, reviews: world.reviews(of: project)) }
+            world.snapshot(for: project).map { RefreshResult(snapshot: Self.readNow($0), reviews: world.reviews(of: project)) }
         }
+    }
+
+    /// The demo's clock runs a few minutes ahead with every refresh, so its numbers move; the read itself happened
+    /// now, which is the time a number that stops is marked with.
+    private static func readNow(_ snapshot: ProjectSnapshot) -> ProjectSnapshot {
+        var read = snapshot
+        read.fetchedAt = Date()
+        return read
     }
 
     /// Called once per refresh of all projects, before the per-project reads.
@@ -36,12 +44,12 @@ public actor DemoProvider: DataProvider {
         persist(world)
     }
 
-    public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?) async -> RefreshResult {
+    public func refresh(_ project: Project, metrics: Set<Metric>, previous: ProjectSnapshot?, kept: [Review]) async -> RefreshResult {
         try? await Task.sleep(for: latency + .milliseconds(Int.random(in: 0...250)))
         guard let snapshot = world.snapshot(for: project) else {
             return RefreshResult(snapshot: ProjectSnapshot(projectId: project.id, fetchedAt: Date(), dayStart: world.dayStart))
         }
-        return RefreshResult(snapshot: snapshot, reviews: world.reviews(of: project))
+        return RefreshResult(snapshot: Self.readNow(world.failing(snapshot, for: project)), reviews: world.reviews(of: project))
     }
 
     public func measure(_ project: Project, metrics: Set<Metric>) async throws -> [Metric: Double] {

@@ -61,7 +61,7 @@ struct RefreshAllIntent: AppIntent {
         let widgets = SharedContainer.widgetMetrics()
         for project in projects where project.includeInRefresh {
             let metrics = MetricsInUse.forProject(project, widgets: widgets)
-            let result = await provider.refresh(project, metrics: metrics, previous: cache.snapshots[project.id])
+            let result = await provider.refresh(project, metrics: metrics, previous: cache.snapshots[project.id], kept: cache.reviews[project.id] ?? [])
             cache.land(result, for: project)
         }
         cache.recordRefresh(at: Date())

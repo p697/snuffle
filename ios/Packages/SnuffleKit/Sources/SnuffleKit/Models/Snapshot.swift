@@ -21,6 +21,9 @@ public struct ProjectSnapshot: Hashable, Sendable {
     public var hourlyReadAt: Date?
     public var hourlyRead: Set<Metric>
     public var failures: [SourceFailure]
+    /// When each of the project's sources was last read without a failure (`RefreshCache.land`): the time its numbers
+    /// stop at while it fails.
+    public var readAt: [Platform: Date]
     /// The counting and scope its numbers were read under (`MetricSettings.inEffect`). Numbers that follow them
     /// (`Metric.followsCounting`) are never carried to, or shown for, other settings. Nil in caches from before.
     public var countedAs: MetricSettings?
@@ -39,6 +42,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
         hourlyReadAt: Date? = nil,
         hourlyRead: Set<Metric>? = nil,
         failures: [SourceFailure] = [],
+        readAt: [Platform: Date] = [:],
         countedAs: MetricSettings? = nil,
         userTally: UserTally? = nil
     ) {
@@ -53,6 +57,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
         self.hourlyReadAt = hourlyReadAt
         self.hourlyRead = hourlyRead ?? Set(values.keys.filter(\.isHourly))
         self.failures = failures
+        self.readAt = readAt
         self.countedAs = countedAs
         self.userTally = userTally
     }
@@ -72,6 +77,12 @@ public struct ProjectSnapshot: Hashable, Sendable {
     public var orders: Int? { values[.orders].map { Int($0) } }
     public var online: Int? { values[.online].map { Int($0) } }
     public var reviewsToAnswer: Int? { values[.reviewsToAnswer].map { Int($0) } }
+
+    /// The failure of a source `metric` is read from in `project`, when one failed: its number stops where it was.
+    public func failure(of metric: Metric, in project: Project) -> SourceFailure? {
+        let platforms = metric.platforms(in: project)
+        return failures.first { platforms.contains($0.platform) }
+    }
 
     /// Fills what this refresh did not read from the previous snapshot: hourly metrics between their hourly reads,
     /// and, on the same day, anything a failed source could not refresh, so one broken source never blanks the card.
@@ -109,7 +120,7 @@ public struct ProjectSnapshot: Hashable, Sendable {
 
 extension ProjectSnapshot: Codable {
     enum CodingKeys: String, CodingKey {
-        case projectId, fetchedAt, dayStart, values, previous, dailyActive, platforms, revenueSource, hourlyReadAt, hourlyRead, failures, countedAs, userTally
+        case projectId, fetchedAt, dayStart, values, previous, dailyActive, platforms, revenueSource, hourlyReadAt, hourlyRead, failures, readAt, countedAs, userTally
     }
 
     /// Values are stored by metric id. A cache from before metrics had ids reads as empty: the next refresh fills it.
@@ -128,6 +139,7 @@ extension ProjectSnapshot: Codable {
         hourlyRead = try container.decodeIfPresent([String].self, forKey: .hourlyRead).map { Set($0.compactMap(Metric.init(id:))) }
             ?? Set(values.keys.filter(\.isHourly))
         failures = try container.decodeIfPresent([SourceFailure].self, forKey: .failures) ?? []
+        readAt = Dictionary((try container.decodeIfPresent([String: Date].self, forKey: .readAt) ?? [:]).compactMap { key, date in Platform(rawValue: key).map { ($0, date) } }, uniquingKeysWith: max)
         countedAs = try container.decodeIfPresent(MetricSettings.self, forKey: .countedAs)
         userTally = (try? container.decodeIfPresent(UserTally.self, forKey: .userTally)) ?? nil
     }
@@ -149,6 +161,7 @@ extension ProjectSnapshot: Codable {
         try container.encodeIfPresent(hourlyReadAt, forKey: .hourlyReadAt)
         try container.encode(hourlyRead.map(\.id).sorted(), forKey: .hourlyRead)
         try container.encode(failures, forKey: .failures)
+        try container.encode(Dictionary(uniqueKeysWithValues: readAt.map { ($0.key.rawValue, $0.value) }), forKey: .readAt)
         try container.encodeIfPresent(countedAs, forKey: .countedAs)
         try container.encodeIfPresent(userTally, forKey: .userTally)
     }

@@ -81,6 +81,49 @@ struct ModelTests {
         #expect(nextDay.fillingGaps(from: previous).revenue == nil)
     }
 
+    @Test func eachSourceKeepsTheTimeItWasLastRead() throws {
+        let ferry = try #require(DemoWorld.projects.first { $0.id == DemoWorld.ferryId })
+        let day = Date(timeIntervalSince1970: 1_000_000)
+        let later = day.addingTimeInterval(600)
+        let down = SourceFailure(platform: .revenueCat, message: "x", kind: .network)
+        var cache = RefreshCache()
+        cache.land(RefreshResult(snapshot: ProjectSnapshot(projectId: ferry.id, fetchedAt: day, dayStart: day, values: [.newUsers: 4, .revenue: 3.28])), for: ferry)
+        #expect(cache.snapshots[ferry.id]?.readAt == Dictionary(uniqueKeysWithValues: ferry.platforms.map { ($0, day) }))
+
+        // RevenueCat fails: its revenue stays at the time it was read, and only numbers read from it are held back.
+        let failed = cache.land(RefreshResult(snapshot: ProjectSnapshot(projectId: ferry.id, fetchedAt: later, dayStart: day, values: [.newUsers: 5], failures: [down])), for: ferry)
+        #expect(failed.revenue == 3.28)
+        #expect(failed.readAt[.revenueCat] == day)
+        #expect(failed.readAt[.posthog] == later)
+        #expect(failed.failure(of: .revenue, in: ferry) == down)
+        #expect(failed.failure(of: .newUsers, in: ferry) == nil)
+
+        // Failing again keeps the first time.
+        let again = cache.land(RefreshResult(snapshot: ProjectSnapshot(projectId: ferry.id, fetchedAt: later.addingTimeInterval(600), dayStart: day, failures: [down])), for: ferry)
+        #expect(again.readAt[.revenueCat] == day)
+
+        // A cache from before these were kept gives the last refresh in which the source did not fail.
+        var old = ProjectSnapshot(projectId: ferry.id, fetchedAt: day, dayStart: day)
+        let next = ProjectSnapshot(projectId: ferry.id, fetchedAt: later, dayStart: day, failures: [down])
+        #expect(RefreshCache.readAt(next, before: old, platforms: [.revenueCat])[.revenueCat] == day)
+        old.failures = [down]
+        #expect(RefreshCache.readAt(next, before: old, platforms: [.revenueCat])[.revenueCat] == nil)
+
+        let decoded = try JSONDecoder().decode(ProjectSnapshot.self, from: JSONEncoder().encode(failed))
+        #expect(decoded.readAt == failed.readAt)
+    }
+
+    @Test func numbersKnowTheSourcesTheyAreReadFrom() throws {
+        let ferry = try #require(DemoWorld.projects.first { $0.id == DemoWorld.ferryId })
+        let lumen = try #require(DemoWorld.projects.first { $0.id == DemoWorld.lumenId })
+        #expect(Metric.revenue.platforms(in: ferry) == [.revenueCat])
+        #expect(Metric.revenue.platforms(in: lumen) == [.posthog])
+        #expect(Metric.orders.platforms(in: lumen) == [.posthog])
+        #expect(Metric.crashRate.platforms(in: ferry) == [.googlePlay])
+        #expect(Metric.reviewsToAnswer.platforms(in: ferry) == [.appStore])
+        #expect(Metric.reviewsToAnswer.platforms(in: lumen) == [.appStore, .googlePlay])
+    }
+
     @Test func hourlyMetricsAreReadOnceAnHourAndKeptBetween() {
         let id = UUID()
         let day = Date(timeIntervalSince1970: 1_000_000)
@@ -247,6 +290,28 @@ struct ModelTests {
         project.googlePlay = nil
         cache.land(result([.appStore: []]), for: project)
         #expect(cache.reviews[project.id] == nil)
+    }
+
+    @Test func olderUnansweredPlayReviewsAreLookedUpOnceADay() {
+        let now = Date(timeIntervalSince1970: 2_000_000_000)
+        func review(_ id: String, _ platform: Platform = .googlePlay, daysAgo: Double, replied: Bool = false, checkedHoursAgo: Double? = nil) -> Review {
+            Review(storeId: id, platform: platform, projectId: UUID(), rating: 1, body: "", createdAt: now.addingTimeInterval(-daysAgo * 86_400),
+                   reply: replied ? ReviewReply(text: "Thanks", date: now, pending: false) : nil,
+                   checkedAt: checkedHoursAgo.map { now.addingTimeInterval(-$0 * 3600) })
+        }
+        let kept = [
+            review("recent", daysAgo: 2),                       // still in the week Google lists
+            review("answered", daysAgo: 20, replied: true),
+            review("store", .appStore, daysAgo: 20),
+            review("checkedToday", daysAgo: 20, checkedHoursAgo: 3),
+            review("checkedYesterday", daysAgo: 30, checkedHoursAgo: 30),
+            review("never1", daysAgo: 9),
+            review("never2", daysAgo: 40)
+        ]
+        let picked = Review.toLookUp(kept, now: now).map(\.storeId)
+        #expect(Set(picked.prefix(2)) == ["never1", "never2"], "never looked up comes first")
+        #expect(picked.last == "checkedYesterday")
+        #expect(Review.toLookUp(kept, now: now, limit: 1).count == 1)
     }
 
     @Test func playHistoryKeepsTheNewestUpToTheLimit() {

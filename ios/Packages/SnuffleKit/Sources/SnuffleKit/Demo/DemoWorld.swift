@@ -265,10 +265,17 @@ public struct DemoWorld: Codable, Sendable, Equatable {
             snapshot[.crashRate] = atlas ? 0.0127 : 0.0031
             snapshot[.anrRate] = atlas ? 0.0021 : 0.0012
         }
-        if scenario == .failure, project.id == DemoWorld.ferryId {
-            snapshot.failures = [SourceFailure(platform: .revenueCat, message: SourceError.http(.revenueCat, 503, String(localized: "服务暂时不可用", bundle: .module)).localizedDescription, kind: .serverError)]
-        }
         return snapshot
+    }
+
+    /// A refresh in the failure scenario: Pocket Ferry's RevenueCat answers nothing, so its numbers stay where the last
+    /// refresh left them (`RefreshCache.land`).
+    public func failing(_ snapshot: ProjectSnapshot, for project: Project) -> ProjectSnapshot {
+        guard scenario == .failure, project.id == DemoWorld.ferryId else { return snapshot }
+        var failed = snapshot
+        failed.failures = [SourceFailure(platform: .revenueCat, message: SourceError.http(.revenueCat, 503, String(localized: "服务暂时不可用", bundle: .module)).localizedDescription, kind: .serverError)]
+        failed.values = failed.values.filter { !$0.key.platforms(in: project).contains(.revenueCat) }
+        return failed
     }
 
     /// The project's reviews in each store it connects, as a refresh reads them.

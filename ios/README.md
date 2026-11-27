@@ -17,7 +17,9 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
   `Projects/` holds the board (charts by platform, each number's definition, charts pinned from PostHog
   dashboards, run with their own queries); one folder per tab. Google Play only returns the last week's reviews, so
   every refresh (app and widget) lands through `RefreshCache.land`, which keeps the ones read before (newest 500 per
-  project); its crash and ANR rates are Play Console's 28-day user-perceived ones, read at most hourly.
+  project), and older ones still waiting for a reply are looked up by id once a day, three per refresh, so a reply
+  written in Play Console or a deleted review shows up (`Review.toLookUp`); its crash and ANR rates are Play
+  Console's 28-day user-perceived ones, read at most hourly.
 - `SnuffleWidgets/` — home and lock screen widgets with an in-widget refresh button.
 - `SnuffleUITests/` — end-to-end tests in demo mode.
 - `ANALYTICS.md` — the PostHog events, their properties and the metrics built on them.

@@ -47,7 +47,7 @@ nonisolated struct TodayEntry: TimelineEntry {
             let snapshot = cache.snapshots[project.id]
             let icon = project.iconVersion.flatMap { UIImage(contentsOfFile: SharedContainer.projectIcon(project.id, version: $0).path()) }
             let values = (snapshot?.values ?? [:]).filter { $0.key.isAvailable(in: project) }
-            return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, icon: icon, values: values, failed: !(snapshot?.failures.isEmpty ?? true))
+            return Row(id: project.id, name: project.name, monogram: project.monogram, tint: project.tint, icon: icon, values: values, failed: snapshot?.failures.contains { !settings.mutedSources.contains($0.platform) } ?? false)
         }
         let pro = UserDefaults(suiteName: SharedContainer.appGroup)?.bool(forKey: "isPro") ?? false
         return TodayEntry(
