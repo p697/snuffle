@@ -100,6 +100,29 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
     /// The letter on the project's square badge.
     public var monogram: String { name.first.map { String($0).uppercased() } ?? "?" }
 
+    /// A store listing's name without the tagline stores encourage: "Isaac Codex: TBOI Guide & Wiki" → "Isaac Codex".
+    /// A name whose part before the separator is too short to stand alone is kept whole.
+    public static func shortName(_ listing: String) -> String {
+        let name = listing.trimmingCharacters(in: .whitespaces)
+        let separators = [": ", "：", " - ", " – ", " — ", " | ", "｜"]
+        let cut = separators.compactMap { name.range(of: $0)?.lowerBound }.min()
+        guard let cut else { return name }
+        let head = name[..<cut].trimmingCharacters(in: .whitespaces)
+        return head.count >= 3 ? head : name
+    }
+
+    /// Letters and digits only, lowercased, so "Isaac Codex" matches "com.example.isaaccodex".
+    public static func comparable(_ name: String) -> String {
+        String(name.lowercased().filter { $0.isLetter || $0.isNumber })
+    }
+
+    /// Every name the product goes by on its sources, to recognise it elsewhere.
+    public var knownNames: [String] {
+        [name, posthog?.projectName, revenueCat?.projectName, appStore?.appName, googlePlay?.packageName]
+            .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+
     /// Platforms this project reads from, in the order they are fetched.
     public var platforms: [Platform] {
         var list: [Platform] = []
@@ -132,6 +155,30 @@ public struct Project: Codable, Identifiable, Hashable, Sendable {
         case .appStore: appStore = nil
         case .googlePlay: googlePlay = nil
         }
+    }
+
+    /// This project with the sources of another one it does not read yet: a second project started for the same
+    /// product, put together. PostHog brings how people are counted and its dashboard charts; RevenueCat counts
+    /// revenue unless revenue was already counted. Name, colour and picture stay this project's, and its card follows
+    /// the new sources unless the person changed it.
+    public func merging(_ other: Project) -> Project {
+        var merged = self
+        if merged.posthog == nil, let link = other.posthog {
+            merged.posthog = link
+            let revenue = merged.metrics.revenue
+            merged.metrics = other.metrics
+            if revenue != .none { merged.metrics.revenue = revenue }
+            merged.pins = other.pins
+            merged.dashboardChecked = other.dashboardChecked
+        }
+        if merged.revenueCat == nil, let link = other.revenueCat {
+            merged.revenueCat = link
+            if merged.metrics.revenue == .none { merged.metrics.revenue = .revenueCat }
+        }
+        if merged.appStore == nil { merged.appStore = other.appStore }
+        if merged.googlePlay == nil { merged.googlePlay = other.googlePlay }
+        if card == CardLayout.standard(for: self) { merged.card = CardLayout.standard(for: merged) }
+        return merged
     }
 }
 

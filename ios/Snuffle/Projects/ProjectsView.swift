@@ -120,7 +120,12 @@ struct ProjectsView: View {
                     .overlay(Circle().strokeBorder(Palette.line))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("已登录的账号").font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.ink)
-                    Text(String(localized: "\(model.workspace.accounts.count) 个 · 只存在这台 iPhone 上", comment: "Number of signed-in accounts.")).font(.system(size: 13)).foregroundStyle(Palette.ink2)
+                    Text(model.workspace.accounts.isEmpty
+                         ? String(localized: "登录 PostHog、RevenueCat 或 Google 后会在这里；App Store 不用登录")
+                         : String(localized: "\(model.workspace.accounts.count) 个 · 只存在这台 iPhone 上", comment: "Number of signed-in accounts."))
+                        .font(.system(size: 13))
+                        .foregroundStyle(Palette.ink2)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
                 Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)

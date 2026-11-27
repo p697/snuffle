@@ -8,9 +8,20 @@ extension Platform {
     /// What a project gets from this platform, in a few words.
     var purpose: String {
         switch self {
-        case .posthog: String(localized: "新增用户、在线和付费事件")
-        case .revenueCat: String(localized: "收入和订阅")
-        case .appStore, .googlePlay: String(localized: "评论和回复")
+        case .posthog: String(localized: "用户数、活跃和新增")
+        case .revenueCat: String(localized: "收入、订阅和 MRR")
+        case .appStore: String(localized: "评分和评论")
+        case .googlePlay: String(localized: "安卓评论和回复")
+        }
+    }
+
+    /// What connecting it takes, for someone choosing where to start.
+    var howToConnect: String {
+        switch self {
+        case .posthog: String(localized: "用 PostHog 账号登录")
+        case .revenueCat: String(localized: "粘贴一把只读密钥")
+        case .appStore: String(localized: "搜到 App 就行，不用登录")
+        case .googlePlay: String(localized: "用 Google 账号登录")
         }
     }
 }
@@ -116,6 +127,8 @@ extension View {
 
 /// A switch in the app's colours: an ink track with an accent knob when on.
 struct InkToggleStyle: ToggleStyle {
+    /// On the dark counting strip, where an ink track would vanish.
+    var onStrip = false
     @Environment(\.accent) private var accent
 
     func makeBody(configuration: Configuration) -> some View {
@@ -128,11 +141,11 @@ struct InkToggleStyle: ToggleStyle {
                     .foregroundStyle(Palette.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Capsule()
-                    .fill(configuration.isOn ? Palette.ink : Palette.line)
+                    .fill(configuration.isOn ? (onStrip ? accent : Palette.ink) : (onStrip ? Palette.stripMuted.opacity(0.4) : Palette.line))
                     .frame(width: 52, height: 32)
                     .overlay(alignment: configuration.isOn ? .trailing : .leading) {
                         Circle()
-                            .fill(configuration.isOn ? accent : Palette.card)
+                            .fill(configuration.isOn ? (onStrip ? Palette.strip : accent) : Palette.card)
                             .padding(3)
                     }
                     .animation(.spring(response: 0.25, dampingFraction: 0.8), value: configuration.isOn)

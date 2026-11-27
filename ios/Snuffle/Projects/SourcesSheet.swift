@@ -125,23 +125,26 @@ struct SourcesSheet: View {
     }
 }
 
-/// Signs in to one of a project's sources again, then reads the project.
+/// Connects one source of a saved project, a new one or signing in to one again, then saves and reads the project.
 struct ReconnectSheet: View {
     var project: Project
     var platform: Platform
+    /// False when the dashboard sheet asked for the sign-in, so PostHog does not offer the dashboards a second time.
+    var offersDashboards = true
     @Environment(AppModel.self) private var model
     @State private var draft: Project
     @State private var finished = false
 
-    init(project: Project, platform: Platform) {
+    init(project: Project, platform: Platform, offersDashboards: Bool = true) {
         self.project = project
         self.platform = platform
+        self.offersDashboards = offersDashboards
         _draft = State(initialValue: project)
     }
 
     var body: some View {
         // A sign-in to the same account can leave the link as it was: finishing is what counts, not a change.
-        ConnectSourceSheet(platform: platform, project: Binding(get: { draft }, set: { draft = $0; finished = true }))
+        ConnectSourceSheet(platform: platform, project: Binding(get: { draft }, set: { draft = $0; finished = true }), offersDashboards: offersDashboards)
             .onDisappear {
                 guard finished else { return }
                 model.save(project: draft)

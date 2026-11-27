@@ -16,6 +16,34 @@ public struct Workspace: Codable, Sendable, Equatable {
     public func projects(using accountId: UUID) -> [Project] {
         projects.filter { $0.accountIds.contains(accountId) }
     }
+
+    /// The saved project a new one looks like a second copy of: the only one going by the same name that reads none
+    /// of the new one's sources, so the two can be put together. Names count when one holds the other and the shorter
+    /// has at least four letters, so "Isaac Codex" matches "com.isaaccodex.app" but "App" matches nothing.
+    public func sameProduct(as project: Project) -> Project? {
+        let names = project.knownNames.map(Project.comparable).filter { $0.count >= 4 }
+        guard !names.isEmpty else { return nil }
+        let sources = Set(project.platforms)
+        let matches = projects.filter { saved in
+            guard saved.id != project.id, sources.isDisjoint(with: saved.platforms) else { return false }
+            return saved.knownNames.map(Project.comparable).filter { $0.count >= 4 }.contains { known in
+                names.contains { $0.contains(known) || known.contains($0) }
+            }
+        }
+        return matches.count == 1 ? matches[0] : nil
+    }
+
+    /// The saved project that already reads this PostHog project, App Store app or Google Play app.
+    public func project(reading platform: Platform, id: String) -> Project? {
+        projects.first { project in
+            switch platform {
+            case .posthog: project.posthog.map { String($0.projectId) } == id
+            case .revenueCat: project.revenueCat?.projectId == id
+            case .appStore: project.appStore?.appId == id
+            case .googlePlay: project.googlePlay?.packageName == id
+            }
+        }
+    }
 }
 
 public struct AppSettings: Codable, Sendable, Equatable {

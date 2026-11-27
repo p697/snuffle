@@ -182,9 +182,28 @@ enum Analytics {
         ])
     }
 
-    /// Charts from a PostHog dashboard placed on a project's board.
-    static func chartsPinned(_ added: Int, total: Int) {
-        capture("charts_pinned", ["added": added, "total": total])
+    enum DashboardImportEntry: String {
+        /// The step after choosing a PostHog project, adding a project or connecting PostHog to one.
+        case connect
+        /// The note on a project's page offering its dashboards.
+        case offer
+        /// The project page's menu.
+        case menu
+        /// "管理" above the charts already placed.
+        case charts
+        /// The "按看板算" line under the project's name.
+        case counting
+    }
+
+    /// The dashboard step or sheet ends: imported (charts placed and/or counting followed) or skipped. Counts only,
+    /// never the dashboard or chart names.
+    static func dashboardImportResolved(_ entry: DashboardImportEntry, imported: Bool, charts: Int, followsCounting: Bool) {
+        capture("dashboard_import_resolved", [
+            "entry": entry.rawValue,
+            "outcome": imported ? "imported" : "skipped",
+            "charts": charts,
+            "follows_counting": followsCounting,
+        ])
     }
 
     static func projectDeleted(_ project: Project, projectCount: Int) {
