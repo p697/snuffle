@@ -131,8 +131,10 @@ public struct LiveProvider: DataProvider {
                     group.addTask {
                         do {
                             let client = try await self.revenueCat(link.accountId)
-                            let day = RevenueCatClient.utcDate(clock.now)
-                            return [.values([.revenue: try await client.revenue(projectId: link.projectId, from: day, to: day)]), .revenueSource(.revenueCat)]
+                            let from = clock.now.addingTimeInterval(-Double(SalesWindows.lookbackDays - 1) * 86_400)
+                            let byDay = try await client.dailySales(projectId: link.projectId, from: RevenueCatClient.utcDate(from), to: RevenueCatClient.utcDate(clock.now))
+                            let windows = RevenueCatClient.windows(byDay, today: clock.now)
+                            return [.values(windows.values), .previous(windows.previous), .revenueSource(.revenueCat)]
                         } catch {
                             return [.failure(Self.failure(.revenueCat, error))]
                         }
@@ -356,11 +358,11 @@ public struct LiveProvider: DataProvider {
 
     // MARK: Detail screens
 
-    public func orders(for project: Project) async throws -> [Order] {
+    public func orders(for project: Project, days: Int) async throws -> [Order] {
         guard let link = project.posthog, case .posthogEvent(let event, let property) = project.metrics.revenue else { return [] }
         let clock = ProjectClock(now: now(), timeZoneIdentifier: link.timeZone)
         let rows = try await withPostHog(link.accountId) {
-            try await $0.query(projectId: link.projectId, PostHogQueries.orders(event: event, valueProperty: property, since: clock.todayStart), name: "snuffle_orders")
+            try await $0.query(projectId: link.projectId, PostHogQueries.orders(event: event, valueProperty: property, since: clock.historyStart(days: days)), name: "snuffle_orders")
         }
         return PostHogParsing.orders(rows, projectId: project.id)
     }
@@ -441,7 +443,7 @@ public struct LiveProvider: DataProvider {
         guard let link = project.revenueCat, project.metrics.revenue == .revenueCat else { return nil }
         let today = now()
         let from = RevenueCatClient.utcDate(today.addingTimeInterval(-Double(days + 1) * 86_400))
-        return try? await revenueCat(link.accountId).dailyRevenue(projectId: link.projectId, from: from, to: RevenueCatClient.utcDate(today))
+        return try? await revenueCat(link.accountId).dailySales(projectId: link.projectId, from: from, to: RevenueCatClient.utcDate(today)).mapValues(\.revenue)
     }
 
     // MARK: Dashboards

@@ -42,7 +42,8 @@ public protocol DataProvider: Sendable {
     func events(for project: Project) async throws -> [EventStat]
     /// The project's surfaces with their people in the last 30 days, for choosing which to count.
     func surfaces(for project: Project) async throws -> [SurfaceStat]
-    func orders(for project: Project) async throws -> [Order]
+    /// Orders over the last `days` days counting today, newest first: PostHog revenue events only.
+    func orders(for project: Project, days: Int) async throws -> [Order]
     func overview(for project: Project) async throws -> SubscriptionOverview?
     /// The project's board for the last `days` days. `total` is today's total by platform, from which the daily
     /// totals are worked back; nil leaves them out.

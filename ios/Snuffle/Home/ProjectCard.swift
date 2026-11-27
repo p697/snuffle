@@ -187,13 +187,12 @@ struct ProjectCard: View {
     /// The reference, or for numbers without one the detail that makes them readable.
     private func referenceText(_ metric: Metric, compact: Bool = false) -> Metric.ReferenceText? {
         if let reference = metric.reference(in: snapshot, compact: compact) { return reference }
-        switch metric {
-        case .revenue:
-            if let orders = snapshot?.orders { return .init(text: String(localized: "\(orders) 笔", comment: "Number of sales today, after the revenue amount."), tone: .muted) }
-            return project.metrics.revenue == .revenueCat ? .init(text: "RevenueCat", tone: .muted) : nil
-        default:
-            return nil
+        // Revenue without a change to show: how many sales made it.
+        guard let window = Metric.revenues.firstIndex(of: metric) else { return nil }
+        if let orders = snapshot?[Metric.ordersByWindow[window]] {
+            return .init(text: String(localized: "\(Int(orders)) 笔", comment: "Number of sales, after the revenue amount."), tone: .muted)
         }
+        return project.metrics.revenue == .revenueCat ? .init(text: "RevenueCat", tone: .muted) : nil
     }
 
     // MARK: Small numbers

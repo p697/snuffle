@@ -18,10 +18,11 @@ public enum Metric: Hashable, Sendable, Identifiable {
     case pageviews
     /// One PostHog event today: the people who sent it, or how many times it was sent.
     case event(String, people: Bool)
-    /// Today's revenue, as the project's `MetricSettings.revenue` says.
-    case revenue
-    /// Today's orders behind PostHog event revenue.
-    case orders
+    /// Revenue today, and over the last 7 and 30 days counting today, as the project's `MetricSettings.revenue`
+    /// says: whole days in the project's time zone for PostHog, UTC dates for RevenueCat.
+    case revenue, revenueWeek, revenueMonth
+    /// How many sales made that revenue, over the same days: paid events, or RevenueCat's transactions.
+    case orders, ordersWeek, ordersMonth
     /// RevenueCat's subscription overview.
     case mrr, activeSubscriptions, activeTrials, revenueLast28Days
     case reviewsToAnswer
@@ -54,7 +55,11 @@ public enum Metric: Hashable, Sendable, Identifiable {
         case .pageviews: "pageviews"
         case .event(let name, let people): (people ? "event_people:" : "event_count:") + name
         case .revenue: "revenue"
+        case .revenueWeek: "revenue_7d"
+        case .revenueMonth: "revenue_30d"
         case .orders: "orders"
+        case .ordersWeek: "orders_7d"
+        case .ordersMonth: "orders_30d"
         case .mrr: "mrr"
         case .activeSubscriptions: "active_subscriptions"
         case .activeTrials: "active_trials"
@@ -82,7 +87,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
     /// Every metric except per-project events, in library order.
     public static let fixed: [Metric] = [
         .newUsers, .activeToday, .activeWeek, .activeMonth, .newWeek, .totalUsers, .online, .pageviews,
-        .revenue, .orders, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days,
+        .revenue, .revenueWeek, .revenueMonth, .orders, .ordersWeek, .ordersMonth, .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days,
         .reviewsToAnswer, .rating, .crashRate, .anrRate
     ]
 
@@ -96,14 +101,14 @@ public enum Metric: Hashable, Sendable, Identifiable {
 
     public enum Source: Sendable, Equatable {
         case posthog, revenueCat, stores, appStore, googlePlay
-        /// Today's revenue comes from whichever source the project counts it with.
+        /// Revenue and orders come from whichever source the project counts revenue with.
         case revenueSetting
     }
 
     public var source: Source {
         switch self {
-        case .newUsers, .activeToday, .activeWeek, .activeMonth, .newWeek, .totalUsers, .online, .pageviews, .event, .orders: .posthog
-        case .revenue: .revenueSetting
+        case .newUsers, .activeToday, .activeWeek, .activeMonth, .newWeek, .totalUsers, .online, .pageviews, .event: .posthog
+        case .revenue, .revenueWeek, .revenueMonth, .orders, .ordersWeek, .ordersMonth: .revenueSetting
         case .mrr, .activeSubscriptions, .activeTrials, .revenueLast28Days: .revenueCat
         case .reviewsToAnswer: .stores
         case .rating: .appStore
@@ -130,22 +135,17 @@ public enum Metric: Hashable, Sendable, Identifiable {
 
     /// Whether `project` has what this number is read from.
     public func isAvailable(in project: Project) -> Bool {
-        switch self {
-        case .orders: if case .posthogEvent = project.metrics.revenue { project.posthog != nil } else { false }
-        case .revenue:
+        switch source {
+        case .posthog: project.posthog != nil
+        case .revenueCat: project.revenueCat != nil
+        case .stores: project.answersReviews
+        case .appStore: project.appStore?.countries.isEmpty == false
+        case .googlePlay: project.googlePlay != nil
+        case .revenueSetting:
             switch project.metrics.revenue {
             case .posthogEvent: project.posthog != nil
             case .revenueCat: project.revenueCat != nil
             case .none: false
-            }
-        default:
-            switch source {
-            case .posthog: project.posthog != nil
-            case .revenueCat: project.revenueCat != nil
-            case .stores: project.answersReviews
-            case .appStore: project.appStore?.countries.isEmpty == false
-            case .googlePlay: project.googlePlay != nil
-            case .revenueSetting: false
             }
         }
     }
@@ -159,7 +159,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
         }
     }
 
-    public var isMoney: Bool { self == .revenue || self == .mrr || self == .revenueLast28Days }
+    public var isMoney: Bool { Self.revenues.contains(self) || self == .mrr || self == .revenueLast28Days }
 
     /// A share of people (0.0109 is 1.09%), shown with two decimals as Play Console does.
     public var isRate: Bool { self == .crashRate || self == .anrRate }
@@ -184,7 +184,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
 
     /// Changes meaning when the project's counting or scope (`MetricSettings`) changes.
     public var followsCounting: Bool {
-        isScoped || self == .newUsers || self == .revenue || self == .orders
+        isScoped || self == .newUsers || source == .revenueSetting
     }
 
     /// What a number is set against, so it never stands alone.
@@ -204,7 +204,7 @@ public enum Metric: Hashable, Sendable, Identifiable {
         switch self {
         case .totalUsers: .today
         case .newUsers, .activeToday: .sameTimeYesterday
-        case .activeWeek, .newWeek: .previousPeriod
+        case .activeWeek, .newWeek, .revenueWeek, .revenueMonth: .previousPeriod
         case .crashRate, .anrRate: .threshold
         default: nil
         }
@@ -229,7 +229,14 @@ public enum Metric: Hashable, Sendable, Identifiable {
         }
     }
 
+    /// Today's sales. A window's total also moves when RevenueCat settles an earlier day, so only today's rise is a sale.
     public var isSale: Bool { self == .revenue || self == .orders }
+
+    /// Revenue today, over 7 days and over 30 days, and the orders behind each, in that order.
+    public static let revenues: [Metric] = [.revenue, .revenueWeek, .revenueMonth]
+    public static let ordersByWindow: [Metric] = [.orders, .ordersWeek, .ordersMonth]
+    /// Everything the 收入 tab shows, read on every refresh of a project that counts revenue.
+    public static let sales: [Metric] = revenues + ordersByWindow
 
     // MARK: Text
 
@@ -249,7 +256,11 @@ public enum Metric: Hashable, Sendable, Identifiable {
             else if people { String(localized: "\(name) 人数", bundle: .module) }
             else { name }
         case .revenue: String(localized: "收入", bundle: .module)
+        case .revenueWeek: String(localized: "近 7 天收入", bundle: .module)
+        case .revenueMonth: String(localized: "近 30 天收入", bundle: .module)
         case .orders: String(localized: "订单", bundle: .module)
+        case .ordersWeek: String(localized: "近 7 天订单", bundle: .module)
+        case .ordersMonth: String(localized: "近 30 天订单", bundle: .module)
         case .mrr: String(localized: "MRR", bundle: .module)
         case .activeSubscriptions: String(localized: "活跃订阅", bundle: .module)
         case .activeTrials: String(localized: "试用中", bundle: .module)
@@ -414,11 +425,11 @@ public struct CardLayout: Codable, Hashable, Sendable {
 
     /// The card a project starts with. With PostHog: everyone counted, with today's, the week's and the week's new
     /// people beneath; otherwise the reviews waiting for a reply, the App Store rating when no store tells those, or
-    /// revenue.
+    /// the last 30 days' revenue (a day's is often nothing).
     public static func standard(for project: Project) -> CardLayout {
         guard project.posthog != nil else {
             let store: Metric? = project.answersReviews ? .reviewsToAnswer : Metric.rating.isAvailable(in: project) ? .rating : nil
-            return CardLayout(big: [store ?? .revenue], rows: project.revenueCat != nil && store != nil ? [[.mrr]] : [])
+            return CardLayout(big: [store ?? .revenueMonth], rows: project.revenueCat != nil && store != nil ? [[.mrr]] : [])
         }
         return CardLayout(big: [.totalUsers], rows: [[.activeToday, .activeWeek, .newWeek]])
     }
@@ -477,6 +488,30 @@ public struct EventStat: Hashable, Sendable, Identifiable {
 
     /// PostHog's bookkeeping events, which say nothing about use.
     public static let hidden: Set<String> = ["$set", "$identify", "$groupidentify", "$create_alias", "$feature_flag_called", "$merge_dangerously", "$pageleave", "$web_vitals", "$snapshot", "$exception", "$feature_view", "$feature_interaction"]
+}
+
+/// Revenue and orders today and over the last 7 and 30 days counting today (`Metric.sales`), with the 7 and 30 days
+/// before as the windows' references, added up from daily totals.
+public struct SalesWindows: Equatable, Sendable {
+    /// Days of daily totals needed: the last 30 and the 30 before.
+    public static let lookbackDays = 60
+
+    public var values: [Metric: Double]
+    public var previous: [Metric: Double]
+
+    /// `newestFirst` starts today and reaches `lookbackDays` back; missing days count as nothing. Orders are left out
+    /// when the source does not count them (nil).
+    public init(newestFirst days: [(revenue: Double, orders: Double?)]) {
+        func revenue(_ range: Range<Int>) -> Double { days[range.clamped(to: days.indices)].reduce(0) { $0 + $1.revenue } }
+        values = [.revenue: revenue(0..<1), .revenueWeek: revenue(0..<7), .revenueMonth: revenue(0..<30)]
+        if days.contains(where: { $0.orders != nil }) {
+            func orders(_ count: Int) -> Double { days.prefix(count).reduce(0) { $0 + ($1.orders ?? 0) } }
+            values[.orders] = orders(1)
+            values[.ordersWeek] = orders(7)
+            values[.ordersMonth] = orders(30)
+        }
+        previous = [.revenueWeek: revenue(7..<14), .revenueMonth: revenue(30..<Self.lookbackDays)]
+    }
 }
 
 extension String {

@@ -57,8 +57,8 @@ struct LiveSmokeTests {
         let events = try await provider.events(for: project)
         print("[live]   events (7 days): \(events.prefix(5).map { "\($0.name) \($0.people)" })")
         #expect(snapshot.dailyActive.last == snapshot[.activeToday].map(Int.init))
-        let orders = try await provider.orders(for: project)
-        print("[live]   orders today: \(orders.count), named: \(orders.filter { $0.product != nil }.count)")
+        let orders = try await provider.orders(for: project, days: 30)
+        print("[live]   orders (30 days): \(orders.count), named: \(orders.filter { $0.product != nil }.count)")
         let board = try await provider.board(for: project, days: 7, total: Dictionary(uniqueKeysWithValues: snapshot.platforms.map { ($0.name, $0.count) }))
         print("[live]   7-day active: \(board.days.map { $0.active.values.reduce(0, +) }), weeks \(board.weeks.count)")
         #expect(board.days.count == 7)
@@ -70,10 +70,12 @@ struct LiveSmokeTests {
         let projects = try await client.projects()
         print("[live] RevenueCat projects: \(projects.map(\.name))")
         let projectId = env["SNUFFLE_LIVE_RC_PROJECT"] ?? projects.first!.id
-        let today = RevenueCatClient.utcDate(Date())
-        let revenue = try await client.revenue(projectId: projectId, from: today, to: today)
+        let now = Date()
+        let from = RevenueCatClient.utcDate(now.addingTimeInterval(-Double(SalesWindows.lookbackDays - 1) * 86_400))
+        let windows = RevenueCatClient.windows(try await client.dailySales(projectId: projectId, from: from, to: RevenueCatClient.utcDate(now)), today: now)
         let overview = try await client.overview(projectId: projectId)
-        print("[live]   today \(revenue), mrr \(overview.mrr ?? -1), active \(overview.activeSubscriptions ?? -1)")
+        print("[live]   sales \(Metric.sales.map { "\($0.id) \(windows.values[$0] ?? -1)" }), before \(windows.previous.map { "\($0.key.id) \($0.value)" }.sorted())")
+        print("[live]   mrr \(overview.mrr ?? -1), active \(overview.activeSubscriptions ?? -1), 28 days \(overview.revenueLast28Days ?? -1)")
     }
 
     /// A Google access token with the androidpublisher and playdeveloperreporting scopes, e.g. from

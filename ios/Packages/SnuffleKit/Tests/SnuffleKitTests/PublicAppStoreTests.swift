@@ -108,7 +108,7 @@ struct PublicAppStoreTests {
 
         project.appStore?.countries = []
         #expect(!Metric.rating.isAvailable(in: project), "an app on no storefront yet has no rating")
-        #expect(CardLayout.standard(for: project).big == [.revenue])
+        #expect(CardLayout.standard(for: project).big == [.revenueMonth])
 
         project.appStore?.accountId = UUID()
         #expect(project.answersReviews && Metric.reviewsToAnswer.platforms(in: project) == [.appStore])

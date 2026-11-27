@@ -102,7 +102,18 @@ extension Metric {
             case .revenueCat: return String(localized: "今天 · RevenueCat 当日总额（UTC）")
             case .none: return String(localized: "还没选怎么算收入")
             }
+        case .revenueWeek, .revenueMonth:
+            let week = self == .revenueWeek
+            switch settings.revenue {
+            case .posthogEvent(let event, _):
+                return week ? String(localized: "最近 7 天，含今天 · PostHog 事件 \(event) 的金额合计") : String(localized: "最近 30 天，含今天 · PostHog 事件 \(event) 的金额合计")
+            case .revenueCat:
+                return week ? String(localized: "最近 7 天，含今天 · RevenueCat 按 UTC 日期") : String(localized: "最近 30 天，含今天 · RevenueCat 按 UTC 日期")
+            case .none: return String(localized: "还没选怎么算收入")
+            }
         case .orders: return String(localized: "今天的付费笔数")
+        case .ordersWeek: return String(localized: "最近 7 天的付费笔数，含今天")
+        case .ordersMonth: return String(localized: "最近 30 天的付费笔数，含今天")
         case .mrr: return String(localized: "RevenueCat 月经常性收入 · 每小时更新")
         case .activeSubscriptions: return String(localized: "RevenueCat 在订人数 · 每小时更新")
         case .activeTrials: return String(localized: "RevenueCat 试用中的人 · 每小时更新")

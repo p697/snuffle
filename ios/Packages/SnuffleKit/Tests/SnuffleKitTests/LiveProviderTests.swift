@@ -226,7 +226,8 @@ struct LiveProviderTests {
             "us.posthog.com/api/projects/42/query#snuffle_counts": (200, #"{"results":[[17,5]]}"#),
             "us.posthog.com/api/projects/42/query#snuffle_people_today": (200, #"{"results":[[50,54,2,900]]}"#),
             "us.posthog.com/api/projects/42/query#snuffle_people_days": (200, #"{"results":[[531,440,\#(days)]]}"#),
-            "api.revenuecat.com/v2/projects/proj1/metrics/revenue": (200, #"{"object":"revenue_metric","value":3.28}"#)
+            // Today, 5 days back (in the week), 10 (the week before), 19 (in the month) and 41 (the month before).
+            "api.revenuecat.com/v2/projects/proj1/charts/revenue": (200, #"{"object":"chart_data","measures":[{"display_name":"Revenue"},{"display_name":"Transactions"}],"values":[{"cohort":1791590400,"incomplete":false,"measure":0,"value":7},{"cohort":1791590400,"incomplete":false,"measure":1,"value":1},{"cohort":1793491200,"incomplete":false,"measure":0,"value":5},{"cohort":1793491200,"incomplete":false,"measure":1,"value":1},{"cohort":1794268800,"incomplete":false,"measure":0,"value":4},{"cohort":1794268800,"incomplete":false,"measure":1,"value":1},{"cohort":1794700800,"incomplete":false,"measure":0,"value":10},{"cohort":1794700800,"incomplete":false,"measure":1,"value":2},{"cohort":1795132800,"incomplete":false,"measure":0,"value":3.5},{"cohort":1795132800,"incomplete":false,"measure":1,"value":1}]}"#)
         ])
         let result = await provider(store: store).refresh(project, metrics: [.newUsers, .revenue, .activeToday, .activeWeek], previous: nil)
         #expect(result.snapshot.newUsers == 17)
@@ -236,13 +237,16 @@ struct LiveProviderTests {
         #expect(result.snapshot[.activeWeek] == 531 && result.snapshot.previous[.activeWeek] == 440)
         #expect(result.snapshot.online == 2 && result.snapshot[.pageviews] == 900)
         #expect(result.snapshot.dailyActive == (0..<14).map { $0 * 10 })
-        #expect(result.snapshot.revenue == 3.28)
+        #expect(result.snapshot.revenue == 3.5)
+        #expect(result.snapshot[.revenueWeek] == 13.5 && result.snapshot.previous[.revenueWeek] == 4)
+        #expect(result.snapshot[.revenueMonth] == 22.5 && result.snapshot.previous[.revenueMonth] == 7)
+        #expect(result.snapshot.orders == 1 && result.snapshot[.ordersWeek] == 3 && result.snapshot[.ordersMonth] == 5)
         #expect(result.snapshot.revenueSource == .revenueCat)
         #expect(result.snapshot.failures.isEmpty)
         #expect(result.reviews.isEmpty)
         let revenueCall = try #require(StubProtocol.seen.first { $0.url?.host() == "api.revenuecat.com" })
         #expect(revenueCall.value(forHTTPHeaderField: "Authorization") == "Bearer sk_test")
-        #expect(revenueCall.url?.query()?.contains("start_date=2026-11-20") == true)
+        #expect(revenueCall.url?.query()?.contains("start_date=2026-09-22&end_date=2026-11-20") == true, "one call for 60 days")
     }
 
     @Test func hourlyNumbersReadUnderOtherScopeAreReadAgain() async {

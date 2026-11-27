@@ -119,6 +119,7 @@ struct ModelTests {
         #expect(Metric.revenue.platforms(in: ferry) == [.revenueCat])
         #expect(Metric.revenue.platforms(in: lumen) == [.posthog])
         #expect(Metric.orders.platforms(in: lumen) == [.posthog])
+        #expect(Metric.ordersMonth.platforms(in: ferry) == [.revenueCat], "RevenueCat counts transactions")
         #expect(Metric.crashRate.platforms(in: ferry) == [.googlePlay])
         #expect(Metric.reviewsToAnswer.platforms(in: ferry) == [.appStore])
         #expect(Metric.reviewsToAnswer.platforms(in: lumen) == [.appStore, .googlePlay])
