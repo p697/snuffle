@@ -8,7 +8,7 @@ enum CardStage: Equatable {
     case rest
     /// Waiting its turn.
     case waiting
-    /// Its turn: lifted, a line sweeping along its top.
+    /// Its turn: lifted, a short stroke running round its outline.
     case loading
     /// Changed digits are rolling up to the new value.
     case landed
