@@ -243,7 +243,7 @@ final class SnuffleUITests: XCTestCase {
         XCTAssertTrue(app.buttons["posthogSignIn"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["startDemo"].exists)
         // The first page says what a project is before asking for anything.
-        XCTAssertTrue(app.staticTexts["添加你的第一个项目"].exists)
+        XCTAssertTrue(app.staticTexts["添加项目"].exists)
         attach(app, name: "connect-start")
         app.buttons["connect-revenueCat"].tap()
         XCTAssertTrue(app.staticTexts["连接 RevenueCat"].waitForExistence(timeout: 5))
@@ -267,10 +267,8 @@ final class SnuffleUITests: XCTestCase {
         let row = app.buttons["projectRow-Lumen Notes"]
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         attach(app, name: "projects")
-        app.buttons["accounts"].tap()
-        XCTAssertTrue(app.staticTexts["已登录的账号"].waitForExistence(timeout: 5))
-        attach(app, name: "accounts")
-        app.buttons["返回"].tap()
+        // The sample projects have no accounts on this phone: no empty accounts page to open.
+        XCTAssertFalse(app.buttons["accounts"].exists)
         row.tap()
         // Everything to change sits in one menu; sources missing from the project are connected on the page itself.
         XCTAssertTrue(app.buttons["addSource-revenueCat"].waitForExistence(timeout: 5))
@@ -303,9 +301,15 @@ final class SnuffleUITests: XCTestCase {
         // Charts that draw are picked for the person; the funnel cannot be.
         XCTAssertTrue(importButton.label.contains("4"), importButton.label)
         attach(app, name: "dashboard-import")
+        // Until the person ticks a chart, each dashboard suggests its own.
+        func expectCharts(_ count: String) {
+            let shown = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label CONTAINS %@", count), object: importButton)
+            XCTAssertEqual(XCTWaiter.wait(for: [shown], timeout: 5), .completed, importButton.label)
+        }
         app.buttons["dashboard-102"].tap()
-        XCTAssertTrue(importButton.label.contains("4"), "charts picked stay picked: \(importButton.label)")
+        expectCharts("1")
         app.buttons["dashboard-101"].tap()
+        expectCharts("4")
         importButton.tap()
         let chip = app.buttons["countingChip"]
         XCTAssertTrue(chip.waitForExistence(timeout: 10))
@@ -316,7 +320,7 @@ final class SnuffleUITests: XCTestCase {
         // "管理" opens the same sheet with the charts placed.
         app.buttons["pickCharts"].tap()
         XCTAssertTrue(importButton.waitForExistence(timeout: 10))
-        XCTAssertTrue(app.staticTexts["现在按它算"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["dashboard-101"].isSelected, "the dashboard followed is the one shown")
         app.buttons["取消"].tap()
 
         // Closing the offer on another project keeps it closed.
@@ -325,8 +329,8 @@ final class SnuffleUITests: XCTestCase {
         let close = app.buttons["不再提示"]
         XCTAssertTrue(close.waitForExistence(timeout: 10))
         close.tap()
-        XCTAssertTrue(chip.waitForExistence(timeout: 5), "Snuffle's own counting is said instead")
-        XCTAssertFalse(offer.exists)
+        XCTAssertTrue(offer.waitForNonExistence(timeout: 5))
+        XCTAssertFalse(chip.exists, "Snuffle's own counting needs no line")
     }
 
     /// Holding a number drags it: onto another number the two trade places, onto "再加一行数" it starts a second row,

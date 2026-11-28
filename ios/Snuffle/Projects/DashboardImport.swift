@@ -4,8 +4,8 @@ import SwiftUI
 /// Whether a project's page offers its PostHog dashboards (`AppModel.dashboardOffer`).
 enum DashboardOffer: Equatable {
     case none
-    /// How many there are, and the first one's name for an example.
-    case dashboards(Int, first: String)
+    /// The project has dashboards to import.
+    case dashboards
     /// The account was connected before Snuffle read dashboards: signing in again allows it.
     case needsAccess
 }
@@ -134,7 +134,8 @@ final class DashboardPicker {
     }
 }
 
-/// The dashboards to choose from, the counting the chosen one would bring, and its charts to tick.
+/// The dashboards as chips, one switch for the counting, and the charts as cards to tick. Charts the phone cannot draw
+/// are left out rather than explained.
 private struct DashboardForm: View {
     @Bindable var picker: DashboardPicker
     var project: Project
@@ -144,31 +145,25 @@ private struct DashboardForm: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             if let dashboards = picker.dashboards, dashboards.count > 1 {
-                SectionLabel(String(localized: "选你平时看的那个"))
-                CardGroup {
-                    ForEach(Array(dashboards.enumerated()), id: \.element.id) { index, summary in
-                        if index > 0 { RowDivider() }
-                        dashboardRow(summary)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(dashboards) { chip($0) }
                     }
+                    .padding(.horizontal, 16)
                 }
-            } else if let only = picker.selected {
-                SectionLabel(String(localized: "看板"))
-                CardGroup { dashboardRow(only) }
+                .padding(.horizontal, -16)
             }
-            if picker.detail != nil { countingStrip }
-            if let detail = picker.detail {
-                SectionLabel(String(localized: "图表 · 已选 \(picker.chosen.count) 张"))
+            if picker.counting != nil {
                 CardGroup {
-                    ForEach(Array(detail.tiles.enumerated()), id: \.element.id) { index, tile in
-                        if index > 0 { RowDivider() }
-                        tileRow(tile)
-                    }
+                    Toggle("数字按此看板算", isOn: $picker.follow)
+                        .toggleStyle(InkToggleStyle())
+                        .padding(.vertical, 4)
+                        .accessibilityIdentifier("followCounting")
                 }
-                if detail.tiles.contains(where: { !$0.canDraw }) {
-                    Text("漏斗、留存、路径这几种图先不在手机上画，可以在 PostHog 里看。")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Palette.ink2)
-                        .padding(.horizontal, 6)
+            }
+            if let detail = picker.detail {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                    ForEach(detail.tiles.filter(\.canDraw)) { tileCard($0) }
                 }
             }
             if picker.loading { ProgressView().frame(maxWidth: .infinity, minHeight: 80) }
@@ -185,148 +180,84 @@ private struct DashboardForm: View {
         }
     }
 
-    private func dashboardRow(_ summary: DashboardSummary) -> some View {
+    private func chip(_ summary: DashboardSummary) -> some View {
         let selected = picker.selected?.id == summary.id
         return Button {
             Task { await picker.select(summary, project: project, provider: model.provider) }
         } label: {
-            HStack(spacing: 12) {
-                Circle()
-                    .strokeBorder(selected ? Palette.ink : Palette.faint, lineWidth: selected ? 7 : 2)
-                    .frame(width: 22, height: 22)
-                Text(verbatim: summary.name)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(Palette.ink)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                if summary.id == picker.followed {
-                    Text("现在按它算").font(.system(size: 11, weight: .bold)).foregroundStyle(Palette.ink2)
-                }
-            }
-            .frame(minHeight: 56)
-            .contentShape(Rectangle())
+            Text(verbatim: summary.name)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(selected ? Palette.paper : Palette.ink)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 40)
+                .background(selected ? Palette.ink : Palette.card, in: Capsule())
+                .overlay(Capsule().strokeBorder(selected ? .clear : Palette.line))
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
         .accessibilityIdentifier("dashboard-\(summary.id)")
     }
 
-    /// Whether the numbers follow this dashboard, and what it counts, in the dark strip used for counting.
-    @ViewBuilder
-    private var countingStrip: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            if let counting = picker.counting {
-                Toggle(isOn: $picker.follow) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("数字也按这个看板算")
-                            .font(.system(size: 16, weight: .heavy))
-                            .foregroundStyle(Palette.stripText)
-                        Text(String(localized: "累计、活跃和新增都照 \(Self.names(counting.sources)) 的条件算，和看板一样。"))
-                            .font(.system(size: 13))
-                            .foregroundStyle(Palette.stripMuted)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-                .toggleStyle(InkToggleStyle(onStrip: true))
-                .accessibilityIdentifier("followCounting")
-                FlowLayout(spacing: 6) {
-                    ForEach(tags(counting), id: \.self) { tag in
-                        Text(verbatim: tag)
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(Palette.stripText)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Palette.stripText.opacity(0.14), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                    }
-                }
-            } else {
-                Text("这个看板里没有数人的图，数字仍按 Snuffle 默认算。")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Palette.stripText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Palette.strip, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-    }
-
-    /// The charts the counting was read from, quoted: up to three, then how many more.
-    static func names(_ sources: [String]) -> String {
-        let quoted = sources.prefix(3).map { String(localized: "「\($0)」") }
-        let shown = ListFormatter.localizedString(byJoining: quoted)
-        return sources.count > 3 ? String(localized: "\(shown) 等 \(sources.count) 张图") : shown
-    }
-
-    /// The counting in a few words: the event, the conditions, people or installs, the platform property.
-    private func tags(_ counting: DashboardReading.Counting) -> [String] {
-        var tags = [counting.activityEvent.map { String(localized: "事件 \($0)") } ?? String(localized: "任何事件")]
-        if !counting.conditions.isEmpty { tags.append(String(localized: "\(counting.conditions.count) 个条件")) }
-        tags.append(counting.unit == .install ? String(localized: "按安装算") : String(localized: "按人算"))
-        if let property = counting.platformProperty { tags.append(String(localized: "按 \(property) 分平台")) }
-        return tags
-    }
-
-    private func tileRow(_ tile: InsightTile) -> some View {
+    /// A chart as a card: what kind it is drawn as, its name, and a tick when it is coming along.
+    private func tileCard(_ tile: InsightTile) -> some View {
         let picked = picker.chosen.contains { $0.id == tile.id }
         return Button {
             picker.toggle(tile)
         } label: {
-            HStack(spacing: 12) {
-                Image(systemName: !tile.canDraw ? "circle.dashed" : picked ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22))
-                    .foregroundStyle(tile.canDraw ? Palette.ink : Palette.faint)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: tile.name)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(tile.canDraw ? Palette.ink : Palette.ink2)
-                        .fixedSize(horizontal: false, vertical: true)
-                    Text(kind(tile)).font(.system(size: 12)).foregroundStyle(Palette.ink2)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: symbol(tile))
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundStyle(picked ? Palette.ink : Palette.ink2)
+                    Spacer()
+                    Image(systemName: picked ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(picked ? Palette.ink : Palette.faint)
                 }
-                Spacer()
+                Text(verbatim: tile.name)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Palette.ink)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, minHeight: 36, alignment: .topLeading)
             }
-            .frame(minHeight: 56)
+            .padding(14)
+            .background(Palette.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(picked ? Palette.ink : .clear, lineWidth: 2))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(!tile.canDraw)
         .accessibilityAddTraits(picked ? .isSelected : [])
         .accessibilityIdentifier("tile-\(tile.id)")
     }
 
-    private func kind(_ tile: InsightTile) -> String {
-        guard tile.canDraw else { return String(localized: "手机上先不支持") }
+    private func symbol(_ tile: InsightTile) -> String {
         switch tile.display {
-        case "BoldNumber": return String(localized: "数字")
-        case "ActionsPie", "ActionsBarValue": return String(localized: "占比")
-        case "ActionsTable", nil: return tile.kind == .table ? String(localized: "表格") : String(localized: "折线")
-        default: return String(localized: "柱状图")
+        case "BoldNumber": "number"
+        case "ActionsPie", "ActionsBarValue": "chart.pie"
+        case "ActionsTable", nil: tile.kind == .table ? "tablecells" : "chart.xyaxis.line"
+        case "ActionsLineGraph", "ActionsAreaGraph": "chart.xyaxis.line"
+        default: "chart.bar"
         }
     }
 }
 
-/// The button under the form: what importing brings, or why it cannot yet.
+/// The button under the form: how many charts come along.
 private struct ImportButton: View {
     var picker: DashboardPicker
     var action: () -> Void
 
     var body: some View {
-        Button(title, action: action)
+        Button(picker.chosen.isEmpty ? String(localized: "导入") : String(localized: "导入 \(picker.chosen.count) 张图"), action: action)
             .buttonStyle(PrimaryButtonStyle())
             .disabled(picker.choice == nil || (picker.chosen.isEmpty && !(picker.choice?.follow ?? false)))
             .accessibilityIdentifier("importDashboard")
-    }
-
-    private var title: String {
-        let charts = picker.chosen.count
-        let follows = picker.choice?.follow ?? false
-        if charts == 0 { return String(localized: "只按看板算数字") }
-        return follows ? String(localized: "导入看板和 \(charts) 张图") : String(localized: "导入 \(charts) 张图")
     }
 }
 
 // MARK: In the connect flow
 
-/// "把你的 PostHog 看板带过来": the step after choosing a PostHog project that has dashboards.
+/// "导入看板": the step after choosing a PostHog project that has dashboards; "跳过" keeps Snuffle's own counting.
 struct ImportBoardPage: View {
     @Environment(ConnectSession.self) private var session
     @Environment(AppModel.self) private var model
@@ -339,11 +270,13 @@ struct ImportBoardPage: View {
                 HStack {
                     BackButton()
                     Spacer()
-                    if let name = session.project.posthog?.projectName {
-                        SuccessBadge(text: String(localized: "已选 \(name)"))
-                    }
+                    Button("跳过", action: skip)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Palette.ink)
+                        .frame(minHeight: 44)
+                        .accessibilityIdentifier("skipDashboard")
                 }
-                PageTitle(title: String(localized: "把你的 PostHog 看板带过来"), subtitle: String(localized: "数字照看板的口径算，图表原样搬到手机上，每次刷新一起更新。"))
+                PageTitle(title: String(localized: "导入看板"))
                 if let picker {
                     DashboardForm(picker: picker, project: session.project) {}
                 }
@@ -351,17 +284,12 @@ struct ImportBoardPage: View {
             .padding(16)
         }
         .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 2) {
-                if let picker { ImportButton(picker: picker, action: { use(picker) }) }
-                Button("先不用，按 Snuffle 默认算", action: skip)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.ink2)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .accessibilityIdentifier("skipDashboard")
+            if let picker {
+                ImportButton(picker: picker) { use(picker) }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .background(Palette.paper.opacity(0.95))
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .background(Palette.paper.opacity(0.95))
         }
         .sheetPage()
         .task {
@@ -388,7 +316,8 @@ struct ImportBoardPage: View {
 
 // MARK: On a project's page
 
-/// "从看板导入", for a saved project: from the offer on its page, its menu, or "管理" above its charts.
+/// "导入看板" for a saved project: from the offer on its page, its menu, the dashboard line under its name, or
+/// "管理" above its charts.
 struct DashboardImportSheet: View {
     var project: Project
     var entry: Analytics.DashboardImportEntry
@@ -412,7 +341,7 @@ struct DashboardImportSheet: View {
                         RoundIconButton(systemName: "xmark", label: String(localized: "取消")) { dismiss() }
                         Spacer()
                     }
-                    PageTitle(title: String(localized: "从看板导入"), subtitle: String(localized: "数字照看板的口径算，图表原样搬到手机上，每次刷新一起更新。"))
+                    PageTitle(title: String(localized: "导入看板"))
                     DashboardForm(picker: picker, project: project) { reconnecting = true }
                 }
                 .padding(16)

@@ -17,8 +17,9 @@ SwiftUI app (iOS 18+), a widget extension, and `SnuffleKit`, the package both sh
   count them; the total reads the whole history once by platform and then adds each day's new people (`UserTally`).
   Adding a project (`Connect/AddProjectFlow.swift`) connects one source, then offers the PostHog project's
   dashboards (`Projects/DashboardImport.swift`: follow its counting and bring its charts over), then shows the card
-  with the missing sources one tap away (`SourceRows`); a project that goes by the name of a saved one missing those
-  sources is offered to go into it (`Workspace.sameProduct`). Store names drop their tagline and the App Store icon
+  with the four sources as tiles, the missing ones a tap away (`SourceSlots`); a project that goes by the name of a
+  saved one missing those sources is offered to go into it (`Workspace.sameProduct`). The screens explain little in
+  words: the tiles, logos and defaults carry it. Store names drop their tagline and the App Store icon
   becomes the project's picture. `Projects/` holds the board (how it counts or the offer to import its dashboards,
   charts brought over from PostHog dashboards and run with their own queries, charts by platform, each number's
   definition, its sources), with everything to change in one menu; one folder per tab. Google Play only returns the last week's reviews, so

@@ -130,68 +130,39 @@ struct ProjectDetailView: View {
         return parts.joined(separator: " · ")
     }
 
-    /// How the people numbers are counted, always in sight under the name: the dashboard followed, or the offer to
-    /// follow one the project has, or Snuffle's own counting. Each opens what changes it.
+    /// Under the name: the dashboard the numbers follow, or a one-line offer to import the project's dashboards.
+    /// Snuffle's own counting needs no line; "数字怎么算" in the menu says it.
     @ViewBuilder
     private var counting: some View {
         if let dashboard = current.metrics.dashboard {
-            countingChip(tag: String(localized: "按看板算"), text: String(localized: "「\(dashboard.name)」· 和网页一致"), strong: true) { importing = .counting }
-        } else if !demo, case .dashboards(let count, let first) = offer {
-            OfferBanner(
-                title: String(localized: "你在 PostHog 有 \(count) 个看板"),
-                message: String(localized: "现在的数按 Snuffle 默认口径算，可能和你平时看的不一样。导入后，数字照看板算，图表也一起搬过来。"),
-                action: String(localized: "导入看板"),
-                example: String(localized: "比如「\(first)」"),
-                run: { importing = .offer },
-                close: {
-                    model.dismissDashboardOffer(for: current)
-                    Analytics.dashboardImportResolved(.offer, imported: false, charts: 0, followsCounting: false)
+            Button { importing = .counting } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "square.grid.2x2").font(.system(size: 11, weight: .bold))
+                    Text(verbatim: dashboard.name).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    Image(systemName: "chevron.forward").font(.system(size: 10, weight: .bold)).foregroundStyle(Palette.ink2)
                 }
-            )
-        } else if !demo, offer == .needsAccess {
-            OfferBanner(
-                title: String(localized: "要导入你的 PostHog 看板？"),
-                message: String(localized: "这个账号连上时，Snuffle 还不读看板。重新连一次 PostHog，就能把看板的口径和图表带过来。"),
-                action: String(localized: "重新连 PostHog"),
-                example: nil,
-                run: { connecting = .posthog },
-                close: { model.dismissDashboardOffer(for: current) }
-            )
-        } else {
-            countingChip(tag: nil, text: current.countingSummary, strong: false) { editingCounting = true }
-        }
-    }
-
-    /// The dashboard followed opens the dashboard sheet (switch it, stop following, its charts); Snuffle's own
-    /// counting opens the counting editor.
-    private func countingChip(tag: String?, text: String, strong: Bool, open: @escaping () -> Void) -> some View {
-        Button(action: open) {
-            HStack(spacing: 10) {
-                if let tag {
-                    Text(tag)
-                        .font(.system(size: 12, weight: .heavy))
-                        .foregroundStyle(Palette.onAccent)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(accent, in: Capsule())
-                }
-                Text(verbatim: text)
-                    .font(.system(size: 14, weight: strong ? .bold : .medium))
-                    .foregroundStyle(strong ? Palette.ink : Palette.ink2)
-                    .lineLimit(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                Image(systemName: "chevron.forward").font(.system(size: 12, weight: .bold)).foregroundStyle(strong ? Palette.ink : Palette.faint)
+                .foregroundStyle(Palette.ink)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 32)
+                .background(Palette.card, in: Capsule())
+                .overlay(Capsule().strokeBorder(Palette.line))
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 12)
-            .frame(minHeight: 44)
-            .background(Palette.card, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(strong ? Palette.ink : Palette.line, lineWidth: strong ? 1.5 : 1))
-            .contentShape(Rectangle())
+            .buttonStyle(.plain)
+            .disabled(demo)
+            .accessibilityLabel(Text("按看板「\(dashboard.name)」算"))
+            .accessibilityIdentifier("countingChip")
+        } else if !demo, offer == .dashboards {
+            OfferRow(title: String(localized: "导入 PostHog 看板"), action: String(localized: "导入"), run: { importing = .offer }, close: {
+                model.dismissDashboardOffer(for: current)
+                Analytics.dashboardImportResolved(.offer, imported: false, charts: 0, followsCounting: false)
+            })
+        } else if !demo, offer == .needsAccess {
+            OfferRow(title: String(localized: "重连 PostHog，导入看板"), action: String(localized: "重连"), run: { connecting = .posthog }, close: {
+                model.dismissDashboardOffer(for: current)
+            })
         }
-        .buttonStyle(.plain)
-        .disabled(demo)
-        .accessibilityHint("看数字怎么算")
-        .accessibilityIdentifier("countingChip")
     }
 
     /// The four people numbers, or for a project without PostHog whatever its card shows.
@@ -362,27 +333,19 @@ struct ProjectDetailView: View {
         }
     }
 
-    /// Where the numbers come from, and the sources still missing with what each would add, connected right here.
+    /// Where the numbers come from: four tiles, the missing ones connected right here; a connected one opens when it
+    /// was read and what it gives.
     private var sources: some View {
         VStack(alignment: .leading, spacing: 8) {
-            SectionLabel(thin && !demo ? String(localized: "数据来源 · 接上更多，数更全") : String(localized: "数据来源"))
-            SourceRows(project: current, status: status, connect: demo ? nil : { connecting = $0 })
+            SectionLabel(String(localized: "数据来源"))
+            SourceSlots(
+                project: current,
+                failed: Set(snapshot?.failures.map(\.platform) ?? []),
+                open: { _ in sheets.openSources(project.id) },
+                connect: demo ? nil : { connecting = $0 }
+            )
         }
         .padding(.top, thin ? 0 : 8)
-    }
-
-    private func status(_ platform: Platform) -> (text: String, warn: Bool)? {
-        if let failure = snapshot?.failures.first(where: { $0.platform == platform }) { return (failure.message, true) }
-        return (detail(platform), false)
-    }
-
-    private func detail(_ platform: Platform) -> String {
-        switch platform {
-        case .posthog: current.posthog.map { String(localized: "项目 \($0.projectName) · 时区 \($0.timeZone)") } ?? ""
-        case .revenueCat: current.revenueCat.map { String(localized: "项目 \($0.projectName)") } ?? ""
-        case .appStore: current.appStore.map { [$0.appName, $0.hasKey ? nil : String(localized: "不用密钥，只看评分和评论")].compactMap { $0 }.joined(separator: " · ") } ?? ""
-        case .googlePlay: current.googlePlay.map { $0.packageName + " · " + String(localized: "保留连接以来的评论") } ?? ""
-        }
     }
 }
 
@@ -390,61 +353,49 @@ extension Analytics.DashboardImportEntry: Identifiable {
     var id: String { rawValue }
 }
 
-/// A dark note at the top of a project's page offering one step that changes its numbers, which can be closed for good.
-private struct OfferBanner: View {
+/// One dark line at the top of a project's page offering one step, with its button and a way to close it for good.
+private struct OfferRow: View {
     var title: String
-    var message: String
     var action: String
-    var example: String?
     var run: () -> Void
     var close: () -> Void
     @Environment(\.accent) private var accent
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .top, spacing: 8) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(title).font(.system(size: 17, weight: .heavy)).foregroundStyle(Palette.stripText)
-                    Text(message)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Palette.stripMuted)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+        HStack(spacing: 10) {
+            Image(systemName: "square.grid.2x2")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(accent)
+            Text(title)
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(Palette.stripText)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                Button(action: close) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(Palette.stripMuted)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .padding(.top, -12)
-                .padding(.trailing, -12)
-                .accessibilityLabel("不再提示")
+            Button(action: run) {
+                Text(action)
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundStyle(Palette.onAccent)
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 34)
+                    .background(accent, in: Capsule())
             }
-            HStack(spacing: 10) {
-                Button(action: run) {
-                    Text(action)
-                        .font(.system(size: 14, weight: .heavy))
-                        .foregroundStyle(Palette.onAccent)
-                        .padding(.horizontal, 18)
-                        .frame(minHeight: 40)
-                        .background(accent, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("offerAction")
-                if let example {
-                    Text(verbatim: example)
-                        .font(.system(size: 13))
-                        .foregroundStyle(Palette.stripMuted)
-                        .lineLimit(1)
-                }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("offerAction")
+            Button(action: close) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(Palette.stripMuted)
+                    .frame(width: 32, height: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("不再提示")
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Palette.strip, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .padding(.leading, 14)
+        .padding(.trailing, 6)
+        .padding(.vertical, 6)
+        .background(Palette.strip, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("dashboardOffer")
     }

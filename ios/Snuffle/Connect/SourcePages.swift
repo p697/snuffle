@@ -30,7 +30,7 @@ struct ChoiceRow: View {
     var title: String
     var detail: String?
     var busy = false
-    /// Another project reads this one already: said instead of the detail, and the row is greyed out.
+    /// Another project reads this one already: tagged, greyed out and named for VoiceOver.
     var addedAs: String?
     var action: () -> Void
 
@@ -39,8 +39,8 @@ struct ChoiceRow: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.ink)
-                    if let line = addedAs.map({ String(localized: "已添加为项目「\($0)」") }) ?? detail {
-                        Text(line).font(.system(size: 13)).foregroundStyle(Palette.ink2).lineLimit(1)
+                    if let detail {
+                        Text(detail).font(.system(size: 13)).foregroundStyle(Palette.ink2).lineLimit(1)
                     }
                 }
                 Spacer(minLength: 8)
@@ -62,6 +62,7 @@ struct ChoiceRow: View {
         }
         .buttonStyle(.plain)
         .opacity(addedAs == nil ? 1 : 0.55)
+        .accessibilityValue(addedAs.map { Text("已添加：\($0)") } ?? Text(verbatim: ""))
     }
 }
 
@@ -330,7 +331,7 @@ struct PostHogPickPage: View {
                     Spacer()
                     SuccessBadge(text: String(localized: "PostHog 已登录"))
                 }
-                PageTitle(title: String(localized: "这个产品在 PostHog 里是哪个项目？"), subtitle: subtitle)
+                PageTitle(title: String(localized: "选择 PostHog 项目"), subtitle: session.postHogAccount?.title)
                 if session.postHogProjects.isEmpty {
                     Text("这个账号下还没有项目。先在 PostHog 里建一个，或换一个账号登录。")
                         .font(.system(size: 15))
@@ -350,20 +351,12 @@ struct PostHogPickPage: View {
                     }
                 }
                 ErrorText(text: error)
-                Text("不在这个账号里？公司和个人的 PostHog 账号可以都登上：返回后换一个账号登录，以后加项目时两个都能直接用。")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Palette.ink2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.horizontal, 4)
             }
             .padding(16)
         }
         .sheetPage()
     }
 
-    private var subtitle: String {
-        [session.postHogAccount?.title, String(localized: "\(session.postHogProjects.count) 个 PostHog 项目")].compactMap { $0 }.joined(separator: " · ")
-    }
 
     private func detail(_ item: PostHogProject) -> String {
         [item.displayName == item.name ? item.organizationName : item.name, item.timezone].compactMap { $0 }.joined(separator: " · ")
@@ -902,7 +895,16 @@ private struct PublicAppRow: View {
                     }
                 }
                 Spacer(minLength: 8)
-                Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
+                if addedAs != nil {
+                    Text("已添加")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(Palette.ink2)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Palette.pill, in: Capsule())
+                } else {
+                    Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
+                }
             }
             .frame(minHeight: 64)
             .contentShape(Rectangle())
@@ -913,8 +915,7 @@ private struct PublicAppRow: View {
     }
 
     private var detail: String {
-        if let addedAs { return String(localized: "已添加为项目「\(addedAs)」") }
-        return [app.developer, app.rating.map { "★ " + Format.rating($0) }].compactMap { $0 }.joined(separator: " · ")
+        [app.developer, app.rating.map { "★ " + Format.rating($0) }].compactMap { $0 }.joined(separator: " · ")
     }
 }
 

@@ -8,12 +8,11 @@ enum ConnectRoute: Hashable {
     case importBoard
     case done(Platform)
     case connected
-    case metrics
 }
 
-/// Adding a project: connect one source first (PostHog suggested), bring its PostHog dashboard over, see today's
-/// numbers right away with the other sources one tap away, then name it. The name, colour, picture and counting are
-/// filled in from what was connected and can be changed on the last page.
+/// Adding a project: connect one source first (PostHog suggested), bring its PostHog dashboard over, then see the
+/// project with today's numbers and its other sources one tap away. Name, picture, colour and counting are filled in
+/// from what was connected; the name and picture can be changed on the last page, the rest in project settings.
 struct AddProjectFlow: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -56,14 +55,7 @@ struct AddProjectFlow: View {
         case .done(.revenueCat): RevenueCatDonePage(next: showConnected)
         case .done(let platform): StoreDonePage(platform: platform, next: showConnected)
         case .connected:
-            ConnectedPage(
-                addSource: { path.append(.connect($0)) },
-                importDashboard: { path.append(.importBoard) },
-                adjust: { path.append(.metrics) },
-                merge: merge,
-                finish: finish
-            )
-        case .metrics: MetricsPage()
+            ConnectedPage(addSource: { path.append(.connect($0)) }, merge: merge, finish: finish)
         }
     }
 
@@ -114,8 +106,8 @@ struct AddProjectFlow: View {
 
 // MARK: Start
 
-/// "添加一个项目": what a project is, PostHog in a big card with its sign-in right there, the others below with what
-/// each brings and what connecting it takes.
+/// "添加项目": PostHog in a big card with its sign-in right there, the other three as tiles. No explanations: the
+/// logos say what each is, and the page after shows a project holds all four.
 private struct StartPage: View {
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
@@ -141,81 +133,44 @@ private struct StartPage: View {
                         .accessibilityIdentifier("startDemo")
                     }
                 }
-                PageTitle(
-                    title: model.workspace.projects.isEmpty ? String(localized: "添加你的第一个项目") : String(localized: "添加一个项目"),
-                    subtitle: String(localized: "一个项目就是你的一个产品。先接上它的一个数据源，其余的下一步在同一页补上。")
-                )
-                .padding(.top, 4)
-                sources
-                postHogCard
-                SectionLabel(String(localized: "也可以先接"))
+                PageTitle(title: String(localized: "添加项目"))
                     .padding(.top, 4)
-                CardGroup {
-                    ForEach(Array([Platform.revenueCat, .appStore, .googlePlay].enumerated()), id: \.element) { index, platform in
-                        if index > 0 { RowDivider() }
+                postHogCard
+                HStack(spacing: 10) {
+                    ForEach([Platform.revenueCat, .appStore, .googlePlay]) { platform in
                         Button {
                             open(platform)
                         } label: {
-                            HStack(spacing: 12) {
+                            VStack(spacing: 10) {
                                 PlatformLogo(platform: platform, size: 44)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(platform.displayName).font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.ink)
-                                    Text(verbatim: platform.purpose + " · " + platform.howToConnect)
-                                        .font(.system(size: 13))
-                                        .foregroundStyle(Palette.ink2)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
+                                Text(platform.displayName)
+                                    .font(.system(size: 13, weight: .bold))
+                                    .foregroundStyle(Palette.ink)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
                             }
-                            .frame(minHeight: 68)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 18)
+                            .background(Palette.card, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("connect-\(platform.rawValue)")
                     }
                 }
-                Text("账号和密钥只存在这台 iPhone 上，\n不会经过我们的服务器。")
-                    .font(.system(size: 12))
-                    .foregroundStyle(Palette.ink2)
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(3)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 4)
             }
             .padding(16)
         }
         .sheetPage()
     }
 
-    /// The four sources one project can read, side by side.
-    private var sources: some View {
-        HStack(spacing: 6) {
-            ForEach(Platform.allCases) { platform in
-                PlatformLogo(platform: platform, size: 28)
-            }
-            Text("都可以汇进同一个项目")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Palette.ink2)
-                .padding(.leading, 4)
-        }
-        .padding(.horizontal, 4)
-        .accessibilityElement(children: .combine)
-    }
-
     private var postHogCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
                 PlatformLogo(platform: .posthog, size: 44)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(verbatim: "PostHog").font(.system(size: 20, weight: .heavy)).foregroundStyle(Palette.ink)
-                    Text("用户数、活跃、新增，还能导入你的看板")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Palette.ink2)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+                Text(verbatim: "PostHog").font(.system(size: 20, weight: .heavy)).foregroundStyle(Palette.ink)
                 Spacer(minLength: 4)
-                Text("建议先连")
+                Text("推荐")
                     .font(.system(size: 12, weight: .heavy))
                     .foregroundStyle(Palette.onAccent)
                     .padding(.horizontal, 10)
@@ -232,21 +187,19 @@ private struct StartPage: View {
 
 // MARK: Connected
 
-/// "项目建好了": today's numbers on the real home card, the dashboard brought over, the other sources one tap away with
-/// what each adds, then the name and colour. A product that already has a project is offered to go into it instead.
+/// The new project: its picture and name on top, today's numbers on the real home card, and its four sources as tiles
+/// with the missing ones a tap away. A product that already has a project is asked about first.
 private struct ConnectedPage: View {
     @Environment(ConnectSession.self) private var session
     @Environment(AppModel.self) private var model
     @Environment(\.dismiss) private var dismiss
     var addSource: (Platform) -> Void
-    var importDashboard: () -> Void
-    var adjust: () -> Void
     var merge: (Project) -> Void
     var finish: () -> Void
     @State private var preview: ProjectSnapshot?
     @State private var loading = false
     @State private var confirmingCancel = false
-    /// "不是同一个": the person wants a project of its own.
+    /// "另建一个": the person wants a project of its own.
     @State private var keepApart = false
 
     var body: some View {
@@ -255,38 +208,26 @@ private struct ConnectedPage: View {
         // they already have. Nothing on it saves a second one.
         let twin = keepApart ? nil : model.workspace.sameProduct(as: session.project)
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     RoundIconButton(systemName: "xmark", label: String(localized: "不保存，关闭")) { confirmingCancel = true }
                     Spacer()
                 }
                 if let twin {
-                    MergeCard(twin: twin, adding: session.project.platforms, merge: { merge(twin) }, keepApart: { keepApart = true })
-                } else {
-                    PageTitle(title: String(localized: "项目建好了"), subtitle: session.project.name.isEmpty ? nil : String(localized: "这是 \(session.project.name) 刚刚读到的数。"))
+                    MergeCard(twin: twin, merge: { merge(twin) }, keepApart: { keepApart = true })
                 }
+                HStack(spacing: 14) {
+                    ProjectIconPicker(project: $session.project)
+                    TextField("项目名称", text: $session.project.name)
+                        .font(Typeface.title(26))
+                        .foregroundStyle(Palette.ink)
+                        .submitLabel(.done)
+                        .accessibilityIdentifier("projectName")
+                    Image(systemName: "pencil").foregroundStyle(Palette.ink2)
+                }
+                .padding(.horizontal, 4)
                 ProjectCard(project: session.finished, preview: preview, previewLoading: loading)
-                if session.project.posthog != nil { dashboardRow }
-                let complete = session.project.platforms.count == Platform.allCases.count
-                SectionLabel(complete ? String(localized: "数据源") : String(localized: "补全数据源 · 同一个产品的其他数据"))
-                    .padding(.top, 6)
-                SourceRows(project: session.project, connect: addSource)
-                if !complete {
-                    Text("现在不接也行，之后在项目页的「数据来源」里随时补。")
-                        .font(.system(size: 12))
-                        .foregroundStyle(Palette.ink2)
-                        .padding(.horizontal, 6)
-                }
-                SectionLabel(String(localized: "图标、名称和颜色"))
-                    .padding(.top, 6)
-                identity($session.project)
-                if session.project.posthog != nil || session.project.revenueCat != nil {
-                    Button("数不对？调整怎么算", action: adjust)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Palette.ink2)
-                        .frame(maxWidth: .infinity, minHeight: 36, alignment: .trailing)
-                        .padding(.horizontal, 4)
-                }
+                SourceSlots(project: session.project, connect: addSource)
             }
             .padding(16)
         }
@@ -313,68 +254,6 @@ private struct ConnectedPage: View {
         }
     }
 
-    /// The dashboard brought over, or the offer to bring one.
-    @ViewBuilder
-    private var dashboardRow: some View {
-        let project = session.project
-        let name = project.metrics.dashboard?.name ?? project.pins.first?.dashboard.name
-        let count = session.postHogDashboards?.count ?? 0
-        if name != nil || count > 0 {
-            Button(action: importDashboard) {
-                HStack(spacing: 12) {
-                    Image(systemName: "square.grid.2x2")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Palette.ink)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(name.map { String(localized: "已导入看板「\($0)」") } ?? String(localized: "没有导入看板"))
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(Palette.ink)
-                        Text(name == nil ? String(localized: "你在 PostHog 有 \(count) 个看板") : importedDetail(project))
-                            .font(.system(size: 12))
-                            .foregroundStyle(Palette.ink2)
-                    }
-                    Spacer(minLength: 8)
-                    Text(name == nil ? String(localized: "导入") : String(localized: "改"))
-                        .font(.system(size: 15, weight: .heavy))
-                        .foregroundStyle(Palette.ink)
-                }
-                .padding(.horizontal, 16)
-                .frame(minHeight: 60)
-                .background(Palette.card, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("connectedDashboard")
-        }
-    }
-
-    private func importedDetail(_ project: Project) -> String {
-        let charts = project.pins.isEmpty ? nil : String(localized: "\(project.pins.count) 张图")
-        let counting = project.metrics.dashboard == nil ? nil : String(localized: "数字按看板算")
-        return [charts, counting].compactMap { $0 }.joined(separator: " · ")
-    }
-
-    private func identity(_ project: Binding<Project>) -> some View {
-        VStack(spacing: 14) {
-            HStack(spacing: 16) {
-                ProjectIconPicker(project: project)
-                TextField("项目名称", text: project.name)
-                    .font(.system(size: 20, weight: .heavy))
-                    .foregroundStyle(Palette.ink)
-                    .submitLabel(.done)
-                    .accessibilityIdentifier("projectName")
-                Image(systemName: "pencil").foregroundStyle(Palette.ink2)
-            }
-            HStack {
-                Text("颜色").font(.system(size: 15)).foregroundStyle(Palette.ink2)
-                Spacer(minLength: 0)
-                TintDots(tint: project.tint)
-            }
-        }
-        .padding(18)
-        .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-
     /// What decides the numbers; the name, colour and picture do not.
     private var numbersKey: Project {
         var key = session.project
@@ -398,62 +277,37 @@ private struct ConnectedPage: View {
     }
 }
 
-/// "已经有「Isaac Codex」了": a new project going by the name of one the person has, which reads none of the same
-/// sources, offered to go into that one.
+/// "已有「Isaac Codex」": a new project going by the name of one the person has, which reads none of the same sources,
+/// offered to go into that one.
 private struct MergeCard: View {
     var twin: Project
-    var adding: [Platform]
     var merge: () -> Void
     var keepApart: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 12) {
                 ProjectBadge(project: twin, size: 44)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("已经有「\(twin.name)」了")
-                        .font(.system(size: 17, weight: .heavy))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("已有「\(twin.name)」")
+                        .font(.system(size: 18, weight: .heavy))
                         .foregroundStyle(Palette.ink)
-                    Text(twin.platforms.isEmpty
-                         ? String(localized: "那个项目还没接数据源")
-                         : String(localized: "那个项目现在接了 \(ListFormatter.localizedString(byJoining: twin.platforms.map(\.displayName)))"))
-                        .font(.system(size: 13))
-                        .foregroundStyle(Palette.ink2)
+                    HStack(spacing: 4) {
+                        ForEach(twin.platforms) { PlatformLogo(platform: $0, size: 18) }
+                    }
                 }
             }
-            Text(String(localized: "要把刚连的 \(ListFormatter.localizedString(byJoining: adding.map(\.displayName))) 加进它里面吗？同一个产品放在一个项目里，数字和评论会在同一张卡上。"))
-                .font(.system(size: 15))
-                .foregroundStyle(Palette.ink)
-                .fixedSize(horizontal: false, vertical: true)
-            Button(String(localized: "加到「\(twin.name)」"), action: merge)
-                .buttonStyle(PrimaryButtonStyle())
-                .accessibilityIdentifier("mergeProject")
-            Button("不是同一个，新建项目", action: keepApart)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Palette.ink2)
-                .frame(maxWidth: .infinity, minHeight: 44)
+            HStack(spacing: 10) {
+                Button(String(localized: "加到这个项目"), action: merge)
+                    .buttonStyle(PrimaryButtonStyle())
+                    .accessibilityIdentifier("mergeProject")
+                Button(String(localized: "另建一个"), action: keepApart)
+                    .buttonStyle(PrimaryButtonStyle(filled: false))
+            }
         }
         .padding(18)
         .background(Palette.card, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(Palette.ink, lineWidth: 2))
-    }
-}
-
-/// "怎么算" on its own page, from the summary.
-private struct MetricsPage: View {
-    @Environment(ConnectSession.self) private var session
-
-    var body: some View {
-        @Bindable var session = session
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                BackButton()
-                PageTitle(title: String(localized: "怎么算"), subtitle: String(localized: "已按这个项目最近 30 天发过的事件选好，数不对再改。"))
-                MetricsCard(project: $session.project)
-            }
-            .padding(16)
-        }
-        .sheetPage()
     }
 }
 
