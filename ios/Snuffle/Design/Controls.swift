@@ -14,16 +14,6 @@ extension Platform {
         case .googlePlay: String(localized: "安卓评论和回复")
         }
     }
-
-    /// What connecting it takes, for someone choosing where to start.
-    var howToConnect: String {
-        switch self {
-        case .posthog: String(localized: "用 PostHog 账号登录")
-        case .revenueCat: String(localized: "粘贴一把只读密钥")
-        case .appStore: String(localized: "搜到 App 就行，不用登录")
-        case .googlePlay: String(localized: "用 Google 账号登录")
-        }
-    }
 }
 
 /// The platform's official mark. Logos that are not a square icon sit on a white tile.
@@ -127,8 +117,6 @@ extension View {
 
 /// A switch in the app's colours: an ink track with an accent knob when on.
 struct InkToggleStyle: ToggleStyle {
-    /// On the dark counting strip, where an ink track would vanish.
-    var onStrip = false
     @Environment(\.accent) private var accent
 
     func makeBody(configuration: Configuration) -> some View {
@@ -141,11 +129,11 @@ struct InkToggleStyle: ToggleStyle {
                     .foregroundStyle(Palette.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Capsule()
-                    .fill(configuration.isOn ? (onStrip ? accent : Palette.ink) : (onStrip ? Palette.stripMuted.opacity(0.4) : Palette.line))
+                    .fill(configuration.isOn ? Palette.ink : Palette.line)
                     .frame(width: 52, height: 32)
                     .overlay(alignment: configuration.isOn ? .trailing : .leading) {
                         Circle()
-                            .fill(configuration.isOn ? (onStrip ? Palette.strip : accent) : Palette.card)
+                            .fill(configuration.isOn ? accent : Palette.card)
                             .padding(3)
                     }
                     .animation(.spring(response: 0.25, dampingFraction: 0.8), value: configuration.isOn)

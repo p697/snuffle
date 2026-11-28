@@ -599,7 +599,7 @@ final class AppModel {
         if let known = dashboardOffers[project.id] { return known }
         do {
             let list = try await provider.dashboards(for: project)
-            let offer: DashboardOffer = list.isEmpty ? .none : .dashboards(list.count, first: list[0].name)
+            let offer: DashboardOffer = list.isEmpty ? .none : .dashboards
             dashboardOffers[project.id] = offer
             return offer
         } catch {

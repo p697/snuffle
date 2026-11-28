@@ -18,7 +18,8 @@ struct ProjectsView: View {
                     header
                     projects
                     footnote
-                    if !model.settings.demoMode { accountsLink.padding(.top, 20) }
+                    // Nothing signed in yet (a store found without a key): nothing to show there.
+                    if !model.settings.demoMode, !model.workspace.accounts.isEmpty { accountsLink.padding(.top, 20) }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
@@ -120,12 +121,7 @@ struct ProjectsView: View {
                     .overlay(Circle().strokeBorder(Palette.line))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("已登录的账号").font(.system(size: 16, weight: .bold)).foregroundStyle(Palette.ink)
-                    Text(model.workspace.accounts.isEmpty
-                         ? String(localized: "登录 PostHog、RevenueCat 或 Google 后会在这里；App Store 不用登录")
-                         : String(localized: "\(model.workspace.accounts.count) 个 · 只存在这台 iPhone 上", comment: "Number of signed-in accounts."))
-                        .font(.system(size: 13))
-                        .foregroundStyle(Palette.ink2)
-                        .fixedSize(horizontal: false, vertical: true)
+                    Text(String(localized: "\(model.workspace.accounts.count) 个 · 只存在这台 iPhone 上", comment: "Number of signed-in accounts.")).font(.system(size: 13)).foregroundStyle(Palette.ink2)
                 }
                 Spacer()
                 Image(systemName: "chevron.forward").font(.system(size: 14, weight: .bold)).foregroundStyle(Palette.faint)
